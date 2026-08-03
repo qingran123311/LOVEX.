@@ -91,6 +91,34 @@
             pointer-events: none;
             overflow: hidden;
         }
+        /* 低功耗模式：后台标签页 / 省电模式 / 系统减弱动画时暂停粒子动画 */
+        body.bg-effects-off .bg-sparkles *,
+        body.bg-effects-off .bg-bubbles *,
+        body.bg-effects-off .bg-hearts *,
+        body.bg-effects-off .bg-dots * {
+            animation-play-state: paused !important;
+            opacity: 0 !important;
+        }
+        /* 聊天界面暂停粒子动画（省 GPU，减少卡顿） */
+        body.chat-open .bg-sparkles *,
+        body.chat-open .bg-bubbles *,
+        body.chat-open .bg-hearts *,
+        body.chat-open .bg-dots * {
+            animation-play-state: paused !important;
+            opacity: 0 !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .bg-sparkles *,
+            .bg-bubbles *,
+            .bg-hearts *,
+            .bg-dots * {
+                animation: none !important;
+                opacity: 0 !important;
+            }
+            .bg-overlay.bg-float {
+                animation: none !important;
+            }
+        }
         .sparkle {
             position: absolute;
             width: 5px;
@@ -2305,19 +2333,14 @@
         .keyboard-open #chat-container { padding-top:56px; padding-bottom:56px; }
         .keyboard-open #emoji-drawer { position:fixed;bottom:calc(var(--kb-bottom,0px) + 56px);left:0;right:0;z-index:49; }
         .dc-svg-lg { width:26px; height:26px; display:inline-block; vertical-align:-6px; flex-shrink:0; }
-        .dc-twinkle { animation: dcTwinkle 2.2s ease-in-out infinite; transform-origin:center; }
-        @keyframes dcTwinkle { 0%,100%{opacity:1; transform:scale(1) rotate(0deg)} 50%{opacity:.65; transform:scale(.88) rotate(10deg)} }
-        .dc-bounce { animation: dcBounce 1.8s ease-in-out infinite; }
-        @keyframes dcBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
-        .dc-rock { animation: dcRock 2.6s ease-in-out infinite; transform-origin:center; }
-        @keyframes dcRock { 0%,100%{transform:rotate(-8deg)} 50%{transform:rotate(8deg)} }
+        .dc-twinkle { transform-origin:center; }
+        .dc-bounce { }
+        .dc-rock { transform-origin:center; }
         .decision-tab { display:flex; flex-direction:row; align-items:center; justify-content:center; gap:5px; padding:7px 15px; border-radius:999px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-secondary); cursor:pointer; transition:all .2s; flex-shrink:0; }
         .decision-tab .dt-ico { font-size:15px; line-height:1; transition:transform .2s; }
         .decision-tab .dt-name { font-size:12px; font-weight:600; }
         .decision-tab:hover .dt-ico { transform:scale(1.25) rotate(-10deg); }
         .decision-tab.active { background:var(--theme); color:#fff; border-color:var(--theme); box-shadow:0 3px 10px rgba(212,165,165,.35); }
-        .decision-tab.active .dt-ico { animation:dtBounce .5s ease; }
-        @keyframes dtBounce { 0%{transform:scale(1)} 40%{transform:scale(1.5) rotate(12deg)} 100%{transform:scale(1)} }
         .dc-card { background:var(--card-bg); border:1px solid var(--border-color); border-radius:16px; padding:14px; }
         .dc-card h4 { font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:10px; }
         .dc-label { display:block; font-size:11px; color:var(--text-secondary); margin-bottom:6px; }
@@ -2335,10 +2358,9 @@
         .cp-check { margin-left:auto; width:22px; height:22px; border-radius:50%; border:2px solid var(--border-color); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; flex-shrink:0; }
         .cp-item.selected .cp-check { background:var(--theme); border-color:var(--theme); }
         .dc-thinking { background:linear-gradient(160deg,var(--theme-light),#fdf2f2); border:1.5px solid var(--theme); border-radius:16px; padding:24px 16px; text-align:center; }
-        .dc-thinking .th-emoji { font-size:32px; display:block; margin-bottom:8px; animation:thBounce 1.2s ease-in-out infinite; display:inline-block; }
+        .dc-thinking .th-emoji { font-size:32px; display:block; margin-bottom:8px; display:inline-block; }
         .dc-thinking .th-name { font-size:14px; font-weight:600; color:var(--theme); }
         .dc-thinking .th-sub { font-size:12px; color:var(--text-secondary); margin-top:4px; }
-        @keyframes thBounce { 0%,100%{transform:translateY(0) rotate(-6deg)} 50%{transform:translateY(-7px) rotate(6deg)} }
         .dc-hist-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
         .dc-hist-btn { display:inline-flex; align-items:center; gap:4px; padding:6px 14px; border-radius:999px; font-size:12px; background:var(--theme-light); color:var(--theme); cursor:pointer; border:none; transition:all .15s; }
         .dc-hist-btn:active { transform:scale(.95); }
@@ -2430,28 +2452,6 @@
             <input id="my-status" type="text" class="text-xs text-[var(--text-secondary)] bg-transparent text-center w-full border-none outline-none" value="在线">
         </div>
     </header>
-    <!-- hidden info holders for JS -->
-    <div class="hidden">
-        <span id="partner-battery"><i class="fa fa-battery-three-quarters"></i></span>
-        <span id="partner-time">--:-- --</span>
-        <span id="my-mood"></span>
-        <span id="my-battery"></span>
-        <span id="header-clock"></span>
-    </div>
-    <!-- info bubble -->
-    <div id="info-bubble" class="fixed z-[100] pointer-events-none hidden" style="top:80px;left:50%;transform:translateX(-50%)">
-        <div class="bg-[var(--card-bg)] rounded-2xl px-4 py-3 shadow-lg border border-[var(--border-color)] min-w-[160px] bubble-in">
-            <div class="flex items-center gap-2 pb-1.5 mb-1.5 border-b border-[var(--border-color)]">
-                <img id="bubble-avatar" class="w-5 h-5 rounded-full border-2 border-[var(--theme)]" src="">
-                <span id="bubble-name" class="text-xs font-semibold text-[var(--theme)]"></span>
-            </div>
-            <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-[var(--text-secondary)]">
-                <span id="bubble-time"><i class="fa fa-clock-o"></i> --:--</span>
-                <span id="bubble-battery"><i class="fa fa-battery-three-quarters"></i></span>
-                <span id="bubble-mood"><i class="fa fa-heart-o"></i></span>
-            </div>
-        </div>
-    </div>
 
     <!-- ===== 首页视图（body.home-view 时显示） ===== -->
     <div id="home-view">
@@ -3711,7 +3711,7 @@
             </div>
             <div class="flex-1 relative overflow-hidden">
                 <div id="call-partner-sim" class="absolute inset-0 backface-hidden" style="transition:all .35s ease;">
-                    <div class="w-full h-full flex flex-col items-center justify-center" style="pointer-events:none;">
+                    <div class="w-full h-full flex flex-col items-center justify-center sim-inner" style="pointer-events:none;">
                         <img id="call-active-avatar" src="" class="w-40 h-40 rounded-full border-4 call-sim-avatar">
                         <p id="call-partner-sim-name" class="mt-3 text-lg font-medium" style="color:var(--text-primary);"></p>
                     </div>
@@ -3726,7 +3726,7 @@
             </div>
             <div class="flex justify-center space-x-8 pb-8">
                 <button id="mute-btn" class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--theme-light);color:var(--text-secondary);box-shadow:0 1px 4px rgba(0,0,0,0.04);"><i class="fa fa-microphone text-lg"></i></button>
-                <button id="speaker-btn" class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--theme-light);color:var(--text-secondary);box-shadow:0 1px 4px rgba(0,0,0,0.04);"><i class="fa fa-volume-up text-lg"></i></button>
+                <button id="flip-camera-btn" class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--theme-light);color:var(--text-secondary);box-shadow:0 1px 4px rgba(0,0,0,0.04);" title="切换前后摄像头"><i class="fa fa-refresh text-lg"></i></button>
                 <button id="camera-btn" class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--theme-light);color:var(--text-secondary);box-shadow:0 1px 4px rgba(0,0,0,0.04);"><i class="fa fa-video-camera text-lg"></i></button>
                 <button id="hangup-btn" class="w-14 h-14 rounded-full flex items-center justify-center text-white" style="background:#e57373;box-shadow:0 1px 4px rgba(0,0,0,0.04);"><i class="fa fa-phone text-lg"></i></button>
             </div>
@@ -3781,10 +3781,25 @@
 
     <!-- ===== 通话PiP窗口 ===== -->
     <div id="call-pip-window" class="fixed bottom-24 right-4 z-[70] hidden rounded-xl shadow-xl overflow-hidden cursor-pointer" style="width:240px;height:360px;background:var(--card-bg);border:1px solid var(--border-color);">
+        <span class="pip-rh" data-dir="nw" style="position:absolute;top:0;left:0;width:14px;height:14px;z-index:9;cursor:nw-resize"></span>
+        <span class="pip-rh" data-dir="ne" style="position:absolute;top:0;right:0;width:14px;height:14px;z-index:9;cursor:ne-resize"></span>
+        <span class="pip-rh" data-dir="sw" style="position:absolute;bottom:0;left:0;width:14px;height:14px;z-index:9;cursor:sw-resize"></span>
+        <span class="pip-rh" data-dir="se" style="position:absolute;bottom:0;right:0;width:14px;height:14px;z-index:9;cursor:se-resize"></span>
+        <span class="pip-rh" data-dir="e" style="position:absolute;top:0;right:0;width:6px;height:100%;z-index:9;cursor:e-resize"></span>
+        <span class="pip-rh" data-dir="s" style="position:absolute;bottom:0;left:0;width:100%;height:6px;z-index:9;cursor:s-resize"></span>
+        <span class="pip-rh" data-dir="w" style="position:absolute;top:0;left:0;width:6px;height:100%;z-index:9;cursor:w-resize"></span>
+        <span class="pip-rh" data-dir="n" style="position:absolute;top:0;left:0;width:100%;height:6px;z-index:9;cursor:n-resize"></span>
         <div class="w-full h-full flex flex-col items-center justify-center relative" style="background-size:cover;background-position:center;">
             <img id="pip-avatar" src="" class="w-16 h-16 rounded-full border-2 mb-2">
             <p id="pip-name" class="text-sm font-medium text-[var(--text-primary)]"></p>
             <p id="pip-duration" class="text-xs text-[var(--text-secondary)]">00:00</p>
+            <div id="pip-self-cam" class="absolute top-2 left-2 z-[5]" style="width:64px;height:88px;background:#000;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.25);">
+                <video id="pip-self-cam-video" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;display:none;"></video>
+                <div id="pip-self-cam-fallback" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--card-bg);">
+                    <img id="pip-self-cam-avatar" src="" style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border-color);">
+                    <span style="font-size:8px;margin-top:2px;color:var(--text-secondary)">我</span>
+                </div>
+            </div>
             <div class="absolute top-1 right-1 z-10">
                 <button id="pip-toggle-btn" class="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px]" style="background:rgba(212,165,165,0.55);box-shadow:0 1px 3px rgba(0,0,0,0.08);"><i class="fa fa-minus"></i></button>
             </div>
@@ -3797,10 +3812,25 @@
 
     <!-- ===== 群通话PiP窗口 ===== -->
     <div id="group-call-pip-window" class="fixed bottom-24 right-4 z-[70] hidden rounded-xl shadow-xl overflow-hidden" style="width:260px;height:380px;background:var(--card-bg);border:1px solid var(--border-color);">
+        <span class="pip-rh" data-dir="nw" style="position:absolute;top:0;left:0;width:14px;height:14px;z-index:9;cursor:nw-resize"></span>
+        <span class="pip-rh" data-dir="ne" style="position:absolute;top:0;right:0;width:14px;height:14px;z-index:9;cursor:ne-resize"></span>
+        <span class="pip-rh" data-dir="sw" style="position:absolute;bottom:0;left:0;width:14px;height:14px;z-index:9;cursor:sw-resize"></span>
+        <span class="pip-rh" data-dir="se" style="position:absolute;bottom:0;right:0;width:14px;height:14px;z-index:9;cursor:se-resize"></span>
+        <span class="pip-rh" data-dir="e" style="position:absolute;top:0;right:0;width:6px;height:100%;z-index:9;cursor:e-resize"></span>
+        <span class="pip-rh" data-dir="s" style="position:absolute;bottom:0;left:0;width:100%;height:6px;z-index:9;cursor:s-resize"></span>
+        <span class="pip-rh" data-dir="w" style="position:absolute;top:0;left:0;width:6px;height:100%;z-index:9;cursor:w-resize"></span>
+        <span class="pip-rh" data-dir="n" style="position:absolute;top:0;left:0;width:100%;height:6px;z-index:9;cursor:n-resize"></span>
         <div class="w-full h-full flex flex-col items-center justify-center relative" style="background-size:cover;background-position:center;">
             <span id="group-pip-avatars" class="flex -space-x-3 mb-2"></span>
             <p id="group-pip-name" class="text-sm font-medium text-[var(--text-primary)]"></p>
             <p id="group-pip-duration" class="text-xs text-[var(--text-secondary)]">00:00</p>
+            <div id="group-pip-self-cam" class="absolute top-2 left-2 z-[5]" style="width:64px;height:88px;background:#000;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.25);">
+                <video id="group-pip-self-cam-video" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;display:none;"></video>
+                <div id="group-pip-self-cam-fallback" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--card-bg);">
+                    <img id="group-pip-self-cam-avatar" src="" style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border-color);">
+                    <span style="font-size:8px;margin-top:2px;color:var(--text-secondary)">我</span>
+                </div>
+            </div>
             <div class="absolute top-1 right-1 z-10">
                 <button id="group-pip-toggle-btn" class="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px]" style="background:rgba(212,165,165,0.55);box-shadow:0 1px 3px rgba(0,0,0,0.08);"><i class="fa fa-minus"></i></button>
             </div>
@@ -3862,7 +3892,7 @@
             </div>
             <div class="flex justify-center space-x-8 pb-8">
                 <button id="group-mute-btn" class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--theme-light);color:var(--text-secondary);box-shadow:0 1px 4px rgba(0,0,0,0.04);"><i class="fa fa-microphone text-lg"></i></button>
-                <button id="speaker-btn" class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--theme-light);color:var(--text-secondary);box-shadow:0 1px 4px rgba(0,0,0,0.04);"><i class="fa fa-volume-up text-lg"></i></button>
+                <button id="group-flip-camera-btn" class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--theme-light);color:var(--text-secondary);box-shadow:0 1px 4px rgba(0,0,0,0.04);" title="切换前后摄像头"><i class="fa fa-refresh text-lg"></i></button>
                 <button id="group-camera-btn" class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--theme-light);color:var(--text-secondary);box-shadow:0 1px 4px rgba(0,0,0,0.04);"><i class="fa fa-video-camera text-lg"></i></button>
                 <button id="hangup-group-call-btn" class="w-14 h-14 rounded-full flex items-center justify-center text-white" style="background:#e57373;box-shadow:0 1px 4px rgba(0,0,0,0.04);"><i class="fa fa-phone text-lg"></i></button>
             </div>
@@ -6173,20 +6203,46 @@ async function createGroup(name, memberIds) {
             var callWindowSwapped = false;
 
             window.swapCallWindows = function swapCallWindows() {
-                callWindowSwapped = !callWindowSwapped;
                 var sim = document.getElementById('call-partner-sim');
                 var sw = document.getElementById('self-cam-view');
                 if (!sim || !sw) return;
                 if (callWindowSwapped) {
-                    sw.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border-radius:0;z-index:2;background:#000;border:none;cursor:pointer;transition:all .35s ease;';
-                    var fb = document.getElementById('self-cam-fallback');
-                    if (fb) fb.style.background = '#000';
-                    sim.style.cssText = 'position:absolute;right:12px;bottom:12px;width:120px;height:170px;z-index:3;background:rgba(0,0,0,0.45);border-radius:16px;transition:all .35s ease;';
-                } else {
+                    // 大屏(自己)已被点击 → 关闭摄像头显示头像
+                    if (selfCamStream) closeSelfCamera();
+                    // 恢复小窗布局
+                    callWindowSwapped = false;
                     sw.style.cssText = 'position:absolute;top:12px;right:12px;width:96px;height:140px;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,0.35);border:1px solid var(--border-color);cursor:pointer;transition:all .35s ease;z-index:2;';
                     var fb2 = document.getElementById('self-cam-fallback');
-                    if (fb2) fb2.style.background = '';
+                    if (fb2) { fb2.style.background = ''; fb2.style.width = '100%'; fb2.style.height = '100%'; }
+                    var av2 = document.getElementById('self-cam-avatar');
+                    if (av2) { av2.style.width = '46px'; av2.style.height = '46px'; }
                     sim.style.cssText = 'position:absolute;inset:0;transition:all .35s ease;';
+                    var simInner2 = sim.querySelector('.sim-inner');
+                    if (simInner2) simInner2.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+                    var simAv2 = sim.querySelector('#call-active-avatar');
+                    if (simAv2) simAv2.style.cssText = 'width:10rem;height:10rem;border-radius:50%;object-fit:cover;';
+                    var simNm2 = sim.querySelector('#call-partner-sim-name');
+                    if (simNm2) simNm2.style.cssText = 'margin-top:12px;font-size:1.125rem;color:var(--text-primary);';
+                    var v2 = document.getElementById('self-cam-video');
+                    if (v2) { v2.style.width = '100%'; v2.style.height = '100%'; }
+                    return;
+                }
+                callWindowSwapped = true;
+                if (callWindowSwapped) {
+                    sw.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border-radius:0;z-index:2;background:#000;border:none;cursor:pointer;transition:all .35s ease;';
+                    var fb = document.getElementById('self-cam-fallback');
+                    if (fb) { fb.style.background = '#000'; fb.style.width = '100%'; fb.style.height = '100%'; }
+                    var av = document.getElementById('self-cam-avatar');
+                    if (av) { av.style.width = '100px'; av.style.height = '100px'; }
+                    sim.style.cssText = 'position:absolute;right:12px;bottom:12px;width:120px;height:170px;z-index:3;background:rgba(0,0,0,0.45);border-radius:16px;overflow:hidden;transition:all .35s ease;';
+                    var simInner = sim.querySelector('.sim-inner');
+                    if (simInner) simInner.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;';
+                    var simAv = sim.querySelector('#call-active-avatar');
+                    if (simAv) simAv.style.cssText = 'width:64px;height:64px;border-radius:50%;object-fit:cover;';
+                    var simNm = sim.querySelector('#call-partner-sim-name');
+                    if (simNm) simNm.style.cssText = 'margin-top:6px;font-size:11px;color:#fff;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                    var v = document.getElementById('self-cam-video');
+                    if (v) { v.style.width = '100%'; v.style.height = '100%'; }
                 }
             };
 
@@ -6201,45 +6257,169 @@ async function createGroup(name, memberIds) {
                 return {
                     video: document.getElementById(g ? 'group-self-cam-video' : 'self-cam-video'),
                     fb: document.getElementById(g ? 'group-self-cam-fallback' : 'self-cam-fallback'),
-                    btn: document.getElementById(g ? 'group-camera-btn' : 'camera-btn')
+                    btn: document.getElementById(g ? 'group-camera-btn' : 'camera-btn'),
+                    pipVideo: document.getElementById(g ? 'group-pip-self-cam-video' : 'pip-self-cam-video'),
+                    pipFb: document.getElementById(g ? 'group-pip-self-cam-fallback' : 'pip-self-cam-fallback')
                 };
             }
 
+            var selfCamFacing = 'user';
+            var selfCamPending = false;
+            function currentCamMode() { return (groupCallState && groupCallState.status === 'connected') ? 'group' : 'private'; }
+
             function openSelfCamera(mode) {
-                mode = mode || (groupCallState && groupCallState.status === 'connected' ? 'group' : 'private');
-                if (selfCamStream) return;
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast('浏览器不支持摄像头'); return; }
-                var els = selfCamEls(mode);
-                navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then(function(stream) { selfCamStream = stream;
-                    if (els.v && els.fb) { els.v.srcObject = stream; els.v.style.display = 'block'; els.fb.style.display = 'none'; }
+                mode = mode || currentCamMode();
+                // 已有缓存流 → 直接复用，不再请求权限（权限只申请一次）
+                if (selfCamStream) {
+                    var els0 = selfCamEls(mode);
+                    try { selfCamStream.getVideoTracks().forEach(function(t) { t.enabled = true; }); } catch (e) {}
+                    if (els0.video && els0.fb) {
+                        els0.video.onloadedmetadata = function() { try { els0.video.play(); } catch (e) {} };
+                        els0.video.srcObject = selfCamStream;
+                        els0.video.style.display = 'block';
+                        els0.fb.style.display = 'none';
+                        try { var pp = els0.video.play(); if (pp && pp.catch) pp.catch(function() {}); } catch (e) {}
+                    }
+                    if (els0.pipVideo && els0.pipFb) {
+                        els0.pipVideo.srcObject = selfCamStream;
+                        els0.pipVideo.style.display = 'block';
+                        els0.pipFb.style.display = 'none';
+                        try { var pp2 = els0.pipVideo.play(); if (pp2 && pp2.catch) pp2.catch(function() {}); } catch (e) {}
+                    }
                     if (mode === 'group' && typeof groupCallState === 'object' && groupCallState) groupCallState.cameraOn = true;
                     else if (callState) callState.cameraOn = true;
-                    if (els.btn) { els.btn.style.background = '#ef4444'; els.btn.style.border = '#ef4444'; els.btn.innerHTML = '<i class="fa fa-eye-slash"></i>'; }
-                }).catch(function(err) { showToast('无法开启真实摄像头，已使用虚拟头像'); });
+                    setCamBtnState(mode, true);
+                    return;
+                }
+                if (selfCamPending) return;
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast('浏览器不支持摄像头'); return; }
+                selfCamPending = true;
+                function camOn(stream) {
+                    selfCamPending = false;
+                    selfCamStream = stream;
+                    // GUM 是异步的，重新获取元素确保拿到当前 DOM
+                    var els2 = selfCamEls(mode);
+                    try {
+                        if (els2.video && els2.fb) {
+                            if (stream) {
+                                els2.video.onloadedmetadata = function() { try { els2.video.play(); } catch (e) {} };
+                                els2.video.srcObject = stream; els2.video.style.display = 'block'; els2.fb.style.display = 'none';
+                                try { var p = els2.video.play(); if (p && p.catch) p.catch(function() {}); } catch (e) {}
+                            } else {
+                                els2.video.srcObject = null; els2.video.style.display = 'none'; els2.fb.style.display = 'flex';
+                            }
+                        }
+                        if (els2.pipVideo && els2.pipFb) {
+                            if (stream) {
+                                els2.pipVideo.srcObject = stream; els2.pipVideo.style.display = 'block'; els2.pipFb.style.display = 'none';
+                                try { var p3 = els2.pipVideo.play(); if (p3 && p3.catch) p3.catch(function() {}); } catch (e) {}
+                            } else {
+                                els2.pipVideo.srcObject = null; els2.pipVideo.style.display = 'none'; els2.pipFb.style.display = 'flex';
+                            }
+                        }
+                        if (mode === 'group' && typeof groupCallState === 'object' && groupCallState) groupCallState.cameraOn = !!stream;
+                        else if (callState) callState.cameraOn = !!stream;
+                        setCamBtnState(mode, !!stream);
+                    } catch (e2) {}
+                }
+                var isSecure = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                if (!isSecure) {
+                    camOn(null);
+                    showToast('摄像头需要 https 环境（当前为本地文件，无法调用）');
+                    return;
+                }
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: selfCamFacing }, audio: false })
+                    .then(camOn)
+                    .catch(function(err) {
+                        camOn(null);
+                        var msg = (err && err.name === 'NotAllowedError') ? '已拒绝摄像头权限，请在浏览器设置中允许' : '无法开启摄像头，已使用虚拟头像';
+                        showToast(msg);
+                    });
+            }
+            function setCamBtnState(mode, on) {
+                var btn = document.getElementById(mode === 'group' ? 'group-camera-btn' : 'camera-btn');
+                if (btn) {
+                    if (on) { btn.style.background = '#ef4444'; btn.style.border = '1px solid #ef4444'; btn.innerHTML = '<i class="fa fa-eye-slash"></i>'; }
+                    else { btn.style.background = ''; btn.style.border = ''; btn.innerHTML = '<i class="fa fa-video-camera"></i>'; }
+                }
             }
 
-            function closeSelfCamera() {
-                if (selfCamStream) { try { selfCamStream.getTracks().forEach(function(t) { t.stop(); }); } catch (e) {} selfCamStream = null; }
+            function closeSelfCamera(fullRelease) {
+                // 默认：不销毁流、不置空 → 流被缓存复用，权限只申请一次（仅停用轨道 + 隐藏画面）
+                // fullRelease=true：挂断/退出时真正释放流（权限已授予，下次不会重复弹窗）
+                if (selfCamStream) {
+                    try {
+                        if (fullRelease) {
+                            selfCamStream.getTracks().forEach(function(t) { t.stop(); });
+                            selfCamStream = null;
+                        } else {
+                            selfCamStream.getVideoTracks().forEach(function(t) { t.enabled = false; });
+                        }
+                    } catch (e) {}
+                }
                 ['private', 'group'].forEach(function(m) {
                     var els = selfCamEls(m);
-                    if (els.v && els.fb) { els.v.srcObject = null; els.v.style.display = 'none'; els.fb.style.display = 'flex'; }
-                    if (els.btn) { els.btn.style.background = ''; els.btn.style.border = ''; els.btn.innerHTML = '<i class="fa fa-video-camera"></i>'; }
+                    if (els.video && els.fb) { els.video.srcObject = null; els.video.style.display = 'none'; els.fb.style.display = 'flex'; }
+                    if (els.pipVideo && els.pipFb) { els.pipVideo.srcObject = null; els.pipVideo.style.display = 'none'; els.pipFb.style.display = 'flex'; }
+                    setCamBtnState(m, false);
                 });
                 if (typeof groupCallState === 'object' && groupCallState) groupCallState.cameraOn = false;
                 if (callState) callState.cameraOn = false;
             }
 
-            function toggleSelfCameraBtn() {
-                var mode = (groupCallState && groupCallState.status === 'connected') ? 'group' : 'private';
+            function flipSelfCamera() {
+                var mode = currentCamMode();
                 var els = selfCamEls(mode);
-                if (selfCamStream) { closeSelfCamera(); return; }
+                if (!selfCamStream) {
+                    // 摄像头还没开 → 只是记住朝向，等开启时生效
+                    selfCamFacing = selfCamFacing === 'user' ? 'environment' : 'user';
+                    showToast(selfCamFacing === 'user' ? '已设为前置摄像头' : '已设为后置摄像头');
+                    return;
+                }
+                var track = null;
+                try { track = selfCamStream.getVideoTracks()[0]; } catch (e) {}
+                var next = selfCamFacing === 'user' ? 'environment' : 'user';
+                if (track && typeof track.applyConstraints === 'function') {
+                    // 同一轨道直接切换 facingMode → 不重新获取流、不再申请权限
+                    track.applyConstraints({ video: { facingMode: next } }).then(function() {
+                        selfCamFacing = next;
+                        showToast(next === 'user' ? '已切换前置摄像头' : '已切换后置摄像头');
+                    }).catch(function() {
+                        // applyConstraints 不支持 → 回退：重新获取（权限已授予，正常不弹窗）
+                        selfCamFacing = next;
+                        if (els.video && els.fb) { els.video.srcObject = null; els.video.style.display = 'none'; els.fb.style.display = 'flex'; }
+                        if (els.pipVideo && els.pipFb) { els.pipVideo.srcObject = null; els.pipVideo.style.display = 'none'; els.pipFb.style.display = 'flex'; }
+                        if (selfCamStream) {
+                            try { selfCamStream.getTracks().forEach(function(t2) { t2.stop(); }); } catch (e) {}
+                            selfCamStream = null;
+                        }
+                        openSelfCamera(mode);
+                    });
+                } else {
+                    selfCamFacing = next;
+                    if (els.video && els.fb) { els.video.srcObject = null; els.video.style.display = 'none'; els.fb.style.display = 'flex'; }
+                    if (els.pipVideo && els.pipFb) { els.pipVideo.srcObject = null; els.pipVideo.style.display = 'none'; els.pipFb.style.display = 'flex'; }
+                    if (selfCamStream) {
+                        try { selfCamStream.getTracks().forEach(function(t3) { t3.stop(); }); } catch (e) {}
+                        selfCamStream = null;
+                    }
+                    openSelfCamera(mode);
+                }
+            }
+
+            function toggleSelfCameraBtn() {
+                var mode = currentCamMode();
+                var els = selfCamEls(mode);
+                if (selfCamStream && els.video && els.video.style.display === 'block') { closeSelfCamera(); return; }
                 openSelfCamera(mode);
             }
             window.__selfCamCtl = {
                 view: function() { var v = document.getElementById('self-cam-view'); return v ? (v.offsetParent !== null ? 'visible' : 'hidden') : 'NO_VIEW'; },
                 fallback: function() { var f = document.getElementById('self-cam-fallback'); return f ? (f.style.display !== 'none' ? 'avatar' : 'video') : 'NO_FB'; },
                 toggleSafe: function() { try { toggleSelfCameraBtn(); return 'ok'; } catch (e) { return 'ERR:' + e.message; } },
-                hasFuncs: function() { return (typeof openSelfCamera === 'function') + '/' + (typeof closeSelfCamera === 'function'); }
+                flipSafe: function() { try { flipSelfCamera(); return 'ok'; } catch (e) { return 'ERR:' + e.message; } },
+                facing: function() { return selfCamFacing; },
+                hasFuncs: function() { return (typeof openSelfCamera === 'function') + '/' + (typeof closeSelfCamera === 'function') + '/' + (typeof flipSelfCamera === 'function'); }
             };
 
             function applyAvatarEffects() {
@@ -6373,6 +6553,7 @@ async function createGroup(name, memberIds) {
                 startActiveMsgTimer();
                 schedulePartnerRead();
                 document.body.classList.remove('home-view');
+                document.body.classList.add('chat-open');
                 document.getElementById('chat-view').classList.add('open');
                 updateWechatHeader();
                 var backBtn = document.getElementById('back-to-home-btn');
@@ -6416,6 +6597,7 @@ async function createGroup(name, memberIds) {
                 updateChatBackground();
                 startActiveMsgTimer();
                 document.body.classList.remove('home-view');
+                document.body.classList.add('chat-open');
                 document.getElementById('chat-view').classList.add('open');
                 updateWechatHeader();
                 if (backBtn) backBtn.classList.remove('hidden');
@@ -6651,7 +6833,7 @@ async function createGroup(name, memberIds) {
                 }
                 if (msg.type === 'voice') {
                     const div = document.createElement('div');
-                    div.className = `flex ${msg.isMe ? 'justify-end' : 'justify-start'}`;
+                    div.className = `flex flex-col ${msg.isMe ? 'items-end' : 'items-start'}`;
                     div.dataset.id = msg.id;
                     const avatar = msg.isMe ? settings.myAvatar : getCurrentContact()?.avatar || 'https://picsum.photos/200/200?random=1';
                     const voiceBubble = createVoiceBubble(msg, msg.isMe);
@@ -6772,7 +6954,7 @@ async function createGroup(name, memberIds) {
                 }
                 if (msg.type === 'image') {
                     const div = document.createElement('div');
-                    div.className = `flex ${msg.isMe ? 'justify-end' : 'justify-start'}`;
+                    div.className = `flex flex-col ${msg.isMe ? 'items-end' : 'items-start'}`;
                     div.dataset.id = msg.id;
                     const avatar = msg.isMe ? settings.myAvatar : getCurrentContact()?.avatar || 'https://picsum.photos/200/200?random=1';
                     const wrapper = document.createElement('div');
@@ -6816,7 +6998,7 @@ async function createGroup(name, memberIds) {
                     return div;
                 }
                 const div = document.createElement('div');
-                div.className = `flex ${msg.isMe ? 'justify-end' : 'justify-start'}`;
+                div.className = `flex flex-col ${msg.isMe ? 'items-end' : 'items-start'}`;
                 div.dataset.id = msg.id;
                 const contact = getCurrentContact();
                 const avatar = msg.isMe ? settings.myAvatar : contact?.avatar || 'https://picsum.photos/200/200?random=1';
@@ -6972,7 +7154,7 @@ async function createGroup(name, memberIds) {
                     div.dataset.id = msg.id;
                     const isMe = msg.senderId === 'me';
                     const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => c.id === msg.senderId) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
-                    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-2`;
+                    div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
                     const wrapper = document.createElement('div');
                     wrapper.className = 'flex items-end space-x-2 max-w-[82%]';
                     if (!isMe) {
@@ -7019,7 +7201,7 @@ async function createGroup(name, memberIds) {
                     div.dataset.id = msg.id;
                     const isMe = msg.senderId === 'me';
                     const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => c.id === msg.senderId) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
-                    div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-2`;
+                    div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
                     const wrapper = document.createElement('div');
                     wrapper.className = 'flex items-end space-x-2 max-w-[82%]';
                     if (!isMe && !hideAvatarAndName) {
@@ -7075,7 +7257,7 @@ async function createGroup(name, memberIds) {
                 const isMe = msg.senderId === 'me';
                 const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => c.id === msg.senderId) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
                 const bubbleClass = isMe ? 'message-bubble-right' : 'message-bubble-left';
-                div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-2`;
+                div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
                 let quoteHtml = '';
                 if (msg.quote) {
                     const qAuthor = msg.quote.senderId === 'me' ? settings.myName : (contacts.find(c => c.id === msg.quote.senderId)?.name || '未知');
@@ -7172,9 +7354,12 @@ async function createGroup(name, memberIds) {
                 let lastSenderTimestamp = null;
                 let lastDateStr = null;
                 const msgsToRender = messages.filter(m => m.type !== 'letter');
+                // 只渲染最近 MAX_RENDER_MSGS 条，避免超长历史拖慢渲染
+                const MAX_RENDER_MSGS = 500;
+                const renderSlice = msgsToRender.length > MAX_RENDER_MSGS ? msgsToRender.slice(-MAX_RENDER_MSGS) : msgsToRender;
                 const displayMsgs = [];
-                for (let i = 0; i < msgsToRender.length; i++) {
-                    const m = msgsToRender[i];
+                for (let i = 0; i < renderSlice.length; i++) {
+                    const m = renderSlice[i];
                     const ts = m.timestamp || m.createdAt;
                     const currentDateStr = formatDateShort(ts);
                     if (currentDateStr && (!lastDateStr || lastDateStr !== currentDateStr)) {
@@ -10093,7 +10278,8 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                 var chMyEl = document.getElementById('ch-my-battery');
                 if (myEl || chMyEl) {
                     var level = window._batteryLevel;
-                    if (level !== undefined) {
+                    if (level !== undefined && !isNaN(level)) {
+                        level = Math.max(1, Math.min(100, Math.round(level)));
                         var icon = 'fa-battery-empty';
                         if (level > 75) icon = 'fa-battery-full';
                         else if (level > 50) icon = 'fa-battery-three-quarters';
@@ -10127,11 +10313,13 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
             }
             function startBatteryMonitor() {
                 if (navigator.getBattery) {
-                    navigator.getBattery().then(function(b) {
-                        window._batteryLevel = Math.round(b.level * 100);
-                        updateHeaderBattery();
-                        b.addEventListener('levelchange', function() { window._batteryLevel = Math.round(b.level * 100); updateHeaderBattery(); });
-                    });
+                    try {
+                        navigator.getBattery().then(function(b) {
+                            window._batteryLevel = Math.round(b.level * 100);
+                            updateHeaderBattery();
+                            b.addEventListener('levelchange', function() { window._batteryLevel = Math.round(b.level * 100); updateHeaderBattery(); });
+                        }).catch(function() {});
+                    } catch (e) {}
                 }
                 updateHeaderBattery();
             }
@@ -11898,7 +12086,9 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                 var effectsEnabled = window.__bgEffectsEnabled !== undefined ? window.__bgEffectsEnabled : settings.bgEffects.enabled;
                 if (!effectsEnabled) return;
                 overlay.classList.add('bg-float');
-                for (let i = 0; i < 15; i++) { const s = document.createElement('div');
+                // 已有粒子则不重建（减少重复 DOM 操作）
+                if (sparkles.childElementCount > 0 && bubbles.childElementCount > 0 && hearts.childElementCount > 0 && dots.childElementCount > 0) return;
+                for (let i = 0; i < 8; i++) { const s = document.createElement('div');
                     s.className = 'sparkle';
                     s.style.left = Math.random() * 100 + '%';
                     s.style.animationDelay = Math.random() * 8 + 's';
@@ -11906,7 +12096,7 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                     s.style.width = 3 + Math.random() * 6 + 'px';
                     s.style.height = s.style.width;
                     sparkles.appendChild(s); }
-                for (let i = 0; i < 8; i++) { const b = document.createElement('div');
+                for (let i = 0; i < 5; i++) { const b = document.createElement('div');
                     b.className = 'bubble';
                     b.style.left = Math.random() * 100 + '%';
                     b.style.animationDelay = Math.random() * 15 + 's';
@@ -11914,7 +12104,7 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                     b.style.width = 4 + Math.random() * 12 + 'px';
                     b.style.height = b.style.width;
                     bubbles.appendChild(b); }
-                for (let i = 0; i < 6; i++) { const h = document.createElement('div');
+                for (let i = 0; i < 4; i++) { const h = document.createElement('div');
                     h.className = 'heart';
                     h.textContent = '♥';
                     h.style.left = Math.random() * 100 + '%';
@@ -11922,7 +12112,7 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                     h.style.animationDuration = 20 + Math.random() * 15 + 's';
                     h.style.fontSize = 8 + Math.random() * 14 + 'px';
                     hearts.appendChild(h); }
-                for (let i = 0; i < 20; i++) { const d = document.createElement('div');
+                for (let i = 0; i < 12; i++) { const d = document.createElement('div');
                     d.className = 'dot';
                     d.style.left = Math.random() * 100 + '%';
                     d.style.animationDelay = Math.random() * 8 + 's';
@@ -12159,6 +12349,9 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                     document.getElementById('group-call-active').classList.remove('hidden');
                     var gSelfAv2 = document.getElementById('group-self-cam-avatar');
                     if (gSelfAv2 && settings.myAvatar) gSelfAv2.src = settings.myAvatar;
+                    var gPipSelfAv2 = document.getElementById('group-pip-self-cam-avatar');
+                    if (gPipSelfAv2 && settings.myAvatar) gPipSelfAv2.src = settings.myAvatar;
+                    setTimeout(function() { if (groupCallState.status === 'connected') { if (typeof openSelfCamera === 'function') openSelfCamera('group'); } }, 800);
                 }
                 scheduleMemberHangup(memberId);
                 const member = contacts.find(c => c.id === memberId);
@@ -12226,7 +12419,7 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
             }
             function endGroupCall(reason) {
                 var now = Date.now();
-                closeSelfCamera();
+                closeSelfCamera(true);
                 document.getElementById('group-call-float-window').classList.add('hidden');
                 document.getElementById('group-call-pip-window').classList.add('hidden');
                 groupCallState.displayMode = 'full';
@@ -12440,11 +12633,14 @@ const myTile = selfCamStream
                 callWindowSwapped = false;
                 var selfAv1 = document.getElementById('self-cam-avatar');
                 if (selfAv1 && settings.myAvatar) selfAv1.src = settings.myAvatar;
+                var pipSelfAv1 = document.getElementById('pip-self-cam-avatar');
+                if (pipSelfAv1 && settings.myAvatar) pipSelfAv1.src = settings.myAvatar;
                 var nameEl = document.getElementById('call-partner-name-active');
                 if (nameEl) nameEl.textContent = contact?.name || '';
                 resetCallUI();
                 startPrivateCallDuration();
                 schedulePartnerHangup();
+                setTimeout(function() { if (callState.status === 'connected') { if (typeof openSelfCamera === 'function') openSelfCamera('private'); } }, 800);
             }
 
             function schedulePartnerHangup() {
@@ -12473,7 +12669,7 @@ const myTile = selfCamStream
             function endCall(reason) {
                 document.getElementById('call-float-window').classList.add('hidden');
                 document.getElementById('call-pip-window').classList.add('hidden');
-                closeSelfCamera();
+                closeSelfCamera(true);
                 callState.displayMode = 'full';
                 clearTimeout(callTimer);
                 clearTimeout(callState.hangupTimer);
@@ -12614,6 +12810,8 @@ const myTile = selfCamStream
                 callWindowSwapped = false;
                 var selfAv2 = document.getElementById('self-cam-avatar');
                 if (selfAv2 && settings.myAvatar) selfAv2.src = settings.myAvatar;
+                var pipSelfAv2 = document.getElementById('pip-self-cam-avatar');
+                if (pipSelfAv2 && settings.myAvatar) pipSelfAv2.src = settings.myAvatar;
                 var nameEl = document.getElementById('call-partner-name-active');
                 if (nameEl) nameEl.textContent = contact?.name || '';
                 document.getElementById('call-interface').classList.remove('hidden');
@@ -12623,6 +12821,7 @@ const myTile = selfCamStream
                 resetCallUI();
                 startPrivateCallDuration();
                 schedulePartnerHangup();
+                setTimeout(function() { if (callState.status === 'connected') { if (typeof openSelfCamera === 'function') openSelfCamera('private'); } }, 800);
             }
 
             function incomingGroupCallFromMember(groupId, initiatorId) {
@@ -12669,9 +12868,12 @@ const myTile = selfCamStream
                 document.getElementById('group-call-float-window').classList.add('hidden');
                 var gSelfAv = document.getElementById('group-self-cam-avatar');
                 if (gSelfAv && settings.myAvatar) gSelfAv.src = settings.myAvatar;
+                var gPipSelfAv = document.getElementById('group-pip-self-cam-avatar');
+                if (gPipSelfAv && settings.myAvatar) gPipSelfAv.src = settings.myAvatar;
                 renderGroupCallActiveMembers();
                 startGroupCallDuration();
                 groupCallState.participants.forEach(mid => startMemberDecision(mid));
+                setTimeout(function() { if (groupCallState.status === 'connected') { if (typeof openSelfCamera === 'function') openSelfCamera('group'); } }, 800);
             }
 
             function startChatInviteTimer() {
@@ -12844,10 +13046,11 @@ const myTile = selfCamStream
                     floatWindowDragState.startY = e.clientY;
                     floatWindowDragState.initialX = fw.offsetLeft;
                     floatWindowDragState.initialY = fw.offsetTop;
+                    fw._dragMoved = false;
                     e.preventDefault(); });
                 document.addEventListener('mousemove', e => { if (!floatWindowDragState.isDragging) return; const dx = e
                         .clientX - floatWindowDragState.startX,
-                    dy = e.clientY - floatWindowDragState.startY; let nx = floatWindowDragState.initialX + dx,
+                    dy = e.clientY - floatWindowDragState.startY; if (Math.abs(dx) > 5 || Math.abs(dy) > 5) fw._dragMoved = true; let nx = floatWindowDragState.initialX + dx,
                     ny = floatWindowDragState.initialY + dy;
                     nx = Math.max(0, Math.min(window.innerWidth - fw.offsetWidth, nx));
                     ny = Math.max(0, Math.min(window.innerHeight - fw.offsetHeight, ny));
@@ -12862,10 +13065,10 @@ const myTile = selfCamStream
                     floatWindowDragState.startY = e.touches[0].clientY;
                     floatWindowDragState.initialX = fw.offsetLeft;
                     floatWindowDragState.initialY = fw.offsetTop;
-                    e.preventDefault(); });
+                    fw._dragMoved = false; }, { passive: true });
                 document.addEventListener('touchmove', e => { if (!floatWindowDragState.isDragging) return; const dx = e
                         .touches[0].clientX - floatWindowDragState.startX,
-                    dy = e.touches[0].clientY - floatWindowDragState.startY; let nx = floatWindowDragState
+                    dy = e.touches[0].clientY - floatWindowDragState.startY; if (Math.abs(dx) > 5 || Math.abs(dy) > 5) fw._dragMoved = true; let nx = floatWindowDragState
                         .initialX + dx,
                     ny = floatWindowDragState.initialY + dy;
                     nx = Math.max(0, Math.min(window.innerWidth - fw.offsetWidth, nx));
@@ -12874,7 +13077,7 @@ const myTile = selfCamStream
                     fw.style.top = ny + 'px';
                     fw.style.right = 'auto';
                     fw.style.bottom = 'auto';
-                    e.preventDefault(); });
+                    if (fw._dragMoved) e.preventDefault(); }, { passive: false });
                 document.addEventListener('touchend', () => { floatWindowDragState.isDragging = false; });
             }
 
@@ -12887,10 +13090,11 @@ const myTile = selfCamStream
                     floatWindowDragState.startY = e.clientY;
                     floatWindowDragState.initialX = fw.offsetLeft;
                     floatWindowDragState.initialY = fw.offsetTop;
+                    fw._dragMoved = false;
                     e.preventDefault(); });
                 document.addEventListener('mousemove', e => { if (!floatWindowDragState.isDragging) return; const dx = e
                         .clientX - floatWindowDragState.startX,
-                    dy = e.clientY - floatWindowDragState.startY; let nx = floatWindowDragState.initialX + dx,
+                    dy = e.clientY - floatWindowDragState.startY; if (Math.abs(dx) > 5 || Math.abs(dy) > 5) fw._dragMoved = true; let nx = floatWindowDragState.initialX + dx,
                     ny = floatWindowDragState.initialY + dy;
                     nx = Math.max(0, Math.min(window.innerWidth - fw.offsetWidth, nx));
                     ny = Math.max(0, Math.min(window.innerHeight - fw.offsetHeight, ny));
@@ -12905,10 +13109,10 @@ const myTile = selfCamStream
                     floatWindowDragState.startY = e.touches[0].clientY;
                     floatWindowDragState.initialX = fw.offsetLeft;
                     floatWindowDragState.initialY = fw.offsetTop;
-                    e.preventDefault(); });
+                    fw._dragMoved = false; }, { passive: true });
                 document.addEventListener('touchmove', e => { if (!floatWindowDragState.isDragging) return; const dx = e
                         .touches[0].clientX - floatWindowDragState.startX,
-                    dy = e.touches[0].clientY - floatWindowDragState.startY; let nx = floatWindowDragState
+                    dy = e.touches[0].clientY - floatWindowDragState.startY; if (Math.abs(dx) > 5 || Math.abs(dy) > 5) fw._dragMoved = true; let nx = floatWindowDragState
                         .initialX + dx,
                     ny = floatWindowDragState.initialY + dy;
                     nx = Math.max(0, Math.min(window.innerWidth - fw.offsetWidth, nx));
@@ -12917,7 +13121,7 @@ const myTile = selfCamStream
                     fw.style.top = ny + 'px';
                     fw.style.right = 'auto';
                     fw.style.bottom = 'auto';
-                    e.preventDefault(); });
+                    if (fw._dragMoved) e.preventDefault(); }, { passive: false });
                 document.addEventListener('touchend', () => { floatWindowDragState.isDragging = false; });
             }
 
@@ -16916,6 +17120,45 @@ const myTile = selfCamStream
                 setupDrag(document.getElementById('call-float-window'), floatWindowDragState);
                 setupDrag(document.getElementById('group-call-pip-window'), groupFloatWindowDragState);
                 setupDrag(document.getElementById('group-call-float-window'), groupFloatWindowDragState);
+                // touch drag for pip windows (mobile)
+                ['call-pip-window', 'group-call-pip-window'].forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    var st = id === 'call-pip-window' ? floatWindowDragState : groupFloatWindowDragState;
+                    el.addEventListener('touchstart', function(e) {
+                        if (e.target.closest('button')) return;
+                        st.isDragging = true;
+                        st.startX = e.touches[0].clientX;
+                        st.startY = e.touches[0].clientY;
+                        st.initialX = el.offsetLeft;
+                        st.initialY = el.offsetTop;
+                        st.target = el;
+                        el._dragMoved = false;
+                    }, { passive: true });
+                });
+                document.addEventListener('touchmove', function(e) {
+                    [floatWindowDragState, groupFloatWindowDragState].forEach(function(ds) {
+                        if (!ds.isDragging || !ds.target) return;
+                        var el = ds.target;
+                        var dx = e.touches[0].clientX - ds.startX;
+                        var dy = e.touches[0].clientY - ds.startY;
+                        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) el._dragMoved = true;
+                        var left = ds.initialX + dx;
+                        var top_ = ds.initialY + dy;
+                        left = Math.max(0, Math.min(window.innerWidth - el.offsetWidth, left));
+                        top_ = Math.max(0, Math.min(window.innerHeight - el.offsetHeight, top_));
+                        el.style.left = left + 'px';
+                        el.style.top = top_ + 'px';
+                        el.style.right = 'auto';
+                        el.style.bottom = 'auto';
+                    });
+                }, { passive: true });
+                document.addEventListener('touchend', function() {
+                    [floatWindowDragState, groupFloatWindowDragState].forEach(function(ds) {
+                        if (ds.isDragging && ds.target) ds.target.style.transition = '';
+                        ds.isDragging = false; ds.target = null;
+                    });
+                });
                 // pip resize handles
                 document.querySelectorAll('.pip-rh').forEach(function(rh) {
                     rh.onmousedown = function(e) { e.stopPropagation();
@@ -16928,6 +17171,44 @@ const myTile = selfCamStream
                         rs.initialX = pip.offsetLeft; rs.initialY = pip.offsetTop;
                         rs.dir = dir; rs.target = pip; pip.style.transition = 'none';
                     };
+                    rh.addEventListener('touchstart', function(e) {
+                        e.stopPropagation(); e.preventDefault();
+                        var pip = rh.closest('[id$="pip-window"]');
+                        var isGroup = pip && pip.id === 'group-call-pip-window';
+                        var rs = isGroup ? groupPipResizeState : pipResizeState;
+                        var dir = rh.dataset.dir;
+                        rs.isResizing = true; rs.startX = e.touches[0].clientX; rs.startY = e.touches[0].clientY;
+                        rs.initialW = pip.offsetWidth; rs.initialH = pip.offsetHeight;
+                        rs.initialX = pip.offsetLeft; rs.initialY = pip.offsetTop;
+                        rs.dir = dir; rs.target = pip; pip.style.transition = 'none';
+                    }, { passive: false });
+                });
+                document.addEventListener('touchmove', function(e) {
+                    if ((pipResizeState.isResizing && pipResizeState.target) || (groupPipResizeState.isResizing && groupPipResizeState.target)) e.preventDefault();
+                    var rs = pipResizeState.isResizing && pipResizeState.target ? pipResizeState : groupPipResizeState;
+                    if (!rs.isResizing || !rs.target) return;
+                    var dx = e.touches[0].clientX - rs.startX;
+                    var dy = e.touches[0].clientY - rs.startY;
+                    var el = rs.target;
+                    var dir = rs.dir;
+                    var newW = rs.initialW, newH = rs.initialH;
+                    var newX = rs.initialX, newY = rs.initialY;
+                    if (dir.includes('e')) newW = Math.max(140, rs.initialW + dx);
+                    if (dir.includes('w')) { newW = Math.max(140, rs.initialW - dx); newX = rs.initialX + (rs.initialW - newW); }
+                    if (dir.includes('s')) newH = Math.max(180, rs.initialH + dy);
+                    if (dir.includes('n')) { newH = Math.max(180, rs.initialH - dy); newY = rs.initialY + (rs.initialH - newH); }
+                    el.style.width = newW + 'px';
+                    el.style.height = newH + 'px';
+                    el.style.left = newX + 'px';
+                    el.style.top = newY + 'px';
+                    el.style.right = 'auto';
+                    el.style.bottom = 'auto';
+                }, { passive: false });
+                document.addEventListener('touchend', function() {
+                    [pipResizeState, groupPipResizeState].forEach(function(rs) {
+                        if (rs.isResizing && rs.target) rs.target.style.transition = '';
+                        rs.isResizing = false; rs.target = null;
+                    });
                 });
                 // float window: click to restore (only if not dragged)
                 document.getElementById('call-float-window').onclick = function(e) {
@@ -16942,7 +17223,12 @@ const myTile = selfCamStream
                 };
                 document.getElementById('float-hangup-btn').onclick = e => { e.stopPropagation(); hangupCall(); };
                 document.getElementById('pip-hangup-btn').onclick = e => { e.stopPropagation(); hangupCall(); };
-                document.getElementById('pip-toggle-btn').onclick = function(e) { e.stopPropagation(); if (this._tick) { clearTimeout(this._tick); this._tick = null; restoreCall(); return; } this._tick = setTimeout(function(){ this._tick = null; minimizeCall(); }.bind(this), 250); };
+                document.getElementById('pip-toggle-btn').onclick = function(e) { e.stopPropagation(); minimizeCall(); };
+                document.getElementById('call-pip-window').onclick = function(e) {
+                    if (this._dragMoved) return;
+                    if (e.target.closest('button')) return;
+                    restoreCall();
+                };
                 document.getElementById('pip-mute-btn').onclick = function() { callState.muted = !callState.muted; this.innerHTML = callState.muted ? '<i class="fa fa-microphone-slash"></i>' : '<i class="fa fa-microphone"></i>'; this.style.background = callState.muted ? '#ef4444' : ''; this.style.borderColor = callState.muted ? '#ef4444' : ''; };
                 document.onmousemove = function(e) {
                     // private pip resize
@@ -17079,11 +17365,15 @@ const myTile = selfCamStream
                                     ['call-active','call-pip-window','group-call-active','group-call-pip-window'].forEach(function(id) {
                                         var el = document.getElementById(id);
                                         if (el) { el.style.backgroundImage = 'url(' + callBgUrls[callBgIdx] + ')'; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
+                                        var inner = el ? el.querySelector('.w-full.h-full.flex.flex-col.items-center.justify-center.relative') : null;
+                                        if (inner) { inner.style.backgroundImage = 'url(' + callBgUrls[callBgIdx] + ')'; inner.style.backgroundSize = 'cover'; inner.style.backgroundPosition = 'center'; }
                                     });
                                 } else if (this.dataset.action === 'clear') {
                                     ['call-active','call-pip-window','group-call-active','group-call-pip-window'].forEach(function(id) {
                                         var el = document.getElementById(id);
                                         if (el) { el.style.backgroundImage = ''; }
+                                        var inner = el ? el.querySelector('.w-full.h-full.flex.flex-col.items-center.justify-center.relative') : null;
+                                        if (inner) { inner.style.backgroundImage = ''; }
                                     });
                                 }
                                 actions.remove(); document.removeEventListener('click', document._bgCloser);
@@ -17091,8 +17381,8 @@ const myTile = selfCamStream
                         });
                     };
                 }
-                (document.getElementById('speaker-btn')||{}).onclick = function() { if (!callState.speakerOn && callState.speakerOn !== false) callState.speakerOn = true; callState.speakerOn = !callState.speakerOn; this.innerHTML = callState.speakerOn ? '<i class="fa fa-volume-up"></i>' : '<i class="fa fa-volume-off"></i>'; this.style.background = callState.speakerOn ? '' : '#ef4444'; this.style.borderColor = callState.speakerOn ? '' : '#ef4444'; };
                 (document.getElementById('camera-btn')||{}).onclick = toggleSelfCameraBtn;
+                (document.getElementById('flip-camera-btn')||{}).onclick = function() { if (typeof flipSelfCamera === 'function') flipSelfCamera(); };
                 document.getElementById('accept-incoming-call').onclick = acceptIncomingCall;
                 document.getElementById('reject-incoming-call').onclick = () => { clearTimeout(autoHangup);
                     document.getElementById('incoming-call-panel').classList.add('hidden');
@@ -17152,6 +17442,7 @@ const myTile = selfCamStream
                 document.getElementById('group-pip-hangup-btn').onclick = e => { e.stopPropagation(); endGroupCall('cancel'); };
                 document.getElementById('group-pip-mute-btn').onclick = function() { groupCallState.muted = !groupCallState.muted; this.innerHTML = groupCallState.muted ? '<i class="fa fa-microphone-slash"></i>' : '<i class="fa fa-microphone"></i>'; this.style.background = groupCallState.muted ? '#ef4444' : ''; this.style.borderColor = groupCallState.muted ? '#ef4444' : ''; };
                 (document.getElementById('group-camera-btn')||{}).onclick = toggleSelfCameraBtn;
+                (document.getElementById('group-flip-camera-btn')||{}).onclick = function() { if (typeof flipSelfCamera === 'function') flipSelfCamera(); };
                 document.getElementById('group-call-close-result').onclick = () => { document.getElementById(
                         'group-call-interface').classList.add('hidden');
                     groupCallState.status = 'idle'; };
@@ -17573,6 +17864,13 @@ const myTile = selfCamStream
                             }
                         });
                     }
+                    // 后台标签页暂停背景粒子动画（省电 + 减少卡顿）
+                    document.addEventListener('visibilitychange', function() {
+                        document.body.classList.toggle('bg-effects-off', document.hidden);
+                        if (!document.hidden && window.__bgEffectsEnabled !== false) {
+                            applyBackgroundEffects();
+                        }
+                    });
                     console.log('LOVE · 多联系人治愈版 初始化完成 ✅');
                     window.__appReady = true;
                     var ld2 = document.getElementById('app-loading');
@@ -19250,6 +19548,7 @@ const myTile = selfCamStream
             _api.openFileManager = function() { var ss = document.getElementById('settings-slide'); if (ss) ss.classList.add('open'); setTimeout(function() { var at = document.querySelector('.folder-tab[data-page="wordcards"]'); if (at) at.click(); }, 100); };
             function showHomeView() {
                 document.body.classList.add('home-view');
+                document.body.classList.remove('chat-open');
                 document.getElementById('chat-view').classList.remove('open');
                 var backBtn = document.getElementById('back-to-home-btn');
                 if (backBtn) backBtn.classList.add('hidden');
@@ -20875,7 +21174,7 @@ const myTile = selfCamStream
                     var names = _decidePending.contactIds.map(function(cid) { var c = contacts.find(function(x) { return x.id === cid; }); return c ? (c.remark || c.name) : ''; }).filter(Boolean);
                     var thinkingName = names.length === 1 ? names[0] + ' 正在思考中' : '对方正在思考中';
                     el.innerHTML =
-                        '<div class="dc-thinking"><span class="th-emoji">🧠</span>' +
+                        '<div class="dc-thinking"><span class="th-emoji" style="color:var(--theme)"><svg class="dc-svg" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="8.2" cy="8.2" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.8" cy="15.8" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></span>' +
                         '<div class="th-name">' + escapeHtml(thinkingName) + '…</div>' +
                         '<div class="th-sub">关于「' + escapeHtml(_decidePending.question) + '」，请稍等片刻</div></div>' +
                         '<div class="dc-card"><div class="dc-hist-bar"><h4>📊 今日决定</h4><button class="dc-hist-btn" onclick="toggleDecideHistory()">📁 历史档案</button></div><div id="decide-history-list" class="space-y-2 text-xs text-[var(--text-secondary)]">加载中...</div></div>';

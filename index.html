@@ -4133,6 +4133,7 @@
                 recallEnabled: false,
                 recallChance: 0.1,
                 wechatChatLayout: false,
+                bubbleTemplate: 'default',
                 moodSymbols: DEFAULT_MOOD_SYMBOLS,
                 myMoodHistory: [],
                 myMood: 85,
@@ -6666,13 +6667,6 @@ async function createGroup(name, memberIds) {
                     }
                     const innerWrap = document.createElement('div');
                     innerWrap.appendChild(voiceBubble);
-                    const metaDiv = document.createElement('div');
-                    metaDiv.className = 'flex msg-meta';
-                    const readIcon = msg.read ? '' : '●';
-                    const readClass = msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
-                    div.ondblclick = () => toggleMsgActions(msg.id);
-                    innerWrap.appendChild(metaDiv);
                     wrapper.appendChild(innerWrap);
                     if (msg.isMe) {
                         const meAvatar = document.createElement('img');
@@ -6682,6 +6676,15 @@ async function createGroup(name, memberIds) {
                         wrapper.appendChild(meAvatar);
                     }
                     div.appendChild(wrapper);
+                    const metaDiv = document.createElement('div');
+                    metaDiv.className = 'flex msg-meta';
+                    metaDiv.style.justifyContent = msg.isMe ? 'flex-end' : 'flex-start';
+                    metaDiv.style.padding = msg.isMe ? '0 36px 0 0' : '0 0 0 36px';
+                    const readIcon = msg.read ? '' : '●';
+                    const readClass = msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400');
+                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    div.ondblclick = () => toggleMsgActions(msg.id);
+                    div.appendChild(metaDiv);
                     if (!msg.read && !msg.isMe) {
                         voiceAutoPlayQueue.push({ bubble: voiceBubble, msg });
                     }
@@ -6792,13 +6795,6 @@ async function createGroup(name, memberIds) {
                     img.style.cursor = 'zoom-in';
                     img.onclick = function(e) { e.stopPropagation(); showImageLightbox(msg.src); };
                     innerWrap.appendChild(img);
-                    const metaDiv = document.createElement('div');
-                    metaDiv.className = 'flex msg-meta';
-                    const readIcon = msg.read ? '' : '●';
-                    const readClass = msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
-                    div.ondblclick = () => toggleMsgActions(msg.id);
-                    innerWrap.appendChild(metaDiv);
                     wrapper.appendChild(innerWrap);
                     if (msg.isMe) {
                         const meAvatar = document.createElement('img');
@@ -6808,6 +6804,15 @@ async function createGroup(name, memberIds) {
                         wrapper.appendChild(meAvatar);
                     }
                     div.appendChild(wrapper);
+                    const metaDiv = document.createElement('div');
+                    metaDiv.className = 'flex msg-meta';
+                    metaDiv.style.justifyContent = msg.isMe ? 'flex-end' : 'flex-start';
+                    metaDiv.style.padding = msg.isMe ? '0 36px 0 0' : '0 0 0 36px';
+                    const readIcon = msg.read ? '' : '●';
+                    const readClass = msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400');
+                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    div.ondblclick = () => toggleMsgActions(msg.id);
+                    div.appendChild(metaDiv);
                     return div;
                 }
                 const div = document.createElement('div');
@@ -6829,7 +6834,8 @@ async function createGroup(name, memberIds) {
                 const timeStr = formatTime(msg.timestamp);
                 const metaRow = `<div class="msg-meta" style="justify-content:${msg.isMe ? 'flex-end' : 'flex-start'}"><span class="msg-time">${timeStr}${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
                 div.innerHTML =
-                    `<div class="flex items-end space-x-2 max-w-[82%]">${!msg.isMe ? `<img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=1'">` : ''}<div><div class="${bubble} px-3.5 py-2.5 card-shadow">${qHtml}${cHtml}</div>${metaRow}</div>${msg.isMe ? `<img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">` : ''}</div>`;
+                    `<div class="flex items-end space-x-2 max-w-[82%]">${!msg.isMe ? `<img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=1'">` : ''}<div><div class="${bubble} px-3.5 py-2.5 card-shadow">${qHtml}${cHtml}</div></div>${msg.isMe ? `<img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">` : ''}</div>` +
+                    `<div class="msg-meta" style="justify-content:${msg.isMe ? 'flex-end' : 'flex-start'};${msg.isMe ? 'padding-right:36px;' : 'padding-left:36px;'}"><span class="msg-time">${timeStr}${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
                 div.ondblclick = function() { toggleMsgActions(msg.id); };
                 return div;
             }
@@ -6985,13 +6991,6 @@ async function createGroup(name, memberIds) {
                     }
                     const voiceBubble = createVoiceBubble(msg, isMe);
                     innerWrap.appendChild(voiceBubble);
-                    const metaDiv = document.createElement('div');
-                    metaDiv.className = 'flex msg-meta';
-                    const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
-                    const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
-                    div.ondblclick = () => toggleMsgActions(msg.id);
-                    innerWrap.appendChild(metaDiv);
                     wrapper.appendChild(innerWrap);
                     if (isMe) {
                         const meAv = document.createElement('img');
@@ -7001,6 +7000,15 @@ async function createGroup(name, memberIds) {
                         wrapper.appendChild(meAv);
                     }
                     div.appendChild(wrapper);
+                    const metaDiv = document.createElement('div');
+                    metaDiv.className = 'flex msg-meta';
+                    metaDiv.style.justifyContent = isMe ? 'flex-end' : 'flex-start';
+                    metaDiv.style.padding = isMe ? '0 36px 0 0' : '0 0 0 36px';
+                    const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
+                    const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
+                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    div.ondblclick = () => toggleMsgActions(msg.id);
+                    div.appendChild(metaDiv);
                     if (!msg.read && !isMe) {
                         voiceAutoPlayQueue.push({ bubble: voiceBubble, msg });
                     }
@@ -7042,13 +7050,6 @@ async function createGroup(name, memberIds) {
                     img.style.cursor = 'zoom-in';
                     img.onclick = function(e) { e.stopPropagation(); showImageLightbox(msg.src); };
                     innerWrap.appendChild(img);
-                    const metaDiv = document.createElement('div');
-                    metaDiv.className = 'flex msg-meta';
-                    const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
-                    const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
-                    div.ondblclick = () => toggleMsgActions(msg.id);
-                    innerWrap.appendChild(metaDiv);
                     wrapper.appendChild(innerWrap);
                     if (isMe) {
                         const meAv = document.createElement('img');
@@ -7058,6 +7059,15 @@ async function createGroup(name, memberIds) {
                         wrapper.appendChild(meAv);
                     }
                     div.appendChild(wrapper);
+                    const metaDiv = document.createElement('div');
+                    metaDiv.className = 'flex msg-meta';
+                    metaDiv.style.justifyContent = isMe ? 'flex-end' : 'flex-start';
+                    metaDiv.style.padding = isMe ? '0 36px 0 0' : '0 0 0 36px';
+                    const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
+                    const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
+                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    div.ondblclick = () => toggleMsgActions(msg.id);
+                    div.appendChild(metaDiv);
                     return div;
                 }
                 const div = document.createElement('div');
@@ -7086,10 +7096,10 @@ async function createGroup(name, memberIds) {
                 <div>
                   ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(sender.name)}</p>` : ''}
                   <div class="${bubbleClass} px-3.5 py-2.5 card-shadow">${quoteHtml}${contentHtml}</div>
-                  ${metaRowG}
                 </div>
                 ${isMe ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">` : ''}
-              </div>`;
+              </div>
+              <div class="msg-meta" style="justify-content:${isMe ? 'flex-end' : 'flex-start'};${isMe ? 'padding-right:36px;' : 'padding-left:36px;'}"><span class="msg-time">${timeStrG}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
                 div.ondblclick = function() { toggleMsgActions(msg.id); };
                 return div;
             }
@@ -11938,6 +11948,84 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                 applyCustomCSS();
             }
 
+            var BUBBLE_TEMPLATES = {
+                default: { name: '默认气泡', css: '' },
+                morandi: {
+                    name: '软萌莫兰迪',
+                    css: '/* ===== 软萌莫兰迪气泡 ===== */\n' +
+                        '.message-bubble-left, .message-bubble-right {\n' +
+                        '  position: relative;\n' +
+                        '  border-radius: 20px 20px 20px 8px;\n' +
+                        '  padding: 10px 16px;\n' +
+                        '  font-size: 14px;\n' +
+                        '  line-height: 1.65;\n' +
+                        '  border: 1px solid rgba(255,255,255,0.6);\n' +
+                        '  backdrop-filter: blur(6px);\n' +
+                        '  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;\n' +
+                        '  animation: bubbleIn 0.35s cubic-bezier(0.34,1.56,0.64,1);\n' +
+                        '}\n' +
+                        '.message-bubble-left {\n' +
+                        '  background: linear-gradient(135deg,#EFEAF7,#E4DCF0);\n' +
+                        '  color: #5B5370;\n' +
+                        '  border-color: #D8CFE8;\n' +
+                        '  border-radius: 20px 20px 20px 8px;\n' +
+                        '  box-shadow: 0 4px 14px rgba(186,176,210,0.35);\n' +
+                        '}\n' +
+                        '.message-bubble-left::before {\n' +
+                        '  content: "";\n' +
+                        '  position: absolute;\n' +
+                        '  left: -5px; bottom: 10px;\n' +
+                        '  width: 12px; height: 12px;\n' +
+                        '  background: inherit;\n' +
+                        '  border-radius: 50%;\n' +
+                        '  border-bottom-left-radius: 2px;\n' +
+                        '  border-left: 1px solid #D8CFE8;\n' +
+                        '  border-bottom: 1px solid #D8CFE8;\n' +
+                        '}\n' +
+                        '.message-bubble-right {\n' +
+                        '  background: linear-gradient(135deg,#F6E3E3,#F0D6DA);\n' +
+                        '  color: #7A4E54;\n' +
+                        '  border-color: #E5C9CE;\n' +
+                        '  border-radius: 20px 20px 8px 20px;\n' +
+                        '  box-shadow: 0 4px 14px rgba(214,168,176,0.4);\n' +
+                        '}\n' +
+                        '.message-bubble-right::before {\n' +
+                        '  content: "";\n' +
+                        '  position: absolute;\n' +
+                        '  right: -5px; bottom: 10px;\n' +
+                        '  width: 12px; height: 12px;\n' +
+                        '  background: inherit;\n' +
+                        '  border-radius: 50%;\n' +
+                        '  border-bottom-right-radius: 2px;\n' +
+                        '  border-right: 1px solid #E5C9CE;\n' +
+                        '  border-bottom: 1px solid #E5C9CE;\n' +
+                        '}\n' +
+                        '.message-bubble-left:hover, .message-bubble-right:hover {\n' +
+                        '  transform: translateY(-2px);\n' +
+                        '  box-shadow: 0 8px 20px rgba(180,150,160,0.35);\n' +
+                        '}\n' +
+                        '@keyframes bubbleIn {\n' +
+                        '  0% { opacity:0; transform: translateY(10px) scale(0.92); filter: blur(2px); }\n' +
+                        '  60% { opacity:1; transform: translateY(-2px) scale(1.02); }\n' +
+                        '  100% { opacity:1; transform: translateY(0) scale(1); filter: blur(0); }\n' +
+                        '}\n' +
+                        '.message-bubble-left::after, .message-bubble-right::after {\n' +
+                        '  content: "";\n' +
+                        '  position: absolute;\n' +
+                        '  inset: 0;\n' +
+                        '  border-radius: inherit;\n' +
+                        '  pointer-events: none;\n' +
+                        '  background: radial-gradient(120% 120% at 50% 0%, rgba(255,255,255,0.55), transparent 60%);\n' +
+                        '  opacity: 0.5;\n' +
+                        '  animation: softBreath 3.5s ease-in-out infinite;\n' +
+                        '}\n' +
+                        '@keyframes softBreath {\n' +
+                        '  0%, 100% { opacity: 0.35; }\n' +
+                        '  50% { opacity: 0.65; }\n' +
+                        '}\n'
+                }
+            };
+
             function applyCustomCSS() {
                 var existing = document.getElementById('custom-user-css');
                 if (!existing) {
@@ -14525,6 +14613,7 @@ const myTile = selfCamStream
 <div class="flex justify-between"><span>🎈 头像悬浮</span><input type="checkbox" id="avatar-float-toggle" ${settings.avatarFloat?'checked':''}></div>
 <div class="flex justify-between"><span>🖼️ 头像框</span><select id="avatar-frame-select" class="text-sm border rounded px-2 py-1">${frameOpts.map(v => `<option value="${v}" ${settings.avatarFrame === v ? 'selected' : ''}>${frameLabels[v]}</option>`).join('')}</select></div>
 <div class="flex flex-col"><span class="text-xs text-[var(--text-secondary)]">🎨 头像框自定义CSS</span><textarea id="avatar-custom-css-input" rows="3" class="w-full px-3 py-2 border rounded-lg text-xs font-mono resize-y mt-1" placeholder="box-shadow: 0 0 20px #ff6b9d; border: 3px solid gold; border-radius: 50%;">${escapeHtml(settings.avatarCustomCSS || '')}</textarea></div>
+<div class="flex flex-col mb-2"><span class="text-xs text-[var(--text-secondary)] mb-1">🫧 气泡模板</span><div class="flex flex-wrap gap-1.5">${Object.keys(BUBBLE_TEMPLATES).map(k => `<button class="bubble-tpl-btn px-3 py-1.5 rounded-full text-xs border transition-all ${(settings.bubbleTemplate||'default') === k ? 'text-white border-transparent' : 'text-[var(--text-secondary)] border-[var(--border-color)]'}" data-tpl="${k}" style="${(settings.bubbleTemplate||'default') === k ? 'background:var(--theme);box-shadow:0 2px 8px rgba(212,165,165,.4)' : ''}">${BUBBLE_TEMPLATES[k].name}</button>`).join('')}</div><p class="text-xs text-[var(--text-secondary)] mt-1">选择模板即应用；选「默认气泡」恢复原样。也可在下方自定义 CSS 里微调</p></div>
 <details class="text-sm" ${settings.customCSS ? 'open' : ''}><summary class="cursor-pointer text-[var(--text-secondary)] mb-1">🎨 自定义 CSS</summary><textarea id="custom-css-input" rows="8" class="w-full px-3 py-2 border rounded-lg text-xs font-mono resize-y mt-2" placeholder="body { background: #fff; }&#10;.message-bubble-left { border-radius: 12px; }">${escapeHtml(settings.customCSS || '')}</textarea><p class="text-xs text-[var(--text-secondary)] mt-1">写任何 CSS 样式，保存即时生效</p></details>
 </div>
 <div class="folder-tab" data-section="layout" style="cursor:pointer"><span>🎀 布局</span><i class="fa fa-chevron-right" style="transition:transform 0.2s"></i></div>
@@ -14569,6 +14658,25 @@ const myTile = selfCamStream
                         if (aFrm) aFrm.onchange = function(e) { settings.avatarFrame = e.target.value; applyAvatarEffects(); saveSettings(); };
                         var ccInput = document.getElementById('custom-css-input');
                         if (ccInput) ccInput.oninput = function(e) { settings.customCSS = e.target.value; applyCustomCSS(); saveSettings(); };
+                        document.querySelectorAll('.bubble-tpl-btn').forEach(function(btn) {
+                            btn.onclick = function() {
+                                var tpl = this.dataset.tpl;
+                                settings.bubbleTemplate = tpl;
+                                settings.customCSS = (BUBBLE_TEMPLATES[tpl] || BUBBLE_TEMPLATES.default).css;
+                                applyCustomCSS();
+                                saveSettings();
+                                var ta = document.getElementById('custom-css-input');
+                                if (ta) ta.value = settings.customCSS;
+                                document.querySelectorAll('.bubble-tpl-btn').forEach(function(b) {
+                                    var on = b.dataset.tpl === tpl;
+                                    b.style.background = on ? 'var(--theme)' : '';
+                                    b.style.boxShadow = on ? '0 2px 8px rgba(212,165,165,.4)' : '';
+                                    b.style.color = on ? '#fff' : '';
+                                    b.style.borderColor = on ? 'transparent' : '';
+                                });
+                                showToast((BUBBLE_TEMPLATES[tpl] || BUBBLE_TEMPLATES.default).name + '已应用 ' + (tpl === 'default' ? '（恢复默认气泡）' : ''));
+                            };
+                        });
                         var accInput = document.getElementById('avatar-custom-css-input');
                         if (accInput) accInput.oninput = function(e) { settings.avatarCustomCSS = e.target.value; applyAvatarEffects(); saveSettings(); };
                     }, 50);

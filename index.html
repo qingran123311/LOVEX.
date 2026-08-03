@@ -2286,6 +2286,24 @@
         .msg-meta .quote-btn, .msg-meta .delete-btn, .msg-meta .recall-btn { font-size:11px; flex-shrink:0; }
         .dc-svg { width:20px; height:20px; display:inline-block; vertical-align:-4px; flex-shrink:0; }
         #expand-panel .exp-item .dc-svg { width:14px; height:14px; vertical-align:-2px; }
+        /* ===== 展开面板（内嵌，防依赖外部 css） ===== */
+        #expand-panel { position:fixed;bottom:60px;left:0;right:0;background:var(--card-bg);border-top:1px solid var(--border-color);box-shadow:0 -2px 12px rgba(0,0,0,0.1);z-index:35;padding:4px 0;display:none;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch; }
+        #expand-panel::-webkit-scrollbar { width:0;height:0;display:none; }
+        #expand-panel.show { display:block; }
+        #expand-panel .exp-inner { display:inline-flex;gap:0;padding:0 2px; }
+        #expand-panel .exp-item { display:inline-flex;flex-direction:column;align-items:center;gap:0;padding:2px 5px;border-radius:6px;cursor:pointer;transition:background 0.15s;font-size:0.5rem;color:var(--text-primary);min-width:36px; }
+        #expand-panel .exp-item:hover { background:var(--theme-light); }
+        #expand-panel .exp-item i { font-size:0.7rem;color:var(--text-secondary); }
+        #voice-overlay { position:absolute;top:0;left:0;right:0;bottom:0;z-index:5;display:none;border-radius:999px;cursor:pointer;align-items:center;justify-content:center;font-size:0.85rem;color:var(--text-secondary);background:var(--card-bg);border:1px solid var(--theme);user-select:none; }
+        #voice-overlay.show { display:flex; }
+        #voice-mode-btn.active { color:var(--theme) !important; }
+        #send-btn.hidden { display:none !important; }
+        #send-btn.recording { background:var(--theme) !important; }
+        .footer-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+        .keyboard-open #footer { position:fixed;bottom:var(--kb-bottom,0px);left:0;right:0;z-index:50; }
+        .keyboard-open #header { position:fixed;top:0;left:0;right:0;z-index:50; }
+        .keyboard-open #chat-container { padding-top:56px; padding-bottom:56px; }
+        .keyboard-open #emoji-drawer { position:fixed;bottom:calc(var(--kb-bottom,0px) + 56px);left:0;right:0;z-index:49; }
         .dc-svg-lg { width:26px; height:26px; display:inline-block; vertical-align:-6px; flex-shrink:0; }
         .dc-twinkle { animation: dcTwinkle 2.2s ease-in-out infinite; transform-origin:center; }
         @keyframes dcTwinkle { 0%,100%{opacity:1; transform:scale(1) rotate(0deg)} 50%{opacity:.65; transform:scale(.88) rotate(10deg)} }
@@ -6652,7 +6670,8 @@ async function createGroup(name, memberIds) {
                     metaDiv.className = 'flex msg-meta';
                     const readIcon = msg.read ? '' : '●';
                     const readClass = msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button>`;
+                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    div.ondblclick = () => toggleMsgActions(msg.id);
                     innerWrap.appendChild(metaDiv);
                     wrapper.appendChild(innerWrap);
                     if (msg.isMe) {
@@ -6685,7 +6704,8 @@ async function createGroup(name, memberIds) {
                     if (cardStatus === 'pending' && !isGiver) {
                         claimBtnHtml = '<button class="mt-2 py-1.5 px-4 text-xs text-white rounded-lg" style="background:var(--theme)" onclick="showFamilyCardClaim(' + msg.cardId + ')">立即领取</button>';
                     }
-                    div2.innerHTML = '<div class="flex items-end space-x-2 max-w-[82%]">' + (!msg.isMe ? '<img src="' + escapeHtml(avatar2) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">' : '') + '<div><div class="px-3.5 py-2.5 card-shadow" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--border-radius,12px);min-width:200px;"><div class="flex items-center space-x-2 mb-2"><i class="fa fa-address-card-o" style="color:var(--theme)"></i><span class="text-sm font-medium text-[var(--text-primary)]">亲属卡</span></div><div class="text-xs text-[var(--text-secondary)]">' + (isGiver ? '你送给了 ' + escapeHtml(recipientName) + ' 一张亲属卡' : escapeHtml(giverName) + ' 送你一张亲属卡') + '</div><div class="text-sm font-bold mt-1" style="color:var(--theme)">' + limitText + '<span class="text-xs font-normal text-[var(--text-secondary)]">/月</span></div><div class="text-xs text-[var(--text-secondary)] mt-1">' + statusText + '</div>' + claimBtnHtml + '</div><div class="msg-meta"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="' + msg.id + '"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="' + msg.id + '"><i class="fa fa-undo"></i></button></div></div>' + (msg.isMe ? '<img src="' + escapeHtml(avatar2) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=2\'">' : '') + '</div>';
+                    div2.innerHTML = '<div class="flex items-end space-x-2 max-w-[82%]">' + (!msg.isMe ? '<img src="' + escapeHtml(avatar2) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">' : '') + '<div><div class="px-3.5 py-2.5 card-shadow" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--border-radius,12px);min-width:200px;"><div class="flex items-center space-x-2 mb-2"><i class="fa fa-address-card-o" style="color:var(--theme)"></i><span class="text-sm font-medium text-[var(--text-primary)]">亲属卡</span></div><div class="text-xs text-[var(--text-secondary)]">' + (isGiver ? '你送给了 ' + escapeHtml(recipientName) + ' 一张亲属卡' : escapeHtml(giverName) + ' 送你一张亲属卡') + '</div><div class="text-sm font-bold mt-1" style="color:var(--theme)">' + limitText + '<span class="text-xs font-normal text-[var(--text-secondary)]">/月</span></div><div class="text-xs text-[var(--text-secondary)] mt-1">' + statusText + '</div>' + claimBtnHtml + '</div><div class="msg-meta"><span class="msg-actions" data-actions="' + msg.id + '"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="' + msg.id + '"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="' + msg.id + '"><i class="fa fa-undo"></i></button></span></div></div>' + (msg.isMe ? '<img src="' + escapeHtml(avatar2) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=2\'">' : '') + '</div>';
+                    div2.ondblclick = () => toggleMsgActions(msg.id);
                     return div2;
                 }
                 if (msg.type === 'report') {
@@ -6731,7 +6751,7 @@ async function createGroup(name, memberIds) {
                         rBody = rText + rPhoto + rNote;
                     }
                     const rHint = rExpanded ? '' : '<div class="text-xs text-[var(--text-secondary)] mt-1">点击查看</div>';
-                    rDiv.innerHTML = '<div class="flex items-end space-x-2 max-w-[82%]">' + (!msg.isMe ? '<img src="' + escapeHtml(rAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">' : '') + '<div><div class="report-bubble px-3 py-2 card-shadow" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--border-radius,12px);min-width:150px;cursor:pointer;" onclick="window.toggleReportMsg(' + msg.id + ')" title="' + (rExpanded ? '点击收起' : '点击查看报备内容') + '"><div class="flex items-center space-x-1.5"><span class="text-xs font-semibold" style="color:var(--theme)">' + rIco + ' ' + escapeHtml(rTitle) + '</span>' + rTrackBtn + '</div>' + rBody + rHint + '</div><div class="msg-meta"><span class="text-xs text-[var(--text-secondary)]">' + formatTime(msg.timestamp) + '<span class="read-status text-xs ml-1 ' + (msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400')) + '">' + (msg.read ? '' : '●') + '</span></span></div></div>' + (msg.isMe ? '<img src="' + escapeHtml(rAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=2\'">' : '</div>');
+                    rDiv.innerHTML = '<div class="flex items-end space-x-2 max-w-[82%]">' + (!msg.isMe ? '<img src="' + escapeHtml(rAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">' : '') + '<div><div class="report-bubble px-3 py-2 card-shadow" style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:var(--border-radius,12px);min-width:150px;cursor:pointer;" onclick="window.toggleReportMsg(' + msg.id + ')" title="' + (rExpanded ? '点击收起' : '点击查看报备内容') + '"><div class="flex items-center space-x-1.5"><span class="text-xs font-semibold" style="color:var(--theme)">' + rIco + ' ' + escapeHtml(rTitle) + '</span>' + rTrackBtn + '</div>' + rBody + rHint + '</div><div class="msg-meta" style="justify-content:' + (msg.isMe ? 'flex-end' : 'flex-start') + '"><span class="text-xs text-[var(--text-secondary)]">' + formatTime(msg.timestamp) + '<span class="read-status text-xs ml-1 ' + (msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400')) + '">' + (msg.read ? '' : '●') + '</span></span></div></div>' + (msg.isMe ? '<img src="' + escapeHtml(rAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=2\'">' : '</div>');
                     return rDiv;
                 }
                 if (msg.type === 'redpacket') {
@@ -6743,7 +6763,8 @@ async function createGroup(name, memberIds) {
                     const rpDone = msg.status === 'opened' || msg.status === 'returned' || msg.status === 'expired';
                     const rpStyle = rpStyleById(msg.rpStyle);
                     const rpMedia = (!rpDone && rpStyle.kind === 'video') ? '<video class="rp-cover-video" src="' + rpStyle.dataUrl + '" muted loop autoplay playsinline></video>' : '';
-                    rpDiv.innerHTML = '<div class="flex items-end space-x-2 max-w-[82%]">' + (!msg.isMe ? '<img src="' + escapeHtml(rpAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">' : '') + '<div><div class="rp-bubble' + (rpDone ? ' done' : '') + '"' + (rpDone ? '' : ' style="background:' + (rpStyle.kind === 'video' ? 'rgba(0,0,0,.4)' : rpStyle.bg) + '"') + ' onclick="openRedpacketPopup(' + msg.id + ')" title="点击查看红包">' + rpMedia + '<div class="rp-ico"><i class="fa fa-rmb"></i></div><div class="rp-info"><div class="rp-note">' + escapeHtml(msg.note || rpStyle.line1) + '</div><div class="rp-label">微信红包</div></div><span class="rp-status">' + rpStatusText + '</span></div><div class="msg-meta"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="' + msg.id + '"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="' + msg.id + '"><i class="fa fa-undo"></i></button></div></div>' + (msg.isMe ? '<img src="' + escapeHtml(rpAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=2\'">' : '</div>');
+                    rpDiv.innerHTML = '<div class="flex items-end space-x-2 max-w-[82%]">' + (!msg.isMe ? '<img src="' + escapeHtml(rpAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">' : '') + '<div><div class="rp-bubble' + (rpDone ? ' done' : '') + '"' + (rpDone ? '' : ' style="background:' + (rpStyle.kind === 'video' ? 'rgba(0,0,0,.4)' : rpStyle.bg) + '"') + ' onclick="openRedpacketPopup(' + msg.id + ')" title="点击查看红包">' + rpMedia + '<div class="rp-ico"><i class="fa fa-rmb"></i></div><div class="rp-info"><div class="rp-note">' + escapeHtml(msg.note || rpStyle.line1) + '</div><div class="rp-label">微信红包</div></div><span class="rp-status">' + rpStatusText + '</span></div><div class="msg-meta"><span class="msg-actions" data-actions="' + msg.id + '"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="' + msg.id + '"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="' + msg.id + '"><i class="fa fa-undo"></i></button></span></div></div>' + (msg.isMe ? '<img src="' + escapeHtml(rpAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=2\'">' : '</div>');
+                    rpDiv.ondblclick = () => toggleMsgActions(msg.id);
                     return rpDiv;
                 }
                 if (msg.type === 'image') {
@@ -6775,7 +6796,8 @@ async function createGroup(name, memberIds) {
                     metaDiv.className = 'flex msg-meta';
                     const readIcon = msg.read ? '' : '●';
                     const readClass = msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button>`;
+                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    div.ondblclick = () => toggleMsgActions(msg.id);
                     innerWrap.appendChild(metaDiv);
                     wrapper.appendChild(innerWrap);
                     if (msg.isMe) {
@@ -6854,13 +6876,16 @@ async function createGroup(name, memberIds) {
                   ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(sender.name)}</p>` : ''}
                   <div class="rp-bubble${rpDone ? ' done' : ''}"${rpDone ? '' : ' style="background:' + (rpStyle.kind === 'video' ? 'rgba(0,0,0,.4)' : rpStyle.bg) + '"'} onclick="openGroupRedpacketPopup(${msg.id})" title="点击查看红包">${rpMedia}<div class="rp-ico"><i class="fa fa-rmb"></i></div><div class="rp-info"><div class="rp-note">${escapeHtml(msg.note || rpStyle.line1)}</div><div class="rp-label">${kindLabel}</div></div><span class="rp-status">${rpStatusText}</span></div>
                   <div class="msg-meta">
+                    <span class="msg-actions" data-actions="${msg.id}">
                     <button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>
                     ${isMe ? `<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button>` : ''}
                     <button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button>
+                    </span>
                   </div>
                 </div>
                 ${isMe ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">` : ''}
               </div>`;
+                    div.ondblclick = function() { toggleMsgActions(msg.id); };
                     return div;
                 }
                 if (msg.type === 'rp-claim') {
@@ -6964,7 +6989,8 @@ async function createGroup(name, memberIds) {
                     metaDiv.className = 'flex msg-meta';
                     const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
                     const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button>`;
+                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    div.ondblclick = () => toggleMsgActions(msg.id);
                     innerWrap.appendChild(metaDiv);
                     wrapper.appendChild(innerWrap);
                     if (isMe) {
@@ -7020,7 +7046,8 @@ async function createGroup(name, memberIds) {
                     metaDiv.className = 'flex msg-meta';
                     const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
                     const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button>`;
+                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    div.ondblclick = () => toggleMsgActions(msg.id);
                     innerWrap.appendChild(metaDiv);
                     wrapper.appendChild(innerWrap);
                     if (isMe) {
@@ -16240,6 +16267,8 @@ const myTile = selfCamStream
                         startGroupCall();
                     else startCall(); };
                 var emojiBtn = document.getElementById('emoji-btn'); if (emojiBtn) emojiBtn.onclick = () => { const d = document.getElementById('emoji-drawer');
+                    const mi = document.getElementById('message-input');
+                    if (mi) { mi.blur(); mi.disabled = isVoiceMode ? true : false; }
                     d.classList.toggle('show'); if (d.classList.contains('show')) { renderEmojiDrawer();
                         switchEmojiTab('emoji-lib'); } document.body.classList.toggle('emoji-open', d.classList.contains('show')); };
 
@@ -16247,6 +16276,8 @@ const myTile = selfCamStream
                 var expandBtn = document.getElementById('expand-btn'); if (expandBtn) expandBtn.onclick = () => {
                     document.getElementById('emoji-drawer').classList.remove('show');
                     document.body.classList.remove('emoji-open');
+                    var mi = document.getElementById('message-input');
+                    if (mi) mi.blur();
                     applyVisibleExpItems();
                     var ep = document.getElementById('expand-panel');
                     if (ep) ep.classList.toggle('show');
@@ -16318,18 +16349,44 @@ const myTile = selfCamStream
                 };
                 var voiceOverlay = document.getElementById('voice-overlay');
                 if (voiceOverlay) {
-                    var voiceRecord = { isRecording: false, mediaRecorder: null, chunks: [], startTime: null, timerInterval: null, isCancelled: false, touchStartY: 0, pressTimer: null, isPress: false };
-                    function onVoicePressStart(y) { if (!isVoiceMode) return; voiceRecord.touchStartY = y; voiceRecord.pressTimer = setTimeout(function() { voiceRecord.isPress = true; if (!voiceRecord.isRecording) { voiceRecord.isRecording = true; voiceRecord.chunks = []; voiceRecord.isCancelled = false; voiceRecord.startTime = Date.now(); navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) { var mr = new MediaRecorder(stream, { mimeType: 'audio/webm' }); voiceRecord.mediaRecorder = mr; mr.ondataavailable = function(e) { if (e.data.size > 0) voiceRecord.chunks.push(e.data); }; mr.onstop = function() { stream.getTracks().forEach(function(t) { t.stop(); }); if (voiceRecord.isCancelled) { voiceRecord.isRecording = false; return; } var blob = new Blob(voiceRecord.chunks, { type: 'audio/webm' }); var reader = new FileReader(); reader.onload = function() { var duration = Math.round((Date.now() - voiceRecord.startTime) / 1000); sendVoiceMessage(reader.result, duration); voiceRecord.isRecording = false; }; reader.readAsDataURL(blob); }; mr.start(); showVoiceRecordUI(); voiceRecord.timerInterval = setInterval(function() { var elapsed = Math.floor((Date.now() - voiceRecord.startTime) / 1000); var timer = document.getElementById('voice-record-timer'); if (timer) timer.textContent = String(Math.floor(elapsed/60)).padStart(2,'0') + ':' + String(elapsed%60).padStart(2,'0'); }, 200); }).catch(function() { showToast('无法获取麦克风权限'); }); } }, 300); }
-                    function onVoicePressMove(y) { if (!voiceRecord.isRecording) return; var dy = voiceRecord.touchStartY - y; var zone = document.getElementById('voice-cancel-zone'); if (zone) { if (dy > 50) { zone.classList.add('show'); voiceRecord.isCancelled = true; } else { zone.classList.remove('show'); voiceRecord.isCancelled = false; } } }
-                    function onVoicePressEnd() { clearTimeout(voiceRecord.pressTimer); if (voiceRecord.isRecording) { voiceRecord.isCancelled = voiceRecord.isCancelled; if (voiceRecord.mediaRecorder && voiceRecord.mediaRecorder.state === 'recording') voiceRecord.mediaRecorder.stop(); if (voiceRecord.timerInterval) { clearInterval(voiceRecord.timerInterval); voiceRecord.timerInterval = null; } voiceRecord.isRecording = false; } voiceRecord.isPress = false; }
+                    function onVoicePressStart(y) {
+                        if (!isVoiceMode) return;
+                        voiceRecordState.touchStartY = y;
+                        voiceRecordState.longPressTimer = setTimeout(function() {
+                            voiceRecordState.isLongPress = true;
+                            startVoiceRecording();
+                        }, 300);
+                    }
+                    function onVoicePressMove(y) {
+                        if (!voiceRecordState.isRecording) return;
+                        var dy = voiceRecordState.touchStartY - y;
+                        var zone = document.getElementById('voice-cancel-zone');
+                        if (zone) {
+                            if (dy > 50) { zone.classList.add('show'); voiceRecordState.isCancelled = true; }
+                            else { zone.classList.remove('show'); voiceRecordState.isCancelled = false; }
+                        }
+                    }
+                    function onVoicePressEnd() {
+                        clearTimeout(voiceRecordState.longPressTimer);
+                        if (voiceRecordState.isRecording) {
+                            voiceRecordState.preventClick = true;
+                            stopVoiceRecording(voiceRecordState.isCancelled);
+                        }
+                        voiceRecordState.isLongPress = false;
+                    }
+                    function onVoicePressCancel() {
+                        clearTimeout(voiceRecordState.longPressTimer);
+                        if (voiceRecordState.isRecording) stopVoiceRecording(true);
+                        voiceRecordState.isLongPress = false;
+                    }
                     voiceOverlay.addEventListener('mousedown', function(e) { onVoicePressStart(e.clientY); });
                     voiceOverlay.addEventListener('mousemove', function(e) { onVoicePressMove(e.clientY); });
                     voiceOverlay.addEventListener('mouseup', onVoicePressEnd);
-                    voiceOverlay.addEventListener('mouseleave', function() { clearTimeout(voiceRecord.pressTimer); if (voiceRecord.isRecording) { voiceRecord.isCancelled = true; if (voiceRecord.mediaRecorder && voiceRecord.mediaRecorder.state === 'recording') voiceRecord.mediaRecorder.stop(); if (voiceRecord.timerInterval) { clearInterval(voiceRecord.timerInterval); voiceRecord.timerInterval = null; } voiceRecord.isRecording = false; } });
-                    voiceOverlay.addEventListener('touchstart', function(e) { onVoicePressStart(e.touches[0].clientY); });
-                    voiceOverlay.addEventListener('touchmove', function(e) { onVoicePressMove(e.touches[0].clientY); });
+                    voiceOverlay.addEventListener('mouseleave', onVoicePressCancel);
+                    voiceOverlay.addEventListener('touchstart', function(e) { e.preventDefault(); onVoicePressStart(e.touches[0].clientY); }, { passive: false });
+                    voiceOverlay.addEventListener('touchmove', function(e) { onVoicePressMove(e.touches[0].clientY); }, { passive: true });
                     voiceOverlay.addEventListener('touchend', onVoicePressEnd);
-                    voiceOverlay.addEventListener('touchcancel', function() { clearTimeout(voiceRecord.pressTimer); if (voiceRecord.isRecording) { voiceRecord.isCancelled = true; if (voiceRecord.mediaRecorder && voiceRecord.mediaRecorder.state === 'recording') voiceRecord.mediaRecorder.stop(); if (voiceRecord.timerInterval) { clearInterval(voiceRecord.timerInterval); voiceRecord.timerInterval = null; } voiceRecord.isRecording = false; } });
+                    voiceOverlay.addEventListener('touchcancel', onVoicePressCancel);
                 }
 
                 try { document.getElementById('batch-emoji-btn').onclick = () => { const txt = document.getElementById(
@@ -17342,12 +17399,35 @@ const myTile = selfCamStream
 
             async function safeGetAll(storeName) { try { return await getAllData(storeName); } catch (e) { return []; } }
 
+            function setupKeyboardAdapt() {
+                var vv = window.visualViewport;
+                if (!vv) return;
+                function applyKb() {
+                    var kb = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+                    var open = kb > 60;
+                    document.body.classList.toggle('keyboard-open', open);
+                    document.documentElement.style.setProperty('--kb-bottom', kb + 'px');
+                    var cc = document.getElementById('chat-container');
+                    if (open && cc) cc.scrollTop = cc.scrollHeight;
+                }
+                vv.addEventListener('resize', applyKb);
+                vv.addEventListener('scroll', applyKb);
+                var mi = document.getElementById('message-input');
+                if (mi) {
+                    mi.addEventListener('focus', function() { setTimeout(applyKb, 100); });
+                    mi.addEventListener('blur', function() { setTimeout(applyKb, 200); });
+                }
+                window.addEventListener('resize', applyKb);
+                setTimeout(applyKb, 500);
+            }
+
             async function initApp() {
                 try {
                     await initDB();
                     await loadAllData();
                     updateUI();
                     setupEventListeners();
+                    setupKeyboardAdapt();
                     var chc = document.getElementById('contact-home-content');
                     if (chc) window._contactHomeDefaultHTML = chc.innerHTML;
                     renderContactList();

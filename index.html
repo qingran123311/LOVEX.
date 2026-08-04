@@ -99,6 +99,21 @@
             animation-play-state: paused !important;
             opacity: 0 !important;
         }
+        /* 通话中暂停头像等装饰动画（省 GPU 防发烫） */
+        body.call-active-busy .avatar-flowing,
+        body.call-active-busy .avatar-floating,
+        body.call-active-busy .avatar-frame-glow,
+        body.call-active-busy .avatar-frame-rainbow,
+        body.call-active-busy .avatar-frame-double {
+            animation-play-state: paused !important;
+        }
+        body.call-active-busy .bg-sparkles *,
+        body.call-active-busy .bg-bubbles *,
+        body.call-active-busy .bg-hearts *,
+        body.call-active-busy .bg-dots * {
+            animation-play-state: paused !important;
+            opacity: 0 !important;
+        }
         /* 聊天界面暂停粒子动画（省 GPU，减少卡顿） */
         body.chat-open .bg-sparkles *,
         body.chat-open .bg-bubbles *,
@@ -2301,6 +2316,9 @@
             20% { opacity: 1; }
             100% { transform: translate(var(--dx, 0px), var(--dy, -120px)) rotate(540deg) scale(1); opacity: 0; }
         }
+        /* 查找聊天记录：日期跳转高亮 */
+        .msg-highlight { animation: msgHighlightFlash 2.5s ease-out; border-radius: 10px; }
+        @keyframes msgHighlightFlash { 0%, 30% { background: rgba(212,165,165,0.35); } 100% { background: transparent; } }
         /* ===== 抉择板块 ===== */
         .decision-tabs { flex-shrink:0; }
         .msg-meta { display:flex; justify-content:flex-end; align-items:center; gap:7px; padding:3px 3px 0; width:100%; min-width:0; }
@@ -3922,25 +3940,25 @@
     </div>
 
     <div id="moments-panel" class="slide-panel">
-        <div id="moments-cover-wrap" class="relative" style="flex-shrink:0;">
-            <div id="moments-cover-container" class="relative w-full overflow-hidden" style="height:230px;cursor:pointer;">
-                <div id="moments-cover-blur" class="absolute inset-0" style="background-size:cover;background-position:center;filter:blur(30px);transform:scale(1.2);"></div>
-                <img id="moments-cover-img" src="" class="relative w-full h-full object-cover" style="transform-origin:center;transition:transform 0.3s;">
-                <video id="moments-cover-video" class="absolute inset-0 w-full h-full object-cover hidden" autoplay muted loop playsinline></video>
-                <div id="moments-cover-overlay" class="absolute inset-0 bg-gradient-to-b from-transparent to-black/40 pointer-events-none"></div>
-                <button id="close-moments" class="absolute top-3 left-3 text-white/80 bg-black/20 rounded-full w-8 h-8 flex items-center justify-center z-10"><i class="fa fa-chevron-left text-lg"></i></button>
-                <button id="post-moment-btn" class="absolute top-3 right-3 text-white/80 bg-black/20 rounded-full w-8 h-8 flex items-center justify-center z-10"><i class="fa fa-camera text-sm"></i></button>
-                <div id="moments-change-cover-bottom" class="absolute bottom-0 left-0 right-0 flex justify-center pb-4 z-10 hidden">
-                    <button id="moments-change-cover-btn" class="px-4 py-1.5 bg-black/40 text-white/90 rounded-full text-xs flex items-center"><i class="fa fa-camera mr-1.5"></i>更换封面</button>
-                </div>
-            </div>
-            <div id="moments-profile-area" class="absolute right-4 flex items-center z-10" style="bottom:-28px;">
-                <span id="moments-my-name" class="text-white font-bold text-base mr-3 drop-shadow-md whitespace-nowrap" style="text-shadow:0 1px 3px rgba(0,0,0,0.5);"></span>
-                <img id="moments-my-avatar" src="" class="w-16 h-16 rounded-lg border-3 border-white object-cover shadow-md" style="border:3px solid white;">
-            </div>
-            <div id="moments-refresh-indicator" class="absolute top-0 left-0 right-0 flex items-center justify-center h-8 text-xs text-white/60 -translate-y-full">松开刷新</div>
-        </div>
         <div id="moments-feed-scroll" class="flex-1 overflow-y-auto relative" style="-webkit-overflow-scrolling:touch;">
+            <div id="moments-cover-wrap" class="relative" style="flex-shrink:0;">
+                <div id="moments-cover-container" class="relative w-full overflow-hidden" style="height:230px;cursor:pointer;">
+                    <div id="moments-cover-blur" class="absolute inset-0" style="background-size:cover;background-position:center;filter:blur(30px);transform:scale(1.2);"></div>
+                    <img id="moments-cover-img" src="" class="relative w-full h-full object-cover" style="transform-origin:center;transition:transform 0.3s;">
+                    <video id="moments-cover-video" class="absolute inset-0 w-full h-full object-cover hidden" autoplay muted loop playsinline></video>
+                    <div id="moments-cover-overlay" class="absolute inset-0 bg-gradient-to-b from-transparent to-black/40 pointer-events-none"></div>
+                    <button id="close-moments" class="absolute top-3 left-3 text-white/80 bg-black/20 rounded-full w-8 h-8 flex items-center justify-center z-10"><i class="fa fa-chevron-left text-lg"></i></button>
+                    <button id="post-moment-btn" class="absolute top-3 right-3 text-white/80 bg-black/20 rounded-full w-8 h-8 flex items-center justify-center z-10"><i class="fa fa-camera text-sm"></i></button>
+                    <div id="moments-change-cover-bottom" class="absolute bottom-0 left-0 right-0 flex justify-center pb-4 z-10 hidden">
+                        <button id="moments-change-cover-btn" class="px-4 py-1.5 bg-black/40 text-white/90 rounded-full text-xs flex items-center"><i class="fa fa-camera mr-1.5"></i>更换封面</button>
+                    </div>
+                </div>
+                <div id="moments-profile-area" class="absolute right-4 flex items-center z-10" style="bottom:-28px;">
+                    <span id="moments-my-name" class="text-white font-bold text-base mr-3 drop-shadow-md whitespace-nowrap" style="text-shadow:0 1px 3px rgba(0,0,0,0.5);"></span>
+                    <img id="moments-my-avatar" src="" class="w-16 h-16 rounded-lg border-3 border-white object-cover shadow-md" style="border:3px solid white;">
+                </div>
+                <div id="moments-refresh-indicator" class="absolute top-0 left-0 right-0 flex items-center justify-center h-8 text-xs text-white/60 -translate-y-full"></div>
+            </div>
             <div class="px-0 pt-14 pb-16">
                 <div id="moments-notif-bar" class="mx-3 mb-2 px-3 py-2 bg-yellow-50/80 dark:bg-yellow-900/20 rounded-xl text-xs text-[var(--text-secondary)] hidden items-center justify-between">
                     <span id="moments-notif-text"></span>
@@ -3949,6 +3967,59 @@
                 <div id="moments-list"></div>
             </div>
         </div>
+        <script>
+        (function() {
+            var feed = document.getElementById('moments-feed-scroll');
+            var coverWrap = document.getElementById('moments-cover-wrap');
+            var coverContainer = document.getElementById('moments-cover-container');
+            var profileArea = document.getElementById('moments-profile-area');
+            var refreshInd = document.getElementById('moments-refresh-indicator');
+            var feedInited = false;
+            function momentsScrollHandler() {
+                if (!feed || !coverWrap || !coverContainer || !profileArea) return;
+                var scrollTop = feed.scrollTop;
+                if (scrollTop <= 0) {
+                    coverContainer.style.height = '230px';
+                    coverWrap.style.marginBottom = '28px';
+                    profileArea.style.position = 'absolute';
+                    profileArea.style.bottom = '-28px';
+                    profileArea.style.top = 'auto';
+                    profileArea.style.transform = 'translateY(0)';
+                    if (refreshInd) refreshInd.classList.remove('moments-refresh-hidden');
+                } else if (scrollTop < 200) {
+                    var h = Math.max(0, 230 - scrollTop * 0.9);
+                    coverContainer.style.height = h + 'px';
+                    coverWrap.style.marginBottom = '28px';
+                    if (refreshInd) refreshInd.classList.add('moments-refresh-hidden');
+                } else {
+                    coverContainer.style.height = '0px';
+                    coverWrap.style.marginBottom = '64px';
+                    // 头像+名字停顶（sticky）
+                    profileArea.style.position = 'sticky';
+                    profileArea.style.top = '8px';
+                    profileArea.style.bottom = 'auto';
+                    profileArea.style.transform = 'translateY(0)';
+                    profileArea.style.zIndex = '20';
+                    if (refreshInd) refreshInd.classList.add('moments-refresh-hidden');
+                }
+                var coverImg = document.getElementById('moments-cover-img');
+                if (coverImg) coverImg.style.transform = scrollTop > 0 ? 'scale(1.15) translateY(' + (scrollTop * 0.2) + 'px)' : '';
+                var coverBlur = document.getElementById('moments-cover-blur');
+                if (coverBlur) coverBlur.style.transform = scrollTop > 0 ? 'scale(1.25) translateY(' + (scrollTop * 0.15) + 'px)' : 'scale(1.2)';
+            }
+            function initMomentsFeedScroll() {
+                if (feedInited || !feed) return;
+                feedInited = true;
+                feed.addEventListener('scroll', momentsScrollHandler, { passive: true });
+                momentsScrollHandler();
+            }
+            window.addEventListener('load', function() { setTimeout(initMomentsFeedScroll, 800); });
+            var mInitTimer = setInterval(function() {
+                if (feed && feed.offsetParent !== null) { initMomentsFeedScroll(); clearInterval(mInitTimer); }
+            }, 500);
+            setTimeout(function() { clearInterval(mInitTimer); }, 15000);
+        })();
+        </script>
     </div>
 
     <div id="moment-compose" class="slide-panel">
@@ -4551,7 +4622,75 @@
 
             function isSameDay(d1, d2) { return new Date(d1).toDateString() === new Date(d2).toDateString(); }
 
+            // ===== 系统通知（手机消息弹窗，需 https + 用户授权） =====
+            var sysNotifEnabled = false;
+            function initSystemNotifications() {
+                try {
+                    if (!('Notification' in window)) return;
+                    if (Notification.permission === 'granted') { sysNotifEnabled = true; return; }
+                    if (Notification.permission === 'default') {
+                        // 等一次用户手势再请求（移动端浏览器要求）
+                        var req = function() {
+                            if (Notification.permission !== 'default') return;
+                            Notification.requestPermission().then(function(p) {
+                                if (p === 'granted') sysNotifEnabled = true;
+                            }).catch(function() {});
+                            document.removeEventListener('click', req);
+                            document.removeEventListener('touchstart', req);
+                        };
+                        document.addEventListener('click', req);
+                        document.addEventListener('touchstart', req);
+                    }
+                } catch (e) {}
+            }
+            function sendSystemNotification(title, body, icon) {
+                try {
+                    if (!sysNotifEnabled || !('Notification' in window)) return;
+                    if (Notification.permission !== 'granted') return;
+                    if (document.visibilityState === 'visible' && document.hasFocus && document.hasFocus()) return;
+                    var n = new Notification(title, { body: body, icon: icon || undefined, tag: 'love-msg-' + Date.now() });
+                    n.onclick = function() { window.focus(); this.close(); };
+                } catch (e) {}
+            }
+            window.sendSystemNotification = sendSystemNotification;
+            window.initSystemNotifications = initSystemNotifications;
+
             function scrollToBottom() { if (chatContainer) { chatContainer.scrollTop = chatContainer.scrollHeight; } }
+
+            // 跳转到指定日期当天第一条消息（按日期查找聊天记录用）
+            function jumpToMessageDate(ts) {
+                var target = new Date(ts);
+                if (isNaN(target.getTime())) { showToast('无该日期的消息'); return; }
+                var targetDay = target.getFullYear() + '-' + String(target.getMonth() + 1).padStart(2, '0') + '-' + String(target.getDate()).padStart(2, '0');
+                // 确保进入聊天界面
+                var c = getCurrentContact();
+                if (!c) return;
+                if (!document.getElementById('chat-view').classList.contains('open')) {
+                    switchContact(c.id).then(function() { doJump(); });
+                } else { doJump(); }
+                function doJump() {
+                    var msgs = (currentChatType === 'group' ? groupMessages : messages) || [];
+                    var first = msgs.find(function(m) {
+                        var mts = m.timestamp || m.createdAt;
+                        if (!mts) return false;
+                        var d = new Date(mts);
+                        return (d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')) === targetDay;
+                    });
+                    if (!first) { showToast('当天没有聊天记录'); return; }
+                    setTimeout(function() {
+                        var el = chatContainer.querySelector('[data-id="' + first.id + '"]');
+                        if (!el) { renderMessages(); }
+                        setTimeout(function() {
+                            var el2 = chatContainer.querySelector('[data-id="' + first.id + '"]');
+                            if (!el2) { showToast('当天没有聊天记录'); return; }
+                            el2.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                            el2.classList.add('msg-highlight');
+                            setTimeout(function() { el2.classList.remove('msg-highlight'); }, 2500);
+                        }, 100);
+                    }, 100);
+                }
+            }
+            window.jumpToMessageDate = jumpToMessageDate;
 
             function showToast(msg) {
                 const t = document.createElement('div');
@@ -4643,6 +4782,7 @@
                 var img = document.getElementById('lightbox-img');
                 if (lb && img && src) { img.src = src; lb.classList.remove('hidden'); }
             }
+            window.showImageLightbox = showImageLightbox;
 
             // ===== 后台保活（低频音） =====
             var keepAliveCtx = null;
@@ -6328,12 +6468,27 @@ async function createGroup(name, memberIds) {
                     showToast('摄像头需要 https 环境（当前为本地文件，无法调用）');
                     return;
                 }
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: selfCamFacing }, audio: false })
+                // 限制分辨率：手机默认会选 720p 以上，编码渲染发热。640×480 足够清晰且省电
+                navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: selfCamFacing, width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 } },
+                    audio: false
+                })
                     .then(camOn)
                     .catch(function(err) {
                         camOn(null);
-                        var msg = (err && err.name === 'NotAllowedError') ? '已拒绝摄像头权限，请在浏览器设置中允许' : '无法开启摄像头，已使用虚拟头像';
-                        showToast(msg);
+                        // 自动开启（非用户手势）被拒时静默降级，等用户点按钮再正式申请
+                        var auto = !!window.__autoCamAttempt;
+                        var msg = '';
+                        if (err && err.name === 'NotAllowedError') {
+                            msg = auto ? '摄像头未开启，点击摄像头按钮可授权开启' : '未获得摄像头权限：请在浏览器地址栏点击摄像头图标，选择"允许"，然后重试';
+                        } else if (err && err.name === 'NotFoundError') {
+                            msg = '未检测到摄像头设备';
+                        } else if (err && err.name === 'NotReadableError') {
+                            msg = '摄像头被其他应用占用，已使用虚拟头像';
+                        } else {
+                            msg = '无法开启摄像头，已使用虚拟头像';
+                        }
+                        if (msg) showToast(msg);
                     });
             }
             function setCamBtnState(mode, on) {
@@ -6376,40 +6531,24 @@ async function createGroup(name, memberIds) {
                     showToast(selfCamFacing === 'user' ? '已设为前置摄像头' : '已设为后置摄像头');
                     return;
                 }
-                var track = null;
-                try { track = selfCamStream.getVideoTracks()[0]; } catch (e) {}
                 var next = selfCamFacing === 'user' ? 'environment' : 'user';
-                if (track && typeof track.applyConstraints === 'function') {
-                    // 同一轨道直接切换 facingMode → 不重新获取流、不再申请权限
-                    track.applyConstraints({ video: { facingMode: next } }).then(function() {
-                        selfCamFacing = next;
-                        showToast(next === 'user' ? '已切换前置摄像头' : '已切换后置摄像头');
-                    }).catch(function() {
-                        // applyConstraints 不支持 → 回退：重新获取（权限已授予，正常不弹窗）
-                        selfCamFacing = next;
-                        if (els.video && els.fb) { els.video.srcObject = null; els.video.style.display = 'none'; els.fb.style.display = 'flex'; }
-                        if (els.pipVideo && els.pipFb) { els.pipVideo.srcObject = null; els.pipVideo.style.display = 'none'; els.pipFb.style.display = 'flex'; }
-                        if (selfCamStream) {
-                            try { selfCamStream.getTracks().forEach(function(t2) { t2.stop(); }); } catch (e) {}
-                            selfCamStream = null;
-                        }
-                        openSelfCamera(mode);
-                    });
-                } else {
-                    selfCamFacing = next;
-                    if (els.video && els.fb) { els.video.srcObject = null; els.video.style.display = 'none'; els.fb.style.display = 'flex'; }
-                    if (els.pipVideo && els.pipFb) { els.pipVideo.srcObject = null; els.pipVideo.style.display = 'none'; els.pipFb.style.display = 'flex'; }
-                    if (selfCamStream) {
-                        try { selfCamStream.getTracks().forEach(function(t3) { t3.stop(); }); } catch (e) {}
-                        selfCamStream = null;
-                    }
-                    openSelfCamera(mode);
+                selfCamFacing = next;
+                // 先隐藏画面，等新流就绪再显示（避免黑屏残留）
+                if (els.video && els.fb) { els.video.srcObject = null; els.video.style.display = 'none'; els.fb.style.display = 'flex'; }
+                if (els.pipVideo && els.pipFb) { els.pipVideo.srcObject = null; els.pipVideo.style.display = 'none'; els.pipFb.style.display = 'flex'; }
+                if (selfCamStream) {
+                    try { selfCamStream.getTracks().forEach(function(t) { t.stop(); }); } catch (e) {}
+                    selfCamStream = null;
                 }
+                // 重新获取新朝向的流。权限已授予 → 浏览器不会重复弹窗。
+                // 部分浏览器（含手机端）applyConstraints 切换会黑屏，直接重新 getUserMedia 最稳。
+                openSelfCamera(mode);
             }
 
             function toggleSelfCameraBtn() {
                 var mode = currentCamMode();
                 var els = selfCamEls(mode);
+                window.__autoCamAttempt = false;
                 if (selfCamStream && els.video && els.video.style.display === 'block') { closeSelfCamera(); return; }
                 openSelfCamera(mode);
             }
@@ -6422,9 +6561,10 @@ async function createGroup(name, memberIds) {
                 hasFuncs: function() { return (typeof openSelfCamera === 'function') + '/' + (typeof closeSelfCamera === 'function') + '/' + (typeof flipSelfCamera === 'function'); }
             };
 
-            function applyAvatarEffects() {
+            function applyAvatarEffects(scopeEl) {
                 var frameClasses = ['avatar-frame-glow', 'avatar-frame-thin', 'avatar-frame-double', 'avatar-frame-rainbow'];
-                document.querySelectorAll('.header-avatar, #call-partner-avatar, #ch-avatar, #chat-container img.rounded-full').forEach(function(av) {
+                var avatars = scopeEl ? scopeEl.querySelectorAll('.header-avatar, #call-partner-avatar, #ch-avatar, img.rounded-full') : document.querySelectorAll('.header-avatar, #call-partner-avatar, #ch-avatar, #chat-container img.rounded-full');
+                avatars.forEach(function(av) {
                     if (settings.avatarFlow) av.classList.add('avatar-flowing'); else av.classList.remove('avatar-flowing');
                     if (settings.avatarSquare) av.classList.add('avatar-square'); else av.classList.remove('avatar-square');
                     if (settings.avatarFloat) av.classList.add('avatar-floating'); else av.classList.remove('avatar-floating');
@@ -7298,8 +7438,33 @@ async function createGroup(name, memberIds) {
                 if (!msg.isMe && msg.type !== 'pat' && msg.type !== 'call' && msg.type !== 'voice' && msg.type !== 'redpacket' && msg.type !== 'rp-claim' && msg.type !== 'report' && currentChatType !== 'group') {
                     schedulePartnerRecall(msg);
                 }
+                // 手机系统通知（需 https + 已授权）
+                if (!msg.isMe) {
+                    try {
+                        var nTitle = (currentChatType === 'group' ? (getCurrentGroup() ? getCurrentGroup().name : '群聊') : (getCurrentContact() ? (getCurrentContact().remark || getCurrentContact().name) : 'TA'));
+                        var nBody = msg.type === 'image' ? '[图片]' : (msg.type === 'voice' ? '[语音]' : (msg.type === 'pat' ? msg.text : (msg.text || '[新消息]')));
+                        sendSystemNotification(nTitle, nBody);
+                    } catch (e) {}
+                }
                 scrollToBottom();
-                applyAvatarEffects();
+                applyAvatarEffects(el);
+                // 控制聊天 DOM 节点数：超过 400 条移除最旧的消息节点（数据仍在，往上翻会重新渲染）
+                pruneChatDom();
+            }
+
+            function pruneChatDom() {
+                try {
+                    var keep = 400;
+                    var nodes = chatContainer.querySelectorAll('[data-id]');
+                    if (nodes.length > keep) {
+                        for (var i = 0; i < nodes.length - keep; i++) {
+                            var n = nodes[i];
+                            var typing = document.getElementById('typing-indicator');
+                            if (typing && n === typing) continue;
+                            n.remove();
+                        }
+                    }
+                } catch (e) {}
             }
 
             function schedulePartnerRecall(msg) {
@@ -7610,7 +7775,9 @@ async function createGroup(name, memberIds) {
                 const emojiKaomojiPool = [...getAllEmojiChars(), ...getAllKaomoji()];
                 const stickerPool = buildStickerPool(contactId);
                 const voicePool = chatType === 'group' ? [] : buildVoicePool(contactId);
-                if (!wordCardPool.length && !emojiKaomojiPool.length && !stickerPool.length && !voicePool.length) {
+                const patPool = chatType === 'group' ? [] : getPartnerPatPool(replyContact);
+                const patAvailable = patPool.length > 0 && rc('replyPatChance') > 0;
+                if (!wordCardPool.length && !emojiKaomojiPool.length && !stickerPool.length && !voicePool.length && !patAvailable) {
                     showToast('当前无可回复内容，请先添加字卡或表情');
                     return;
                 }
@@ -7701,7 +7868,6 @@ async function createGroup(name, memberIds) {
                         plan.messages.push({ type: 'voice', src: voice.src, duration: voice.duration || 3 });
                     }
 
-                    const patPool = getPartnerPatPool(replyContact);
                     if (rc('replyPatChance') > 0 && Math.random() < rc('replyPatChance') && patPool.length) {
                         const patText = patPool[Math.floor(Math.random() * patPool.length)];
                         plan.messages.push({ type: 'pat', text: patText });
@@ -11825,11 +11991,11 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                 });
                 feed.addEventListener('touchend', function(e) {
                     if (refreshInd && refreshInd.style.transform && refreshInd.style.transform.indexOf('translateY(0)') >= 0) {
-                        refreshInd.textContent = '刷新中...';
+                        refreshInd.textContent = '';
                         refreshInd.style.transform = 'translateY(30px)';
                         setTimeout(function() {
                             renderMoments();
-                            if (refreshInd) { refreshInd.textContent = '松开刷新'; refreshInd.style.transform = ''; }
+                            if (refreshInd) { refreshInd.textContent = ''; refreshInd.style.transform = ''; }
                         }, 800);
                     }
                 });
@@ -12345,13 +12511,14 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                 if (!groupCallState.startTime) groupCallState.startTime = Date.now();
                 if (groupCallState.status === 'calling') {
                     groupCallState.status = 'connected';
+                    document.body.classList.add('call-active-busy');
                     document.getElementById('group-call-waiting').classList.add('hidden');
                     document.getElementById('group-call-active').classList.remove('hidden');
                     var gSelfAv2 = document.getElementById('group-self-cam-avatar');
                     if (gSelfAv2 && settings.myAvatar) gSelfAv2.src = settings.myAvatar;
                     var gPipSelfAv2 = document.getElementById('group-pip-self-cam-avatar');
                     if (gPipSelfAv2 && settings.myAvatar) gPipSelfAv2.src = settings.myAvatar;
-                    setTimeout(function() { if (groupCallState.status === 'connected') { if (typeof openSelfCamera === 'function') openSelfCamera('group'); } }, 800);
+                    setTimeout(function() { if (groupCallState.status === 'connected') { if (typeof openSelfCamera === 'function') { window.__autoCamAttempt = true; openSelfCamera('group'); } } }, 800);
                 }
                 scheduleMemberHangup(memberId);
                 const member = contacts.find(c => c.id === memberId);
@@ -12419,6 +12586,7 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
             }
             function endGroupCall(reason) {
                 var now = Date.now();
+                document.body.classList.remove('call-active-busy');
                 closeSelfCamera(true);
                 document.getElementById('group-call-float-window').classList.add('hidden');
                 document.getElementById('group-call-pip-window').classList.add('hidden');
@@ -12617,6 +12785,7 @@ const myTile = selfCamStream
 
             function acceptCall() {
                 clearTimeout(callTimer);
+                document.body.classList.add('call-active-busy');
                 const contact = contacts.find(c => c.id === callState.contactId) || getCurrentContact();
                 callState.status = 'connected';
                 callState.displayMode = 'full';
@@ -12640,7 +12809,7 @@ const myTile = selfCamStream
                 resetCallUI();
                 startPrivateCallDuration();
                 schedulePartnerHangup();
-                setTimeout(function() { if (callState.status === 'connected') { if (typeof openSelfCamera === 'function') openSelfCamera('private'); } }, 800);
+                setTimeout(function() { if (callState.status === 'connected') { if (typeof openSelfCamera === 'function') { window.__autoCamAttempt = true; openSelfCamera('private'); } } }, 800);
             }
 
             function schedulePartnerHangup() {
@@ -12667,6 +12836,7 @@ const myTile = selfCamStream
             }
 
             function endCall(reason) {
+                document.body.classList.remove('call-active-busy');
                 document.getElementById('call-float-window').classList.add('hidden');
                 document.getElementById('call-pip-window').classList.add('hidden');
                 closeSelfCamera(true);
@@ -12723,6 +12893,9 @@ const myTile = selfCamStream
                     cp.classList.remove('hidden');
                     document.getElementById('pip-avatar').src = contact?.avatar || 'https://picsum.photos/200/200?random=1';
                     document.getElementById('pip-name').textContent = contact?.name || '';
+                    // 主窗口隐藏时暂停主 video（省 GPU，只留 PiP 小窗渲染）
+                    var mv = document.getElementById('self-cam-video');
+                    if (mv && mv.srcObject) { try { mv.pause(); } catch (e) {} }
                 } else if (callState.displayMode === 'pip') {
                     // pip → bar
                     callState.displayMode = 'bar';
@@ -12748,6 +12921,9 @@ const myTile = selfCamStream
                     cp.classList.add('hidden');
                     ci.classList.remove('hidden');
                     callState.minimized = false;
+                    // 恢复主窗口时恢复主 video 播放
+                    var mv2 = document.getElementById('self-cam-video');
+                    if (mv2 && mv2.srcObject) { try { mv2.play(); } catch (e) {} }
                 }
             }
 
@@ -12794,6 +12970,7 @@ const myTile = selfCamStream
 
             function acceptIncomingCall() {
                 clearTimeout(autoHangup);
+                document.body.classList.add('call-active-busy');
                 const contact = contacts.find(c => c.id === callState.contactId) || getCurrentContact();
                 document.getElementById('incoming-call-panel').classList.add('hidden');
                 callState.status = 'connected';
@@ -12821,7 +12998,7 @@ const myTile = selfCamStream
                 resetCallUI();
                 startPrivateCallDuration();
                 schedulePartnerHangup();
-                setTimeout(function() { if (callState.status === 'connected') { if (typeof openSelfCamera === 'function') openSelfCamera('private'); } }, 800);
+                setTimeout(function() { if (callState.status === 'connected') { if (typeof openSelfCamera === 'function') { window.__autoCamAttempt = true; openSelfCamera('private'); } } }, 800);
             }
 
             function incomingGroupCallFromMember(groupId, initiatorId) {
@@ -12856,6 +13033,7 @@ const myTile = selfCamStream
 
             function acceptGroupCall() {
                 clearTimeout(autoHangup);
+                document.body.classList.add('call-active-busy');
                 document.getElementById('incoming-group-call-panel').classList.add('hidden');
                 groupCallState.status = 'connected';
                 groupCallState.displayMode = 'full';
@@ -12873,7 +13051,7 @@ const myTile = selfCamStream
                 renderGroupCallActiveMembers();
                 startGroupCallDuration();
                 groupCallState.participants.forEach(mid => startMemberDecision(mid));
-                setTimeout(function() { if (groupCallState.status === 'connected') { if (typeof openSelfCamera === 'function') openSelfCamera('group'); } }, 800);
+                setTimeout(function() { if (groupCallState.status === 'connected') { if (typeof openSelfCamera === 'function') { window.__autoCamAttempt = true; openSelfCamera('group'); } } }, 800);
             }
 
             function startChatInviteTimer() {
@@ -12983,8 +13161,7 @@ const myTile = selfCamStream
 
             function startPartnerLetterTimer() {
                 if (partnerLetterTimer) clearTimeout(partnerLetterTimer);
-                const check = async () => {
-                    if (!settings.lastPartnerLetterTimes) settings.lastPartnerLetterTimes = {};
+                const check = async () => {                    if (!settings.lastPartnerLetterTimes) settings.lastPartnerLetterTimes = {};
                     for (const contact of contacts) {
                         if (!getContactReplySetting(contact, 'partnerLetterEnabled')) continue;
                         var lastTime = settings.lastPartnerLetterTimes[contact.id];
@@ -13015,6 +13192,7 @@ const myTile = selfCamStream
                 };
                 check();
             }
+
 
             async function partnerSendLetter(contactId, scheduledTime) {
                 const contact = contacts.find(c => c.id === contactId);
@@ -16342,21 +16520,39 @@ const myTile = selfCamStream
                 var searchMsg = document.getElementById('ch-search-msg');
                 if (searchMsg) searchMsg.onclick = function() {
                     var c = getCurrentContact(); if (!c) return;
-                    var keyword = prompt('搜索聊天记录（输入关键词）：');
-                    if (!keyword || !keyword.trim()) return;
                     var msgs = cachedContactMessages[c.id] || [];
-                    var results = msgs.filter(function(m) { return m.text && m.text.toLowerCase().includes(keyword.toLowerCase()); });
-                    if (!results.length) { showToast('未找到匹配的消息'); return; }
                     var panel = document.getElementById('ch-sub-modal');
                     var title = document.getElementById('ch-sub-title');
                     var content = document.getElementById('ch-sub-content');
                     if (!panel || !title || !content) return;
-                    title.textContent = '🔍 查找: ' + keyword;
-                    content.innerHTML = results.map(function(m) {
-                        var t = escapeHtml(m.text || (m.type === 'image' ? '[图片]' : '[消息]'));
-                        var time = m.timestamp ? formatDateTime(m.timestamp) : '';
-                        return '<div class="px-3 py-2 border-b border-[var(--border-color)] text-sm"><div class="text-[var(--text-primary)]">' + t + '</div><div class="text-xs text-[var(--text-secondary)] mt-0.5">' + time + '</div></div>';
-                    }).join('') || '<div class="text-xs text-[var(--text-secondary)] text-center py-4">无匹配结果</div>';
+                    // 按日期分组：只列有消息的日期（最近 60 天，倒序）
+                    var dateMap = {};
+                    msgs.forEach(function(m) {
+                        var ts = m.timestamp || m.createdAt;
+                        if (!ts) return;
+                        var d = new Date(ts);
+                        var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                        if (!dateMap[key]) { dateMap[key] = { count: 0, firstTs: ts }; }
+                        dateMap[key].count++;
+                    });
+                    var keys = Object.keys(dateMap).sort().reverse().slice(0, 60);
+                    title.textContent = '📅 按日期查找聊天记录';
+                    if (!keys.length) {
+                        content.innerHTML = '<div class="text-xs text-[var(--text-secondary)] text-center py-4">暂无聊天记录</div>';
+                    } else {
+                        content.innerHTML = keys.map(function(k) {
+                            var parts = k.split('-');
+                            var label = parts[0] + '年' + parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+                            return '<div class="px-3 py-2.5 border-b border-[var(--border-color)] flex items-center justify-between cursor-pointer hover:bg-[var(--theme-light)] transition-colors" data-date="' + k + '" data-firstts="' + dateMap[k].firstTs + '"><span class="text-sm text-[var(--text-primary)]">' + label + '</span><span class="text-xs text-[var(--text-secondary)]">' + dateMap[k].count + ' 条</span></div>';
+                        }).join('');
+                        content.querySelectorAll('[data-date]').forEach(function(row) {
+                            row.onclick = function() {
+                                var firstTs = this.dataset.firstts;
+                                panel.classList.remove('open');
+                                jumpToMessageDate(firstTs);
+                            };
+                        });
+                    }
                     panel.classList.add('open');
                 };
                 var clearMsg = document.getElementById('ch-clear-msg');
@@ -17847,6 +18043,7 @@ const myTile = selfCamStream
                     startMoodRefreshTimer();
                     startBatteryTimer();
                     startBatteryMonitor();
+                    initSystemNotifications();
                     updateMyMoodDisplay();
                     rebuildPendingRedpackets();
                     updateHeaderClock();
@@ -18447,6 +18644,8 @@ const myTile = selfCamStream
                 var msgs = await safeGetAll('messages');
                 msgs.forEach(function(m) {
                     if (m.type !== 'report') return;
+                    // 抉择/观点/问答等非报备 report 消息不进时间轴
+                    if (m.kind === 'decide' || m.kind === 'opinion' || m.kind === 'qn') return;
                     if (m.recordId) return;
                     var ts = m.timestamp ? new Date(m.timestamp).getTime() : Date.now();
                     var key = m.contactId + '|' + (m.isMe ? 'me' : 'contact') + '|' + (m.text || '') + '|' + (Math.floor(ts / 5000));
@@ -18458,6 +18657,10 @@ const myTile = selfCamStream
                     var st = scheduleStartTs(s);
                     if (!st) return;
                     items.push({ id: 'sch' + s.id, kind: 'schedule', contactId: null, initiator: 'me', text: (s.title || '日程') + (s.done ? '（已完成）' : ''), note: s.note || '', photo: null, ts: st, scheduleId: s.id, schedule: s });
+                });
+                // 时间轴只呈现报备相关记录 + 日程，不混入抉择/其他无关内容
+                items = items.filter(function(it) {
+                    return it.kind === 'patrol_request' || it.kind === 'patrol_report' || it.kind === 'quick_checkin' || it.kind === 'patrol_reject' || it.kind === 'schedule';
                 });
                 items.forEach(function(it) {
                     it.thread = msgs.filter(function(m) { return String(m.recordId) === String(it.id) && m.type !== 'report'; }).sort(function(a, b) { return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(); });

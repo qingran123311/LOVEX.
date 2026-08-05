@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -5294,6 +5294,7 @@ async function createGroup(name, memberIds) {
                     card.className = 'group-tab flex items-center p-3';
                     const stack = document.createElement('div');
                     stack.className = 'group-avatar-stack';
+                    g.members = g.members || [];
                     g.members.slice(0, 3).forEach(mid => {
                         const c = contacts.find(c => c.id === mid);
                         if (c) {
@@ -5304,6 +5305,12 @@ async function createGroup(name, memberIds) {
                             stack.appendChild(img);
                         }
                     });
+                    if (!g.members.length) {
+                        const fallback = document.createElement('div');
+                        fallback.className = 'w-8 h-8 rounded-full bg-[var(--theme-light)] flex items-center justify-center text-xs';
+                        fallback.textContent = '群';
+                        stack.appendChild(fallback);
+                    }
                     card.appendChild(stack);
                     const flex = document.createElement('div');
                     flex.className = 'flex-1';
@@ -5663,7 +5670,7 @@ async function createGroup(name, memberIds) {
                     var actions = document.createElement('div');
                     actions.id = 'gh-bg-actions';
                     actions.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100000;background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:200px;box-shadow:0 8px 40px rgba(0,0,0,0.3);';
-                    actions.innerHTML = '<div style="font-size:14px;font-weight:600;color:var(--text-primary);text-align:center;margin-bottom:4px;">设置群聊背景</div><button id="gh-bg-upload-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">📁 上传图片</button><button id="gh-bg-url-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">🔗 输入URL</button><button id="gh-bg-clear-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">✕ 清除背景</button><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-primary);"><span>模糊度</span><div style="display:flex;align-items:center;gap:6px;"><input id="gh-bg-blur" type="range" min="0" max="30" value="' + (g.bgBlur !== undefined ? g.bgBlur : settings.bgBlur) + '" style="width:96px;"><span id="gh-bg-blur-val" style="font-size:11px;opacity:.7;min-width:28px;text-align:right;">' + (g.bgBlur !== undefined ? g.bgBlur : settings.bgBlur) + 'px</span></div></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-primary);"><span>透明度</span><div style="display:flex;align-items:center;gap:6px;"><input id="gh-bg-opacity" type="range" min="0" max="100" value="' + Math.round((g.bgOpacity !== undefined ? g.bgOpacity : settings.bgOpacity) * 100) + '" style="width:96px;"><span id="gh-bg-opacity-val" style="font-size:11px;opacity:.7;min-width:32px;text-align:right;">' + Math.round((g.bgOpacity !== undefined ? g.bgOpacity : settings.bgOpacity) * 100) + '%</span></div></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-primary);"><span>动态效果</span><input type="checkbox" id="gh-bg-effects" ' + ((g.bgEffects !== undefined ? g.bgEffects : settings.bgEffects.enabled) ? 'checked' : '') + '></div><p style="font-size:10px;opacity:.55;color:var(--text-secondary);text-align:center;">模糊/透明/动态仅在上传专属背景后生效</p>';
+                    actions.innerHTML = '<div style="font-size:14px;font-weight:600;color:var(--text-primary);text-align:center;margin-bottom:4px;">设置群聊背景</div><button id="gh-bg-upload-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">📁 上传图片</button><button id="gh-bg-url-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">🔗 输入URL</button><button id="gh-bg-clear-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">✕ 清除背景</button><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-primary);"><span>模糊度</span><div style="display:flex;align-items:center;gap:6px;"><input id="gh-bg-blur" type="range" min="0" max="30" value="' + (g.bgBlur !== undefined ? g.bgBlur : settings.bgBlur) + '" style="width:96px;"><span id="gh-bg-blur-val" style="font-size:11px;opacity:.7;min-width:28px;text-align:right;">' + (g.bgBlur !== undefined ? g.bgBlur : settings.bgBlur) + 'px</span></div></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-primary);"><span>透明度</span><div style="display:flex;align-items:center;gap:6px;"><input id="gh-bg-opacity" type="range" min="0" max="100" value="' + Math.round((g.bgOpacity !== undefined ? g.bgOpacity : settings.bgOpacity) * 100) + '" style="width:96px;"><span id="gh-bg-opacity-val" style="font-size:11px;opacity:.7;min-width:32px;text-align:right;">' + Math.round((g.bgOpacity !== undefined ? g.bgOpacity : settings.bgOpacity) * 100) + '%</span></div></div><p style="font-size:10px;opacity:.55;color:var(--text-secondary);text-align:center;">模糊/透明/动态仅在上传专属背景后生效</p>';
                     document.body.appendChild(actions);
                     function ghBgApply() {
                         updateData('groups', g);
@@ -5673,8 +5680,6 @@ async function createGroup(name, memberIds) {
                     if (ghBlur) ghBlur.oninput = function() { g.bgBlur = parseInt(this.value); document.getElementById('gh-bg-blur-val').textContent = this.value + 'px'; ghBgApply(); };
                     var ghOp = document.getElementById('gh-bg-opacity');
                     if (ghOp) ghOp.oninput = function() { g.bgOpacity = parseInt(this.value) / 100; document.getElementById('gh-bg-opacity-val').textContent = this.value + '%'; ghBgApply(); };
-                    var ghEff = document.getElementById('gh-bg-effects');
-                    if (ghEff) ghEff.onchange = function() { g.bgEffects = this.checked; ghBgApply(); };
                     setTimeout(function() {
                         var closer = function(ev2) {
                             if (!ev2.target.closest('#gh-bg-actions')) { actions.remove(); document.removeEventListener('click', closer); }
@@ -6900,6 +6905,7 @@ async function createGroup(name, memberIds) {
                 document.body.classList.add('chat-open');
                 document.getElementById('chat-view').classList.add('open');
                 updateWechatHeader();
+                var backBtn = document.getElementById('back-to-home-btn');
                 if (backBtn) backBtn.classList.remove('hidden');
                 document.getElementById('contact-switcher')?.classList.remove('hidden');
                 document.getElementById('partner-avatar-clickable')?.classList.remove('hidden');
@@ -6918,13 +6924,13 @@ async function createGroup(name, memberIds) {
                 var ptl = document.getElementById('partner-time-label');
                 if (ptl) ptl.textContent = group.name;
                 let h = '';
-                group.members.slice(0, 4).forEach(mid => {
+                (group.members || []).slice(0, 4).forEach(mid => {
                     const c = contacts.find(c => c.id === mid);
                     if (c) h +=
                         `<img src="${escapeHtml(c.avatar)}" class="w-6 h-6 rounded-full border" onerror="this.src='https://picsum.photos/200/200?random=1'">`;
                 });
                 document.getElementById('partner-status').innerHTML =
-                    `<div class="flex -space-x-1">${h}<span class="ml-1 text-xs">${group.members.length}人</span></div>`;
+                    `<div class="flex -space-x-1">${h}<span class="ml-1 text-xs">${(group.members || []).length}人</span></div>`;
             }
 
             async function loadCurrentContactData() {
@@ -12521,6 +12527,8 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
             }
 
             function applyBackgroundEffects() {
+                // 背景动态效果已移除（2026-08-05 用户要求删除）
+                return;
                 const overlay = document.getElementById('bg-overlay'),
                     sparkles = document.getElementById('bg-sparkles'),
                     bubbles = document.getElementById('bg-bubbles'),
@@ -15351,7 +15359,7 @@ const myTile = selfCamStream
                 } else if (p === 'background') {
                     document.querySelector('#settings-subpages h2').textContent = '🖼️ 聊天背景';
                     c.innerHTML =
-                        `<label for="bg-image-upload" class="block py-3 bg-[var(--theme-light)] rounded-xl text-center text-sm cursor-pointer mb-3">📁 上传背景图片</label><input type="file" id="bg-image-upload" accept="image/*" class="hidden"><div class="flex justify-between text-sm mb-2"><span>模糊度</span><input type="range" id="bg-blur" min="0" max="30" value="${settings.bgBlur}" class="w-24"><span id="blur-val">${settings.bgBlur}px</span></div><div class="flex justify-between text-sm mb-2"><span>透明度</span><input type="range" id="bg-opacity" min="0" max="100" value="${Math.round(settings.bgOpacity*100)}" class="w-24"><span id="opacity-val">${Math.round(settings.bgOpacity*100)}%</span></div><hr class="my-4 border-[var(--border-color)]"><div class="flex justify-between"><span>开启动态效果</span><input type="checkbox" id="bg-effects-enabled" class="effect-checkbox" ${settings.bgEffects.enabled?'checked':''}></div><button id="clear-bg-btn" class="w-full py-2 bg-red-50 text-red-500 rounded-xl text-sm mt-4">清除背景</button>`;
+                        `<label for="bg-image-upload" class="block py-3 bg-[var(--theme-light)] rounded-xl text-center text-sm cursor-pointer mb-3">📁 上传背景图片</label><input type="file" id="bg-image-upload" accept="image/*" class="hidden"><div class="flex justify-between text-sm mb-2"><span>模糊度</span><input type="range" id="bg-blur" min="0" max="30" value="${settings.bgBlur}" class="w-24"><span id="blur-val">${settings.bgBlur}px</span></div><div class="flex justify-between text-sm mb-2"><span>透明度</span><input type="range" id="bg-opacity" min="0" max="100" value="${Math.round(settings.bgOpacity*100)}" class="w-24"><span id="opacity-val">${Math.round(settings.bgOpacity*100)}%</span></div><button id="clear-bg-btn" class="w-full py-2 bg-red-50 text-red-500 rounded-xl text-sm mt-4">清除背景</button>`;
                     document.getElementById('bg-image-upload').onchange = e => { const f = e.target.files[0]; if (!
                             f) return;
                         compressImage(f, 1920, 0.88).then(src => {
@@ -15369,10 +15377,6 @@ const myTile = selfCamStream
                     document.getElementById('bg-opacity').oninput = e => { settings.bgOpacity = parseInt(e.target
                             .value) / 100;
                         document.getElementById('opacity-val').textContent = e.target.value + '%';
-                        applySkin();
-                        saveSettings(); };
-                    document.getElementById('bg-effects-enabled').onchange = e => { settings.bgEffects.enabled = e
-                            .target.checked;
                         applySkin();
                         saveSettings(); };
                     document.getElementById('clear-bg-btn').onclick = () => { settings.bgImage = '';
@@ -16995,7 +16999,7 @@ const myTile = selfCamStream
                     var actions = document.createElement('div');
                     actions.id = 'ch-bg-actions';
                     actions.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100000;background:var(--card-bg);border:1px solid var(--border-color);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:200px;box-shadow:0 8px 40px rgba(0,0,0,0.3);';
-                    actions.innerHTML = '<div style="font-size:14px;font-weight:600;color:var(--text-primary);text-align:center;margin-bottom:4px;">设置聊天背景</div><button id="ch-bg-upload-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">📁 上传图片</button><button id="ch-bg-url-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">🔗 输入URL</button><button id="ch-bg-clear-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">✕ 清除背景</button><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-primary);"><span>模糊度</span><div style="display:flex;align-items:center;gap:6px;"><input id="ch-bg-blur" type="range" min="0" max="30" value="' + (c.bgBlur !== undefined ? c.bgBlur : settings.bgBlur) + '" style="width:96px;"><span id="ch-bg-blur-val" style="font-size:11px;opacity:.7;min-width:28px;text-align:right;">' + (c.bgBlur !== undefined ? c.bgBlur : settings.bgBlur) + 'px</span></div></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-primary);"><span>透明度</span><div style="display:flex;align-items:center;gap:6px;"><input id="ch-bg-opacity" type="range" min="0" max="100" value="' + Math.round((c.bgOpacity !== undefined ? c.bgOpacity : settings.bgOpacity) * 100) + '" style="width:96px;"><span id="ch-bg-opacity-val" style="font-size:11px;opacity:.7;min-width:32px;text-align:right;">' + Math.round((c.bgOpacity !== undefined ? c.bgOpacity : settings.bgOpacity) * 100) + '%</span></div></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-primary);"><span>动态效果</span><input type="checkbox" id="ch-bg-effects" ' + ((c.bgEffects !== undefined ? c.bgEffects : settings.bgEffects.enabled) ? 'checked' : '') + '></div><p style="font-size:10px;opacity:.55;color:var(--text-secondary);text-align:center;">模糊/透明/动态仅在上传专属背景后生效</p>';
+                    actions.innerHTML = '<div style="font-size:14px;font-weight:600;color:var(--text-primary);text-align:center;margin-bottom:4px;">设置聊天背景</div><button id="ch-bg-upload-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">📁 上传图片</button><button id="ch-bg-url-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">🔗 输入URL</button><button id="ch-bg-clear-btn" style="background:var(--theme-light);color:var(--text-primary);border:none;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">✕ 清除背景</button><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-primary);"><span>模糊度</span><div style="display:flex;align-items:center;gap:6px;"><input id="ch-bg-blur" type="range" min="0" max="30" value="' + (c.bgBlur !== undefined ? c.bgBlur : settings.bgBlur) + '" style="width:96px;"><span id="ch-bg-blur-val" style="font-size:11px;opacity:.7;min-width:28px;text-align:right;">' + (c.bgBlur !== undefined ? c.bgBlur : settings.bgBlur) + 'px</span></div></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-primary);"><span>透明度</span><div style="display:flex;align-items:center;gap:6px;"><input id="ch-bg-opacity" type="range" min="0" max="100" value="' + Math.round((c.bgOpacity !== undefined ? c.bgOpacity : settings.bgOpacity) * 100) + '" style="width:96px;"><span id="ch-bg-opacity-val" style="font-size:11px;opacity:.7;min-width:32px;text-align:right;">' + Math.round((c.bgOpacity !== undefined ? c.bgOpacity : settings.bgOpacity) * 100) + '%</span></div></div><p style="font-size:10px;opacity:.55;color:var(--text-secondary);text-align:center;">模糊/透明/动态仅在上传专属背景后生效</p>';
                     document.body.appendChild(actions);
                     function chBgApply() {
                         updateContact(c);
@@ -17005,8 +17009,6 @@ const myTile = selfCamStream
                     if (chBlur) chBlur.oninput = function() { c.bgBlur = parseInt(this.value); document.getElementById('ch-bg-blur-val').textContent = this.value + 'px'; chBgApply(); };
                     var chOp = document.getElementById('ch-bg-opacity');
                     if (chOp) chOp.oninput = function() { c.bgOpacity = parseInt(this.value) / 100; document.getElementById('ch-bg-opacity-val').textContent = this.value + '%'; chBgApply(); };
-                    var chEff = document.getElementById('ch-bg-effects');
-                    if (chEff) chEff.onchange = function() { c.bgEffects = this.checked; chBgApply(); };
                     setTimeout(function() {
                         var closer = function(ev2) {
                             if (!ev2.target.closest('#ch-bg-actions')) { actions.remove(); document.removeEventListener('click', closer); }
@@ -17024,6 +17026,25 @@ const myTile = selfCamStream
             }
             function setupEventListeners() {
                 try {
+                // 首页 联系人/群聊 tab 切换
+                var _tabC = document.getElementById('tab-contacts');
+                var _tabG = document.getElementById('tab-groups');
+                var _cc = document.getElementById('contact-list-content');
+                var _gc = document.getElementById('group-list-content');
+                function _switchMainTab(mode) {
+                    var isGroup = mode === 'group';
+                    if (_cc) _cc.classList.toggle('hidden', isGroup);
+                    if (_gc) _gc.classList.toggle('hidden', !isGroup);
+                    if (_tabC) { _tabC.style.borderColor = isGroup ? 'transparent' : 'var(--theme)'; _tabC.style.color = isGroup ? 'var(--text-secondary)' : 'var(--theme)'; }
+                    if (_tabG) { _tabG.style.borderColor = isGroup ? 'var(--theme)' : 'transparent'; _tabG.style.color = isGroup ? 'var(--theme)' : 'var(--text-secondary)'; }
+                    if (isGroup) { renderGroupList(); }
+                    else { renderContactList(); }
+                }
+                if (_tabC) _tabC.onclick = function() { _switchMainTab('contact'); };
+                if (_tabG) _tabG.onclick = function() { _switchMainTab('group'); };
+                window._switchMainTab = _switchMainTab;
+                var _cgb = document.getElementById('create-group-btn');
+                if (_cgb) _cgb.onclick = function() { if (typeof window.handleCreateGroup === 'function') window.handleCreateGroup(); else if (typeof handleCreateGroup === 'function') handleCreateGroup(); };
                 var avClickable = document.getElementById('partner-avatar-clickable'); if (avClickable) avClickable.onclick = function(e) { e.stopPropagation(); showContactHome(); };
 
                 var _acb = document.getElementById('add-contact-btn'); if (_acb) _acb.onclick = async () => { const name = prompt('输入联系人昵称'); if (name?.trim()) { const nc = await addContact({ name: name.trim() }); renderContactList(); await switchContact(nc.id); } };

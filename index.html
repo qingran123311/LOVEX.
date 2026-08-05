@@ -4708,7 +4708,16 @@
                     if (Notification.permission !== 'granted') return;
                     // 前台聚焦时不打扰；后台或锁屏时弹
                     if (document.visibilityState === 'visible' && document.hasFocus && document.hasFocus()) return;
-                    var n = new Notification(title, { body: body, icon: icon || undefined, tag: 'love-msg-' + Date.now() });
+                    // 按会话分 tag：同一会话的新消息替换旧通知并重新横幅提醒，避免通知栏堆积
+                    var notifTag = 'love-msg-' + (groupId || contactId || 'misc');
+                    var n = new Notification(title, {
+                        body: body,
+                        icon: icon || undefined,
+                        tag: notifTag,
+                        renotify: true,
+                        requireInteraction: true,
+                        vibrate: [150, 80, 150]
+                    });
                     n.onclick = function() {
                         this.close();
                         window.focus();
@@ -4815,6 +4824,9 @@
                 var popup = document.getElementById('notification-popup');
                 var inner = document.getElementById('notif-inner');
                 if (!popup || !inner) return;
+                // 正在聊这个会话时不弹站内弹窗（消息已直接显示在对话里）
+                if (contactId && currentChatType === 'private' && currentContactId === contactId) return;
+                if (groupId && currentChatType === 'group' && currentGroupId === groupId) return;
                 // 后台时同时发系统通知（挂后台也能看到）
                 try {
                     if (document.hidden || !document.hasFocus || !document.hasFocus()) {
@@ -5131,7 +5143,6 @@
                     momentCardProb: 5,
                     generalVoiceGroups: [],
                     patLibrary: ['拍了拍对方的头', '拍了拍对方的肚子', '捏了捏对方的脸', '戳了戳对方的胳膊', '摸了摸对方的头', '揉了揉对方的脸'],
-                    partnerPatGroups: [],
                     statusLibrary: ['在线', '正在输入...', '发呆中', '想你中', '刚看到消息'],
                     partnerTimeFlowSpeed: 0,
                     partnerRedpacketEnabled: false,
@@ -5239,8 +5250,9 @@ async function createGroup(name, memberIds) {
             }
 
             function renderGroupList() {
-                renderContactList();
-                return;
+                var el = document.getElementById('group-list');
+                if (!el) return;
+                el.innerHTML = '';
                 groups.forEach(g => {
                     const card = document.createElement('div');
                     card.className = 'group-tab flex items-center p-3';
@@ -7961,16 +7973,23 @@ async function createGroup(name, memberIds) {
                 var replyContact = chatType === 'private' ? (contacts.find(function(c) { return c.id === contactId; }) || null) : null;
                 var rc = function(key) { return getContactReplySetting(replyContact, key); };
 
-                // ===== 已读不回逻辑 =====
+                // ===== 已读不回逻辑（只影响文字回复，拍一拍照常发） =====
+                const _patPoolCheck = chatType === 'group' ? [] : getPartnerPatPool(replyContact);
+                var _forcePat = false;
                 if (rc('readReceiptEnabled') && Math.random() < rc('readReceiptChance')) {
-                    const readDelay = 2000 + Math.random() * 5000;
-                    setTimeout(() => {
-                        if ((chatType === 'private' && currentContactId === contactId) || (chatType === 'group' && currentGroupId === groupId)) {
-                            markMessagesAsRead(chatType, contactId, groupId);
-                        }
-                        removeTyping(typingKey);
-                    }, readDelay);
-                    return;
+                    if (_patPoolCheck.length > 0 && rc('replyPatChance') > 0 && Math.random() < rc('replyPatChance')) {
+                        // 已读不回时仍发拍一拍（拍一拍不算"回复"），强制本轮回拍一拍
+                        _forcePat = true;
+                    } else {
+                        const readDelay = 2000 + Math.random() * 5000;
+                        setTimeout(() => {
+                            if ((chatType === 'private' && currentContactId === contactId) || (chatType === 'group' && currentGroupId === groupId)) {
+                                markMessagesAsRead(chatType, contactId, groupId);
+                            }
+                            removeTyping(typingKey);
+                        }, readDelay);
+                        return;
+                    }
                 }
 
                 const wordCardPool = buildWordCardPool(contactId);
@@ -8070,7 +8089,10 @@ async function createGroup(name, memberIds) {
                         plan.messages.push({ type: 'voice', src: voice.src, duration: voice.duration || 3 });
                     }
 
-                    if (rc('replyPatChance') > 0 && Math.random() < rc('replyPatChance') && patPool.length) {
+                    if (_forcePat && patPool.length) {
+                        const patText = patPool[Math.floor(Math.random() * patPool.length)];
+                        plan.messages.push({ type: 'pat', text: patText });
+                    } else if (rc('replyPatChance') > 0 && Math.random() < rc('replyPatChance') && patPool.length) {
                         const patText = patPool[Math.floor(Math.random() * patPool.length)];
                         plan.messages.push({ type: 'pat', text: patText });
                     }
@@ -18156,6 +18178,10 @@ const myTile = selfCamStream
                 contacts.forEach(function(ct) {
                     var rs = ct.replySettings || {};
                     if (rs.patLibrary && rs.patLibrary.length === 4 && rs.patLibrary[0] === '拍了拍' && rs.patLibrary[1] === '拍了拍的头') { rs.patLibrary = [...DEFAULT_PAT_LIBRARY]; queuedUpdateContact(ct); }
+                    if (rs.partnerPatGroups !== undefined && Array.isArray(rs.partnerPatGroups) && rs.partnerPatGroups.length === 0) {
+                        delete rs.partnerPatGroups;
+                        queuedUpdateContact(ct);
+                    }
                 });
                 if (!settings.partnerPatGroups) settings.partnerPatGroups = [];
                 if (!settings.statusLibrary) settings.statusLibrary = [...DEFAULT_STATUS_LIBRARY];

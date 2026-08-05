@@ -3394,22 +3394,6 @@
         </div>
     </div>
 
-    <!-- ===== 相册操作底部动作表 ===== -->
-    <div id="album-action-sheet" class="fixed inset-0 bg-black/30 z-[90] hidden flex items-end justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="bg-[var(--card-bg)] rounded-3xl w-full max-w-sm p-6 shadow-xl">
-            <h3 class="font-semibold text-lg mb-4 text-[var(--text-primary)] text-center">选择方式</h3>
-            <div class="space-y-3">
-                <button class="w-full py-3 flex items-center justify-center space-x-3 bg-[var(--theme-light)] rounded-xl text-sm font-medium" onclick="pickFromCamera()">
-                    <span>📷</span><span>拍照</span>
-                </button>
-                <button class="w-full py-3 flex items-center justify-center space-x-3 bg-[var(--theme-light)] rounded-xl text-sm font-medium" onclick="pickFromGallery()">
-                    <span>🖼️</span><span>从相册选择</span>
-                </button>
-            </div>
-            <button class="w-full mt-4 py-2 text-[var(--text-secondary)] text-sm" onclick="document.getElementById('album-action-sheet').classList.add('hidden')">取消</button>
-        </div>
-    </div>
-
     <!-- ===== 添加菜单底部动作表 ===== -->
     <div id="add-action-sheet" class="fixed inset-0 bg-black/30 z-[90] hidden flex items-end justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
         <div class="bg-[var(--card-bg)] rounded-3xl w-full max-w-sm p-6 shadow-xl">
@@ -5177,6 +5161,9 @@
                     momentPostProb: 40,
                     momentVoiceProb: 5,
                     momentCardProb: 5,
+                    momentIntervalMin: 1,
+                    momentIntervalMax: 6,
+                    momentIntervalUnit: '时',
                     generalVoiceGroups: [],
                     patLibrary: ['拍了拍对方的头', '拍了拍对方的肚子', '捏了捏对方的脸', '戳了戳对方的胳膊', '摸了摸对方的头', '揉了揉对方的脸'],
                     statusLibrary: ['在线', '正在输入...', '发呆中', '想你中', '刚看到消息'],
@@ -6031,6 +6018,7 @@ async function createGroup(name, memberIds) {
                         + '<div class="flex justify-between"><span>发帖概率</span><input type="range" id="ch-moment-post" min="0" max="100" value="' + (rs.momentPostProb || 40) + '" class="w-24"><span id="ch-moment-post-label">' + (rs.momentPostProb || 40) + '%</span></div>'
                         + '<div class="flex justify-between"><span>语音发帖概率</span><input type="range" id="ch-moment-voice" min="0" max="100" value="' + (rs.momentVoiceProb || 5) + '" class="w-24"><span id="ch-moment-voice-label">' + (rs.momentVoiceProb || 5) + '%</span></div>'
                         + '<div class="flex justify-between"><span>拼字卡发帖概率</span><input type="range" id="ch-moment-card" min="0" max="100" value="' + (rs.momentCardProb || 5) + '" class="w-24"><span id="ch-moment-card-label">' + (rs.momentCardProb || 5) + '%</span></div>'
+                        + '<div class="flex justify-between"><span>发圈间隔</span><input type="number" id="ch-moment-interval-min" value="' + _du((rs.momentIntervalMin || 1), '时', rs.momentIntervalUnit || '时') + '" class="w-12 px-1 border rounded text-center">~<input type="number" id="ch-moment-interval-max" value="' + _du((rs.momentIntervalMax || 6), '时', rs.momentIntervalUnit || '时') + '" class="w-12 px-1 border rounded text-center"><select id="ch-moment-interval-unit" class="border rounded text-xs px-1"><option value="秒" ' + ((rs.momentIntervalUnit||'时')==='秒'?'selected':'') + '>秒</option><option value="分" ' + ((rs.momentIntervalUnit||'时')==='分'?'selected':'') + '>分</option><option value="时" ' + ((rs.momentIntervalUnit||'时')==='时'?'selected':'') + '>时</option></select></div>'
                         + '</div>'
                         + '<hr>'
                         + '<div class="flex justify-between"><span>状态更新间隔</span><input type="number" id="ch-status-min" value="' + _du(rs.statusMin, '分', rs.statusUnit || '分') + '" class="w-12 px-1 border rounded text-center">~<input type="number" id="ch-status-max" value="' + _du(rs.statusMax, '分', rs.statusUnit || '分') + '" class="w-12 px-1 border rounded text-center"><select id="ch-status-unit" class="border rounded text-xs px-1"><option value="秒" ' + ((rs.statusUnit||'分')==='秒'?'selected':'') + '>秒</option><option value="分" ' + ((rs.statusUnit||'分')==='分'?'selected':'') + '>分</option><option value="时" ' + ((rs.statusUnit||'分')==='时'?'selected':'') + '>时</option></select></div>'
@@ -6193,6 +6181,13 @@ async function createGroup(name, memberIds) {
                     document.getElementById('ch-moment-card').oninput = function() {
                         rsv('momentCardProb', parseInt(this.value));
                         document.getElementById('ch-moment-card-label').textContent = this.value + '%';
+                    };
+                    document.getElementById('ch-moment-interval-min').onchange = function() { rs.momentIntervalMin = parseFloat(this.value) || 1; };
+                    document.getElementById('ch-moment-interval-max').onchange = function() { rs.momentIntervalMax = parseFloat(this.value) || 6; };
+                    document.getElementById('ch-moment-interval-unit').onchange = function() {
+                        rs.momentIntervalUnit = this.value;
+                        document.getElementById('ch-moment-interval-min').value = _du((rs.momentIntervalMin || 1), '时', rs.momentIntervalUnit);
+                        document.getElementById('ch-moment-interval-max').value = _du((rs.momentIntervalMax || 6), '时', rs.momentIntervalUnit);
                     };
                     document.getElementById('ch-status-min').onchange = function() { rs.statusMin = _su(parseFloat(this.value) || 0, '分', rs.statusUnit || '分'); startStatusTimersForAll(); };
                     document.getElementById('ch-status-max').onchange = function() { rs.statusMax = _su(parseFloat(this.value) || 0, '分', rs.statusUnit || '分'); startStatusTimersForAll(); };
@@ -12481,7 +12476,19 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
             }
 
             function scheduleNextMoment(contactId, isFirst) {
-                const base = isFirst ? (20 + Math.random() * 100) * 1000 : 1 * 60 * 60 * 1000 + Math.random() * 5 * 60 * 60 * 1000;
+                const contact = contacts.find(c => c.id === contactId);
+                let base;
+                if (isFirst) {
+                    base = (20 + Math.random() * 100) * 1000;
+                } else {
+                    const minV = contact ? (getContactReplySetting(contact, 'momentIntervalMin') ?? 1) : 1;
+                    const maxV = contact ? (getContactReplySetting(contact, 'momentIntervalMax') ?? 6) : 6;
+                    const unit = contact ? (getContactReplySetting(contact, 'momentIntervalUnit') || '时') : '时';
+                    const mult = unit === '分' ? 60000 : unit === '时' ? 3600000 : 1000;
+                    const lo = Math.max(1, Math.min(minV, maxV)) * mult;
+                    const hi = Math.max(1, Math.max(minV, maxV)) * mult;
+                    base = lo + Math.random() * (hi - lo);
+                }
                 momentTimers[contactId] = setTimeout(async () => {
                     const contact = contacts.find(c => c.id === contactId);
                     if (!contact) { scheduleNextMoment(contactId); return; }
@@ -17123,7 +17130,7 @@ const myTile = selfCamStream
                     }
                     switch (action) {
                         case 'video-call': if (currentChatType === 'group') startGroupCall(); else startCall(); break;
-                        case 'album': (function() { showAlbumActionSheet(); })(); break;
+                        case 'album': (function() { pickFromGallery(); })(); break;
                         case 'mood': var mp = document.getElementById('mood-calendar-panel'); if (mp) mp.classList.add('open'); switchModule('mood'); break;
                         case 'period': var mp2 = document.getElementById('mood-calendar-panel'); if (mp2) mp2.classList.add('open'); switchModule('period'); markPeriodRecordsViewed(); break;
                         case 'moments': var momP = document.getElementById('moments-panel'); if (momP) { momP.classList.add('open'); initMomentsCoverEvents(); renderMoments(); } break;
@@ -20021,26 +20028,7 @@ const myTile = selfCamStream
             _api.switchEmojiTab = switchEmojiTab;
             _api.compressImage = compressImage;
             // ===== 相册操作（拍照/选择） =====
-            window.showAlbumActionSheet = function() {
-                document.getElementById('album-action-sheet').classList.remove('hidden');
-            };
-            window.pickFromCamera = function() {
-                document.getElementById('album-action-sheet').classList.add('hidden');
-                var fi = document.createElement('input');
-                fi.type = 'file';
-                fi.accept = 'image/*';
-                fi.capture = 'environment';
-                fi.onchange = function(ev) {
-                    var f = ev.target.files[0];
-                    if (!f) return;
-                    compressImage(f, 1920, 0.92).then(function(src) {
-                        if (src) sendStickerMsg(src, 'shared');
-                    });
-                };
-                fi.click();
-            };
             window.pickFromGallery = function() {
-                document.getElementById('album-action-sheet').classList.add('hidden');
                 var fi = document.createElement('input');
                 fi.type = 'file';
                 fi.accept = 'image/*,video/*';

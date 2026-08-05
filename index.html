@@ -4704,7 +4704,8 @@
             // 系统通知：带联系人/群信息，点击跳转到对应聊天
             function sendSystemNotification(title, body, icon, contactId, groupId) {
                 try {
-                    if (!sysNotifEnabled || !('Notification' in window)) return;
+                    if (!('Notification' in window)) return;
+                    // 实时检查权限：用户在浏览器设置里改过授权后立即生效，不依赖页面加载时的缓存状态
                     if (Notification.permission !== 'granted') return;
                     // 按会话分 tag：同一会话的新消息替换旧通知并重新横幅提醒，避免通知栏堆积
                     var notifTag = 'love-msg-' + (groupId || contactId || 'misc');
@@ -4718,21 +4719,58 @@
                     });
                     n.onclick = function() {
                         this.close();
-                        window.focus();
                         try {
-                            if (groupId) { window.jumpToChatFromNotif && window.jumpToChatFromNotif(null, groupId); }
-                            else { window.jumpToChatFromNotif && window.jumpToChatFromNotif(contactId, null); }
+                            _pendingNotifJump = { contactId: contactId, groupId: groupId };
+                            try { window.focus(); } catch (e) {}
+                            // 页面刚从后台恢复，延迟一点再跳转，等数据/DOM 就绪
+                            setTimeout(_execPendingNotifJump, 700);
                         } catch (e) {}
                     };
                 } catch (e) {}
             }
+            var _pendingNotifJump = null;
+            function _execPendingNotifJump() {
+                var j = _pendingNotifJump;
+                if (!j) return;
+                _pendingNotifJump = null;
+                try {
+                    if (j.groupId) { window.jumpToChatFromNotif && window.jumpToChatFromNotif(null, j.groupId); }
+                    else { window.jumpToChatFromNotif && window.jumpToChatFromNotif(j.contactId, null); }
+                } catch (e) {}
+            }
+            // 兜底：点击通知后页面恢复可见/聚焦时再执行跳转（部分安卓浏览器 onclick 时机不可靠）
+            try {
+                document.addEventListener('visibilitychange', function() {
+                    if (document.visibilityState === 'visible' && _pendingNotifJump) {
+                        setTimeout(_execPendingNotifJump, 400);
+                    }
+                });
+                window.addEventListener('focus', function() {
+                    if (_pendingNotifJump) setTimeout(_execPendingNotifJump, 300);
+                });
+            } catch (e) {}
             // 点击系统通知 → 切到对应聊天
             window.jumpToChatFromNotif = function(contactId, groupId) {
                 try {
-                    if (groupId) {
-                        if (typeof switchGroup === 'function') switchGroup(groupId);
-                    } else if (contactId) {
-                        if (typeof switchContact === 'function') switchContact(contactId);
+                    // 页面刚从后台恢复，数据可能还没加载完，等待后再跳
+                    var tryJump = function() {
+                        if (groupId) {
+                            if (typeof switchGroup === 'function' && (typeof groups !== 'undefined' && groups.length > 0)) switchGroup(groupId);
+                            else if (typeof switchGroup === 'function') switchGroup(groupId);
+                        } else if (contactId) {
+                            if (typeof switchContact === 'function' && typeof contacts !== 'undefined' && contacts.length > 0) switchContact(contactId);
+                            else if (typeof switchContact === 'function') switchContact(contactId);
+                        }
+                    };
+                    var isReady = (typeof contacts !== 'undefined' && contacts.length > 0) || (groupId && typeof groups !== 'undefined' && groups.length > 0);
+                    if (isReady) { tryJump(); }
+                    else {
+                        var waited = 0;
+                        var iv = setInterval(function() {
+                            waited += 300;
+                            var ready = (typeof contacts !== 'undefined' && contacts.length > 0) || (groupId && typeof groups !== 'undefined' && groups.length > 0);
+                            if (ready || waited > 10000) { clearInterval(iv); tryJump(); }
+                        }, 300);
                     }
                 } catch (e) {}
             };

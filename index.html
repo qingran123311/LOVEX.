@@ -5171,6 +5171,12 @@
                 if (!contact || !contact.replySettings) return settings[key];
                 return contact.replySettings[key] !== undefined ? contact.replySettings[key] : settings[key];
             }
+            function dispName(c) { return c ? (c.remark || c.name) : 'TA'; }
+            function dispNameById(id) {
+                if (id === 'me') return settings.myName;
+                var c = contacts.find(function(x) { return x.id === id; });
+                return c ? (c.remark || c.name) : '未知';
+            }
             async function addContact(contactData) {
                 const def = {
                     name: 'TA',
@@ -5339,7 +5345,7 @@ async function createGroup(name, memberIds) {
                         lastMsg = last.text || (last.type === 'image' ? '[图片]' : (last.type === 'voice' ? '[语音]' : (last.type === 'redpacket' ? '[红包]' : '')));
                         lastTime = new Date(last.timestamp).getTime();
                     }
-                    items.push({ id: c.id, type: 'private', name: c.name, avatar: c.avatar, unread: unread, lastMsg: lastMsg, lastTime: lastTime, status: c.status, pinned: !!c.pinned });
+                    items.push({ id: c.id, type: 'private', name: c.remark || c.name, avatar: c.avatar, unread: unread, lastMsg: lastMsg, lastTime: lastTime, status: c.status, pinned: !!c.pinned });
                 });
                 groups.forEach(function(g) {
                     var unread = g.id === currentGroupId && currentChatType === 'group' ? messages.filter(function(m) { return !m.isMe && !m.read; }).length : getUnreadCountForGroup(g.id);
@@ -5904,7 +5910,7 @@ async function createGroup(name, memberIds) {
                 if (!modal || !title || !content) return;
                 modal.classList.remove('hidden');
                 if (type === 'bubble-css') {
-                    title.textContent = '💬 气泡CSS - ' + contact.name;
+                    title.textContent = '💬 气泡CSS - ' + dispName(contact);
                     var curCss = contact.bubbleCss || '';
                     content.innerHTML = '<div class="text-sm space-y-3"><p class="text-xs text-[var(--text-secondary)]">自定义此联系人的聊天气泡样式（CSS），输入时实时预览</p>'
                         + '<div id="bubble-preview-scope" class="rounded-2xl overflow-hidden" style="background:linear-gradient(160deg,#eef0f5,#dce3ee);padding:14px 12px;min-height:130px;">'
@@ -5932,7 +5938,7 @@ async function createGroup(name, memberIds) {
                         modal.classList.add('hidden');
                     };
                 } else if (type === 'reply-settings') {
-                    title.textContent = '⚙️ 回复设置 - ' + contact.name;
+                    title.textContent = '⚙️ 回复设置 - ' + dispName(contact);
                     if (!contact.replySettings) { contact.replySettings = defaultReplySettings(); }
                     else { var _def = defaultReplySettings(); for (var _k in _def) { if (contact.replySettings[_k] === undefined) contact.replySettings[_k] = _def[_k]; } }
                     var rs = contact.replySettings;
@@ -6222,7 +6228,7 @@ async function createGroup(name, memberIds) {
                     var patrolRow = content.querySelector('#ch-open-patrol');
                     if (patrolRow) patrolRow.onclick = function() { modal.classList.add('hidden'); window.openPatrolSettings(contact); };
                 } else if (type === 'mood-history') {
-                    title.textContent = '💖 心情记录 - ' + contact.name;
+                    title.textContent = '💖 心情记录 - ' + dispName(contact);
                     var history = contact.partnerMoodHistory || [];
                     var html = '<div class="text-sm space-y-2 max-h-[55vh] overflow-y-auto">';
                     if (history.length) {
@@ -6625,10 +6631,10 @@ async function createGroup(name, memberIds) {
                 document.getElementById('partner-avatar').src = c.avatar;
                 var chPa = document.getElementById('ch-partner-avatar');
                 if (chPa) chPa.src = c.avatar;
-                document.getElementById('partner-name').textContent = c.name;
+                document.getElementById('partner-name').textContent = c.remark || c.name;
                 document.getElementById('partner-status').textContent = c.status;
                 var ptl = document.getElementById('partner-time-label');
-                if (ptl) ptl.textContent = c.name;
+                if (ptl) ptl.textContent = c.remark || c.name;
                 updateHeaderBattery();
                 updateMyMoodDisplay();
                 updateHeaderClock();
@@ -6851,7 +6857,7 @@ async function createGroup(name, memberIds) {
                     var rd = document.createElement('div');
                     rd.className = 'flex justify-center w-full my-1';
                     rd.dataset.id = msg.id;
-                    var by = msg.isMe ? '你' : (getCurrentContact()?.name || 'TA');
+                    var by = msg.isMe ? '你' : dispName(getCurrentContact());
                     rd.innerHTML = '<span class="text-xs text-[var(--text-secondary)] msg-recalled">' + escapeHtml(by) + ' 撤回了一条消息</span>';
                     return rd;
                 }
@@ -6916,7 +6922,7 @@ async function createGroup(name, memberIds) {
                     const div = document.createElement('div');
                     div.className = 'flex justify-center w-full my-1';
                     div.dataset.id = msg.id;
-                    const displayName = msg.isMe ? settings.myName : (getCurrentContact()?.name || 'TA');
+                    const displayName = msg.isMe ? settings.myName : dispName(getCurrentContact());
                     div.innerHTML =
                         `<span class="text-xs text-[var(--text-secondary)] bg-[var(--card-bg)] px-3 py-1 rounded-full pat-anim">${escapeHtml(displayName)} ${escapeHtml(msg.text)}</span>`;
                     return div;
@@ -7132,7 +7138,7 @@ async function createGroup(name, memberIds) {
                     var rd = document.createElement('div');
                     rd.className = 'flex justify-center w-full my-1';
                     rd.dataset.id = msg.id;
-                    var by = msg.senderId === 'me' ? '你' : (contacts.find(function(c) { return c.id === msg.senderId; })?.name || 'TA');
+                    var by = msg.senderId === 'me' ? '你' : dispNameById(msg.senderId);
                     rd.innerHTML = '<span class="text-xs text-[var(--text-secondary)] msg-recalled">' + escapeHtml(by) + ' 撤回了一条消息</span>';
                     return rd;
                 }
@@ -7158,7 +7164,7 @@ async function createGroup(name, memberIds) {
               <div class="flex items-end space-x-2 max-w-[82%]">
                 ${(!isMe && !hideAvatarAndName) ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=1'">` : (!isMe ? `<div class="w-7 h-7"></div>` : '')}
                 <div>
-                  ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(sender.name)}</p>` : ''}
+                  ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(dispName(sender))}</p>` : ''}
                   <div class="rp-bubble${rpDone ? ' done' : ''}"${rpDone ? '' : ' style="background:' + (rpStyle.kind === 'video' ? 'rgba(0,0,0,.4)' : rpStyle.bg) + '"'} onclick="openGroupRedpacketPopup(${msg.id})" title="点击查看红包">${rpMedia}<div class="rp-ico"><i class="fa fa-rmb"></i></div><div class="rp-info"><div class="rp-note">${escapeHtml(msg.note || rpStyle.line1)}</div><div class="rp-label">${kindLabel}</div></div><span class="rp-status">${rpStatusText}</span></div>
                   <div class="msg-meta">
                     <span class="msg-actions" data-actions="${msg.id}">
@@ -7241,7 +7247,7 @@ async function createGroup(name, memberIds) {
                     const div = document.createElement('div');
                     div.className = 'flex justify-center w-full my-2';
                     div.dataset.id = msg.id;
-                    const sender = msg.senderId === 'me' ? settings.myName : contacts.find(c => c.id === msg.senderId)?.name || '未知';
+                    const sender = msg.senderId === 'me' ? settings.myName : dispNameById(msg.senderId);
                     div.innerHTML =
                         `<span class="text-xs text-[var(--text-secondary)] bg-[var(--card-bg)] px-3 py-1 rounded-full pat-anim">${escapeHtml(sender)} ${escapeHtml(msg.text)}</span>`;
                     return div;
@@ -7265,7 +7271,7 @@ async function createGroup(name, memberIds) {
                     if (!isMe && !hideAvatarAndName) {
                         const nameP = document.createElement('p');
                         nameP.className = 'text-xs text-[var(--text-secondary)] mb-1';
-                        nameP.textContent = sender.name;
+                        nameP.textContent = dispName(sender);
                         innerWrap.appendChild(nameP);
                     }
                     const voiceBubble = createVoiceBubble(msg, isMe);
@@ -7316,7 +7322,7 @@ async function createGroup(name, memberIds) {
                     if (!isMe && !hideAvatarAndName) {
                         const nameP = document.createElement('p');
                         nameP.className = 'text-xs text-[var(--text-secondary)] mb-1';
-                        nameP.textContent = sender.name;
+                        nameP.textContent = dispName(sender);
                         innerWrap.appendChild(nameP);
                     }
                     const img = document.createElement('img');
@@ -7357,7 +7363,7 @@ async function createGroup(name, memberIds) {
                 div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
                 let quoteHtml = '';
                 if (msg.quote) {
-                    const qAuthor = msg.quote.senderId === 'me' ? settings.myName : (contacts.find(c => c.id === msg.quote.senderId)?.name || '未知');
+                    const qAuthor = msg.quote.senderId === 'me' ? settings.myName : dispNameById(msg.quote.senderId);
                     const qText = msg.quote.type === 'text' ? msg.quote.text : (msg.quote.type === 'image' ? '[图片]' : (msg.quote.type === 'voice' ? '[语音]' : (msg.quote.type === 'redpacket' ? '[红包]' : (msg.quote.type === 'rp-claim' ? msg.quote.text : '[消息]'))));
                     const qJumpId = msg.quote.id || '';
                     quoteHtml =
@@ -7373,7 +7379,7 @@ async function createGroup(name, memberIds) {
               <div class="flex items-end space-x-2 max-w-[82%]">
                 ${(!isMe && !hideAvatarAndName) ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=1'">` : (!isMe ? `<div class="w-7 h-7"></div>` : '')}
                 <div>
-                  ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(sender.name)}</p>` : ''}
+                  ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(dispName(sender))}</p>` : ''}
                   <div class="${bubbleClass} px-3.5 py-2.5 card-shadow">${quoteHtml}${contentHtml}</div>
                 </div>
                 ${isMe ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">` : ''}
@@ -7880,13 +7886,12 @@ async function createGroup(name, memberIds) {
                             if (recentMsgs.length > 0) {
                                 const refMsg = recentMsgs[Math.floor(Math.random() * recentMsgs.length)];
                                 if (chatType === 'group') {
-                                    const refAuthor = refMsg.senderId === 'me' ? settings.myName : (contacts.find(c => c.id ===
-                                        refMsg.senderId)?.name || '未知');
+                                    const refAuthor = refMsg.senderId === 'me' ? settings.myName : dispNameById(refMsg.senderId);
                                     quote = { senderId: refMsg.senderId, type: refMsg.type, text: refMsg.type === 'text' ? refMsg
                                             .text : (refMsg.type === 'image' ? '[图片]' : (refMsg.type === 'voice' ? '[语音]' :
                                             '[消息]')), author: refAuthor };
                                 } else {
-                                    quote = { author: refMsg.isMe ? settings.myName : (getCurrentContact()?.name || 'TA'),
+                                    quote = { author: refMsg.isMe ? settings.myName : dispName(getCurrentContact()),
                                         text: refMsg.type === 'text' ? refMsg.text : (refMsg.type === 'image' ? '[图片]' : (refMsg
                                             .type === 'voice' ? '[语音]' : '[消息]')) };
                                 }
@@ -7966,7 +7971,7 @@ async function createGroup(name, memberIds) {
                             const voice = memberVoicePool[Math.floor(Math.random() * memberVoicePool.length)];
                             const member = contacts.find(c => c.id === randomMemberId);
                             const plan = { messages: [{ type: 'voice', src: voice.src, duration: voice.duration || 3,
-                                    senderId: randomMemberId, senderName: member?.name || '未知' }] };
+                                    senderId: randomMemberId, senderName: (member ? (member.remark || member.name) : '未知') }] };
                             messagePlan.push(plan);
                         }
                     }
@@ -8032,7 +8037,7 @@ async function createGroup(name, memberIds) {
             }
 
             async function sendGroupVoiceFromMember(plan, groupId) {
-                const memberName = plan.senderName || (contacts.find(c => c.id === plan.senderId)?.name || '未知');
+                const memberName = plan.senderName || dispNameById(plan.senderId);
                 showGroupTypingBar(`${memberName} 正在说话...`);
                 const prepDelay = 800 + Math.random() * 1500;
                 setTimeout(async () => {
@@ -8178,7 +8183,7 @@ async function createGroup(name, memberIds) {
                         var c = contacts.find(function(ct) { return ct.id === contactId; });
                         if (c) {
                             var preview = msg.type === 'text' ? msg.text : (msg.type === 'image' ? '[图片]' : (msg.type === 'redpacket' ? '[红包]' : (msg.type === 'rp-claim' ? msg.text : '[消息]')));
-                            showNotification(c.name, preview, c.avatar, c.id, null);
+                            showNotification(dispName(c), preview, c.avatar, c.id, null);
                         }
                     } else if (chatType === 'group') {
                         var g = groups.find(function(gr) { return gr.id === groupId; });
@@ -8186,7 +8191,7 @@ async function createGroup(name, memberIds) {
                             var senderName = '我';
                             if (msg.senderId !== 'me') {
                                 var m = contacts.find(function(ct) { return ct.id === msg.senderId; });
-                                if (m) senderName = m.name;
+                                if (m) senderName = dispName(m);
                             }
                             var preview = msg.type === 'text' ? senderName + ': ' + msg.text : (msg.type === 'image' ? senderName + ': [图片]' : (msg.type === 'redpacket' ? senderName + ': [红包]' : senderName + ': [消息]'));
                             showNotification(g.name, preview, g.avatar || '', null, groupId);
@@ -8790,7 +8795,7 @@ async function createGroup(name, memberIds) {
                 if (currentChatType === 'private') {
                     var contact = getCurrentContact();
                     if (contact && contact.uniqueEmojis && contact.uniqueEmojis.length) {
-                        tabs.push({ id: 'contact-emojis', label: '<i class="fa fa-heart"></i>', title: contact.name + '的专属' });
+                        tabs.push({ id: 'contact-emojis', label: '<i class="fa fa-heart"></i>', title: dispName(contact) + '的专属' });
                     }
                 }
                 tabs.forEach(function(tab, idx) {
@@ -8888,7 +8893,7 @@ async function createGroup(name, memberIds) {
 <div class="flex items-center space-x-2 mb-2"><input type="text" id="new-shared-group-name" placeholder="新组名" class="flex-1 px-2 py-1 border border-[var(--border-color)] rounded-lg text-xs"><button id="create-shared-group" class="px-3 py-1 text-white rounded-lg text-xs" style="background:var(--theme)">创建组</button></div>\
 </div>\
 <div id="fm-img-exclusive"' + (_fmImgTab === 'exclusive' ? '' : ' style="display:none"') + '>\
-<div class="mb-2"><select id="fm-img-exclusive-contact" class="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg text-xs"><option value="">选择联系人管理专属表情</option>' + contacts.map(function(c){return '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>';}).join('') + '</select></div>\
+<div class="mb-2"><select id="fm-img-exclusive-contact" class="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg text-xs"><option value="">选择联系人管理专属表情</option>' + contacts.map(function(c){return '<option value="' + c.id + '">' + escapeHtml(c.remark || c.name) + '</option>';}).join('') + '</select></div>\
 <div id="fm-img-exclusive-list" class="grid grid-cols-5 gap-2 mb-3"></div>\
 <label for="fm-img-exclusive-upload" class="block py-2 bg-[var(--theme-light)] rounded-lg text-center cursor-pointer text-xs">📷 上传专属表情</label>\
 <input type="file" id="fm-img-exclusive-upload" accept="image/*" multiple class="hidden">\
@@ -8947,7 +8952,7 @@ async function createGroup(name, memberIds) {
 </div>\
 </div>\
 <div id="fm-wc-exclusive"' + (_fmWcTab === 'exclusive' ? '' : ' style="display:none"') + '>\
-<div class="mb-2"><select id="fm-wc-exclusive-contact" class="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg text-xs"><option value="">选择联系人管理专属字卡</option>' + contacts.map(function(c){return '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>';}).join('') + '</select></div>\
+<div class="mb-2"><select id="fm-wc-exclusive-contact" class="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg text-xs"><option value="">选择联系人管理专属字卡</option>' + contacts.map(function(c){return '<option value="' + c.id + '">' + escapeHtml(c.remark || c.name) + '</option>';}).join('') + '</select></div>\
 <div class="flex items-center space-x-2 mb-3">\
   <div class="relative flex-1"><i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] text-sm"></i><input type="text" id="fm-wc-exclusive-search" placeholder="搜索专属字卡..." class="w-full pl-9 pr-3 py-2 border border-[var(--border-color)] rounded-xl text-xs"></div>\
   <button id="fm-wc-exclusive-select-toggle" class="text-xs px-3 py-2 rounded-lg border border-[var(--border-color)] hover:bg-[var(--theme-light)] whitespace-nowrap">选择</button>\
@@ -9287,7 +9292,7 @@ async function createGroup(name, memberIds) {
 <div class="mt-4 border-t border-[var(--border-color)] pt-4"><h4 class="text-sm font-semibold mb-2">🎙 录音录入</h4><div class="text-center py-3"><button id="fm-voice-record-btn" class="px-6 py-3 rounded-full text-white text-lg" style="background:var(--theme)"><i class="fa fa-microphone mr-2"></i>开始录音</button><p id="fm-voice-record-status" class="text-xs text-[var(--text-secondary)] mt-2"></p><audio id="fm-voice-record-preview" class="hidden mt-2 w-full" controls></audio><div class="mt-3 hidden space-y-2" id="fm-voice-save-btns"><input type="text" id="fm-voice-record-name" placeholder="语音名称" class="w-full px-2 py-1 border rounded text-xs"><div class="flex space-x-2 items-center"><select id="fm-voice-record-group" class="flex-1 px-2 py-1 border rounded text-xs min-w-0"></select><button id="fm-voice-save-record" class="px-4 py-1 text-white rounded text-xs flex-shrink-0" style="background:var(--theme)">保存</button></div></div></div></div>\
 </div>\
 <div id="fm-voice-exclusive"' + (_fmVoiceTab === 'exclusive' ? '' : ' style="display:none"') + '>\
-<div class="mb-2"><select id="fm-voice-exclusive-contact" class="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg text-xs"><option value="">选择联系人管理专属语音</option>' + contacts.map(function(c){return '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>';}).join('') + '</select></div>\
+<div class="mb-2"><select id="fm-voice-exclusive-contact" class="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg text-xs"><option value="">选择联系人管理专属语音</option>' + contacts.map(function(c){return '<option value="' + c.id + '">' + escapeHtml(c.remark || c.name) + '</option>';}).join('') + '</select></div>\
 <div id="fm-voice-exclusive-groups" class="space-y-3 mb-4"></div>\
 <button id="fm-voice-add-exclusive-group" class="w-full py-2 border border-dashed border-[var(--border-color)] rounded-xl text-xs">+ 添加专属语音分组</button>\
 <label for="fm-voice-exclusive-upload" class="block py-2 mt-2 bg-[var(--theme-light)] rounded-lg text-center cursor-pointer text-xs">🎤 上传语音文件（支持多选）</label>\
@@ -9967,7 +9972,7 @@ async function createGroup(name, memberIds) {
                 const letter = letters.find(l => l.id === letterId);
                 if (!letter) return;
                 currentLetterId = letterId;
-                const contactName = getCurrentContact()?.name || 'TA';
+                const contactName = dispName(getCurrentContact());
                 const container = document.getElementById('letter-comparison-view');
                 let html = '';
                 html += renderLetterPaper(letter, letter.isMe ? '我' : contactName);
@@ -10035,7 +10040,7 @@ async function createGroup(name, memberIds) {
                 if (replyTo) {
                     const quotedLetter = letters.find(l => l.id === replyTo);
                     if (quotedLetter) {
-                        const quotedAuthor = quotedLetter.isMe ? (settings.myName || '我') : (contact2?.name || 'TA');
+                        const quotedAuthor = quotedLetter.isMe ? (settings.myName || '我') : dispName(contact2);
                         const quotedDate = formatDateTime(quotedLetter.timestamp);
                         var quotedBody = quotedLetter.text || '';
                         text = '> 📨 ' + quotedDate + ' ' + quotedAuthor + ':\n> ' + quotedBody.replace(/\n/g, '\n> ') + '\n\n' + text;
@@ -10043,7 +10048,7 @@ async function createGroup(name, memberIds) {
                 }
                 if (isFromMe) {
                     const myName2 = settings.myName || '我';
-                    const partnerName2 = contact2?.name || 'TA';
+                    const partnerName2 = dispName(contact2);
                     finalText = '亲爱的' + partnerName2 + '\n\n见字如晤，展信舒颜\n\n' + text + '\n\n你的 ' + myName2 + '\n' + dateStr2;
                 }
                 const letter = { type: 'letter', text: finalText, isMe: isFromMe, timestamp: now2.toISOString(), read: true, replyTo,
@@ -10069,7 +10074,7 @@ async function createGroup(name, memberIds) {
                 const body = cards.join('，') + '。';
                 const now4 = new Date();
                 const dateStr4 = now4.getFullYear() + '-' + String(now4.getMonth()+1).padStart(2,'0') + '-' + String(now4.getDate()).padStart(2,'0') + ' ' + String(now4.getHours()).padStart(2,'0') + ':' + String(now4.getMinutes()).padStart(2,'0');
-                return '亲爱的' + settings.myName + '\n\n见字如晤，展信舒颜\n\n' + body + '\n\n你的 ' + contact.name + '\n' + dateStr4;
+                return '亲爱的' + settings.myName + '\n\n见字如晤，展信舒颜\n\n' + body + '\n\n你的 ' + dispName(contact) + '\n' + dateStr4;
             }
             async function executeLetterReply(contactId, replyToId, dueTime) {
                 const contact = contacts.find(c => c.id === contactId);
@@ -10086,7 +10091,7 @@ async function createGroup(name, memberIds) {
                 if (replyToId) {
                     const quotedLetter = letters.find(l => l.id === replyToId);
                     if (quotedLetter) {
-                        const quotedAuthor = quotedLetter.isMe ? (settings.myName || '我') : contact.name;
+                        const quotedAuthor = quotedLetter.isMe ? (settings.myName || '我') : dispName(contact);
                         const quotedDate = formatDateTime(quotedLetter.timestamp);
                         var quotedBody = quotedLetter.text || '';
                         finalReplyText = '> 📨 ' + quotedDate + ' ' + quotedAuthor + ':\n> ' + quotedBody.replace(/\n/g, '\n> ') + '\n\n' + replyText;
@@ -10263,7 +10268,7 @@ async function createGroup(name, memberIds) {
                 const contact = getCurrentContact();
                 const myHistory = (settings.myMoodHistory || []).filter(m => m.contactId === currentContactId);
                 const partnerHistory = contact?.partnerMoodHistory || [];
-                if (partnerNameEl && contact) partnerNameEl.textContent = contact.name;
+                if (partnerNameEl && contact) partnerNameEl.textContent = dispName(contact);
                 myContainer.innerHTML = renderSingleStats(myHistory);
                 partnerContainer.innerHTML = renderSingleStats(partnerHistory);
             }
@@ -10303,7 +10308,7 @@ async function createGroup(name, memberIds) {
                 }
                 html += `</div>`;
                 html += `<div class="mb-4 p-4 bg-[var(--card-bg)] rounded-2xl">`;
-                html += `<p class="text-sm font-medium mb-2" style="color:var(--text-primary);">${escapeHtml(contact?.name || 'TA')} 的心情</p>`;
+                html += `<p class="text-sm font-medium mb-2" style="color:var(--text-primary);">${escapeHtml(dispName(contact))} 的心情</p>`;
                 if (partnerMood) {
                     html += `<div class="detail-emoji">${escapeHtml(partnerMood.emoji)}</div>`;
                     if (partnerMood.weather) html +=
@@ -10353,7 +10358,7 @@ async function createGroup(name, memberIds) {
                     html = '<div class="text-center text-[var(--text-secondary)] py-8">当天没有聊天记录</div>';
                 } else {
                     dayMsgs.forEach(function(m) {
-                        var who = m.isMe ? '我' : (contact.name || 'TA');
+                        var who = m.isMe ? '我' : dispName(contact);
                         var txt = m.type === 'text' ? escapeHtml(m.text) : (m.type === 'image' ? '[图片]' : (m.type === 'voice' ? '[语音]' : (m.type === 'pat' ? m.text : (m.type === 'call' ? m.text : (m.type === 'rp-claim' ? m.text : '[消息]')))));
                         var time = m.timestamp ? m.timestamp.substring(11, 19) : '';
                         html += '<div class="flex ' + (m.isMe ? 'justify-end' : 'justify-start') + ' mb-2">';
@@ -10541,17 +10546,18 @@ async function createGroup(name, memberIds) {
                 var chMyEl = document.getElementById('ch-my-battery');
                 if (myEl || chMyEl) {
                     var level = window._batteryLevel;
+                    var html = '--';
                     if (level !== undefined && !isNaN(level)) {
-                        level = Math.max(1, Math.min(100, Math.round(level)));
+                        level = Math.max(0, Math.min(100, Math.round(level)));
                         var icon = 'fa-battery-empty';
                         if (level > 75) icon = 'fa-battery-full';
                         else if (level > 50) icon = 'fa-battery-three-quarters';
                         else if (level > 25) icon = 'fa-battery-half';
                         else if (level > 10) icon = 'fa-battery-quarter';
-                        var html = '<i class="fa ' + icon + '" style="margin-right:1px;"></i>' + level + '%';
-                        if (myEl) myEl.innerHTML = html;
-                        if (chMyEl) chMyEl.innerHTML = html;
-                    } else { if (myEl) myEl.textContent = ''; if (chMyEl) chMyEl.textContent = ''; }
+                        html = '<i class="fa ' + icon + '" style="margin-right:1px;"></i>' + level + '%';
+                    }
+                    if (myEl) myEl.innerHTML = html;
+                    if (chMyEl) chMyEl.innerHTML = html;
                 }
                 // Partner random battery
                 var partnerEl = document.getElementById('partner-battery');
@@ -10587,6 +10593,11 @@ async function createGroup(name, memberIds) {
                             updateHeaderBattery();
                             b.addEventListener('levelchange', function() { window._batteryLevel = Math.round(b.level * 100); updateHeaderBattery(); });
                         }).catch(function() {});
+                    } catch (e) {}
+                } else if (navigator.battery && navigator.battery.level !== undefined) {
+                    try {
+                        window._batteryLevel = Math.round(navigator.battery.level * 100);
+                        navigator.battery.addEventListener('levelchange', function() { window._batteryLevel = Math.round(navigator.battery.level * 100); updateHeaderBattery(); });
                     } catch (e) {}
                 }
                 updateHeaderBattery();
@@ -10961,7 +10972,7 @@ async function createGroup(name, memberIds) {
             }
 
             window.syncAllPeriodRecords = async function() {
-                if (!confirm('确定将当前联系人（' + (contacts.find(function(c){return c.id===currentContactId})||{}).name + '）的全部暖记记录一键同步到其他所有联系人吗？已有记录将被覆盖。')) return;
+                if (!confirm('确定将当前联系人（' + (function() { var _c = contacts.find(function(c) { return c.id === currentContactId; }); return _c ? (_c.remark || _c.name) : 'TA'; })() + '）的全部暖记记录一键同步到其他所有联系人吗？已有记录将被覆盖。')) return;
                 var curRecords = periodRecords.filter(function(r) { return r.contactId === currentContactId; });
                 if (!curRecords.length) { showToast('没有可同步的记录'); return; }
                 var otherContacts = contacts.filter(function(c) { return c.id !== currentContactId; });
@@ -11194,7 +11205,7 @@ async function createGroup(name, memberIds) {
                             contacts.forEach(function(c) {
                                 var viewed = periodRecords.find(function(r) { return r.date === todayStr2 && r.contactId === c.id && r.partnerViewedAt; });
                                 var status = viewed ? '<span class="text-green-500">已查看</span>' : '<span class="text-[var(--text-secondary)]">未查看</span>';
-                                viewList.innerHTML += '<div class="flex items-center justify-between py-1"><span class="text-[var(--text-primary)]">' + escapeHtml(c.name) + '</span>' + status + '</div>';
+                                viewList.innerHTML += '<div class="flex items-center justify-between py-1"><span class="text-[var(--text-primary)]">' + escapeHtml(c.remark || c.name) + '</span>' + status + '</div>';
                             });
                         }
                     } else {
@@ -11531,7 +11542,7 @@ async function createGroup(name, memberIds) {
                 var myName = document.getElementById('moments-my-name');
                 if (contactFilter) {
                     if (myAvatar) { myAvatar.src = contactFilter.avatar; myAvatar.onclick = function(e) { e.stopPropagation(); window.momentGoProfile(contactFilter.id); }; }
-                    if (myName) myName.textContent = contactFilter.name;
+                    if (myName) myName.textContent = contactFilter.remark || contactFilter.name;
                 } else {
                     if (myAvatar) { myAvatar.src = settings.myAvatar; myAvatar.onclick = function(e) { e.stopPropagation(); openMySidebar(); }; }
                     if (myName) myName.textContent = settings.myName;
@@ -11612,7 +11623,7 @@ async function createGroup(name, memberIds) {
                 var likesHtml = '';
                 if (p.likes && p.likes.length) {
                     var likerNames = p.likes.map(function(l) {
-                        return l === 'me' ? settings.myName : (contacts.find(function(c) { return c.id === l; })?.name || '');
+                        return l === 'me' ? settings.myName : dispNameById(l);
                     }).filter(Boolean);
                     likesHtml = '<div class="moment-likes-bar flex items-center text-xs text-[var(--text-secondary)]"><i class="fa fa-heart text-red-400 mr-1.5"></i><span>' + likerNames.join('、') + '</span></div>';
                 }
@@ -11621,14 +11632,14 @@ async function createGroup(name, memberIds) {
                 if (p.comments && p.comments.length) {
                     commentsHtml = '<div class="mt-2">';
 p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c, idx) {
-                        var ca = c.authorId === 'me' ? settings.myName : (contacts.find(function(ct) { return ct.id === c.authorId; })?.name || '未知');
+                        var ca = c.authorId === 'me' ? settings.myName : dispNameById(c.authorId);
                         var text = c.text || '';
                         var cm = '';
                         if (c.type === 'image' && c.media) cm = '<span class="inline-block mt-1" title="点击放大，双击删除表情评论"><img src="' + c.media + '" class="w-8 h-8 object-cover rounded-md cursor-pointer" style="image-rendering:auto" onclick="event.stopPropagation();window.cmOpenImage(this.src)" ondblclick="event.stopPropagation();window.cmDeleteComment(' + p.id + ',' + idx + ')"></span>';
                         else if (c.type === 'voice' && c.media) cm = '<div class="mt-1"><audio src="' + c.media + '" controls preload="metadata" style="width:180px;height:34px;"></audio></div>';
                         var displayComment = '<span class="font-medium text-xs">' + escapeHtml(ca) + '</span>';
                         if (c.replyToIndex !== undefined && p.comments[c.replyToIndex]) {
-                            var targetName = p.comments[c.replyToIndex].authorId === 'me' ? settings.myName : (contacts.find(function(ct) { return ct.id === p.comments[c.replyToIndex].authorId; })?.name || '未知');
+                            var targetName = p.comments[c.replyToIndex].authorId === 'me' ? settings.myName : dispNameById(p.comments[c.replyToIndex].authorId);
                             displayComment += '<span class="text-xs text-[var(--text-secondary)]"> 回复 </span><span class="font-medium text-xs">' + escapeHtml(targetName) + '</span>';
                         }
                         if (text && !((c.type === 'image' || c.type === 'voice') && c.media)) displayComment += '<span class="text-xs">：' + escapeHtml(text) + '</span>';
@@ -11654,7 +11665,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                 if (p.location) locHtml = '<div class="moment-loc mt-1.5 flex items-center" style="font-size:0.72rem;color:var(--text-secondary);"><i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>' + escapeHtml(p.location) + '</div>';
                 return '<div class="moment-feed-card" ondblclick="event.stopPropagation();window.toggleMomentDelete(' + p.id + ')"' + (p._actReveal ? ' style="outline:1px dashed rgba(239,68,68,0.35);outline-offset:2px;"' : '') + '><div class="flex items-start">'
                     + '<img src="' + escapeHtml(author.avatar) + '" class="w-9 h-9 rounded-full mr-2.5 flex-shrink-0 cursor-pointer" onclick="event.stopPropagation();' + avatarClick + '" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">'
-                    + '<div class="flex-1 min-w-0"><div class="flex items-center"><span class="font-medium text-sm text-[var(--text-primary)]">' + escapeHtml(author.name) + '</span>' + privacyBadge + '</div>'
+                    + '<div class="flex-1 min-w-0"><div class="flex items-center"><span class="font-medium text-sm text-[var(--text-primary)]">' + escapeHtml(p.authorId === 'me' ? settings.myName : dispNameById(p.authorId)) + '</span>' + privacyBadge + '</div>'
                     + '<p class="moment-text mt-1" style="font-size:0.8rem;line-height:1.5;">' + typeIcon + displayText + '</p>'
                     + mediaHtml
                     + locHtml
@@ -11703,7 +11714,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
             window.prepareReply = function(postId, commentIndex) {
                 var post = posts.find(function(p) { return p.id === postId; });
                 if (!post || !post.comments || !post.comments[commentIndex]) return;
-                var targetName = post.comments[commentIndex].authorId === 'me' ? settings.myName : (contacts.find(function(c) { return c.id === post.comments[commentIndex].authorId; })?.name || '未知');
+                var targetName = post.comments[commentIndex].authorId === 'me' ? settings.myName : dispNameById(post.comments[commentIndex].authorId);
                 var input = document.getElementById('comment-text-' + postId);
                 if (input) {
                     input.value = '@' + targetName + ' ';
@@ -11727,7 +11738,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                 if (attach) { comment.type = 'image'; comment.media = attach.src; }
                 if (replyToIndex !== null && replyToIndex !== undefined && post.comments[replyToIndex]) {
                     comment.replyToIndex = replyToIndex;
-                    comment.replyToName = post.comments[replyToIndex].authorId === 'me' ? settings.myName : (contacts.find(function(c) { return c.id === post.comments[replyToIndex].authorId; })?.name || '未知');
+                    comment.replyToName = post.comments[replyToIndex].authorId === 'me' ? settings.myName : dispNameById(post.comments[replyToIndex].authorId);
                 }
 
                 // check if @mentioned someone
@@ -12037,7 +12048,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                     currentPost.comments.push(newComment);
                     await updateData('posts', currentPost);
                     if (document.getElementById('moments-panel') && document.getElementById('moments-panel').classList.contains('open')) renderMoments();
-                    showMomentToast((contacts.find(function(c) { return c.id === authorId; })?.name || 'TA') + ' 回复了你', 'fa fa-commenting-o');
+                    showMomentToast(dispNameById(authorId) + ' 回复了你', 'fa fa-commenting-o');
                 }, delay);
             }
 
@@ -12067,7 +12078,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                     currentPost.comments.push(newComment);
                     await updateData('posts', currentPost);
                     if (document.getElementById('moments-panel') && document.getElementById('moments-panel').classList.contains('open')) renderMoments();
-                    showMomentToast((contacts.find(function(c) { return c.id === targetAuthorId; })?.name || 'TA') + ' 回复了你的评论', 'fa fa-commenting-o');
+                    showMomentToast(dispNameById(targetAuthorId) + ' 回复了你的评论', 'fa fa-commenting-o');
                 }, delay);
             }
 
@@ -12193,7 +12204,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                         p.likes.push(liker.id);
                         await updateData('posts', p);
                         if (document.getElementById('moments-panel')?.classList.contains('open')) renderMoments();
-                        showMomentLikeNotif(liker.name || 'TA');
+                        showMomentLikeNotif(dispName(liker) || 'TA');
                     }, delay);
                 }
             }
@@ -12214,7 +12225,6 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
             async function schedulePostCommentsFromContacts(post) {
                 const otherContacts = contacts.filter(c => c.id !== 'me' && typeof c.id === 'number');
                 if (!otherContacts.length) return;
-                let accumulatedDelay = 0;
                 for (const commenter of otherContacts) {
                     if (!momentPostVisibleToContact(post, commenter)) continue;
                     const cMinDelay = getContactReplySetting(commenter, 'postReplyMin') || (settings.postReplyMin || 300);
@@ -12222,7 +12232,6 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                     const minDelay = cMinDelay * 1000;
                     const maxDelay = Math.max(cMaxDelay * 1000, minDelay);
                     const delay = minDelay + Math.random() * (maxDelay - minDelay);
-                    accumulatedDelay += delay;
                     setTimeout(async () => {
                         const p = posts.find(pp => pp.id === post.id);
                         if (!p) return;
@@ -12234,8 +12243,8 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                                 .toISOString() });
                         await updateData('posts', p);
                         if (document.getElementById('moments-panel').classList.contains('open')) renderMoments();
-                        showMomentToast(commenter.name + ' 评论了你的动态', 'fa fa-comment-o');
-                    }, accumulatedDelay);
+                        showMomentToast((commenter.remark || commenter.name) + ' 评论了你的动态', 'fa fa-comment-o');
+                    }, delay);
                 }
             }
 
@@ -12907,7 +12916,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                 }
                 scheduleMemberHangup(memberId);
                 const member = contacts.find(c => c.id === memberId);
-                const memberName = member?.name || '未知成员';
+                const memberName = (member?.remark || member?.name || '未知成员');
                 const joinMsg = { type: 'call', text: `${memberName} 加入了群通话`, senderId: 'me', groupId: groupCallState
                         .groupId, timestamp: new Date().toISOString(), read: true };
                 addData('groupMessages', joinMsg).then(id => { joinMsg.id = id;
@@ -12998,7 +13007,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                 groupCallState.participants.forEach(function(mid) {
                     if (groupCallState.memberDurations[mid] !== undefined) {
                         var c = contacts.find(function(x) { return x.id === mid; });
-                        memberDetails.push({ name: c?.name || mid, duration: groupCallState.memberDurations[mid] });
+                        memberDetails.push({ name: (c?.remark || c?.name) || mid, duration: groupCallState.memberDurations[mid] });
                     }
                 });
                 const endMsg = { type: 'call', text: endText, senderId: 'me', groupId: groupCallState.groupId, timestamp: new Date()
@@ -13128,7 +13137,7 @@ const myTile = selfCamStream
 
             async function addCallRecordForMember(memberId, reason) {
                 const member = contacts.find(c => c.id === memberId);
-                const memberName = member?.name || '未知成员';
+                const memberName = (member?.remark || member?.name || '未知成员');
                 let text = '';
                 const dur = groupCallState.memberDurations[memberId] || 0;
                 if (reason === 'rejected') text = `${memberName} 拒绝了群通话`;
@@ -13153,9 +13162,9 @@ const myTile = selfCamStream
                 callState = { status: 'calling', initiator: 'me', contactId: currentContactId, muted: false, minimized: false,
                     displayMode: 'full', speakerOn: true, cameraOn: false, startTime: null, durationInterval: null, hangupTimer: null };
                 document.getElementById('call-partner-avatar').src = contact.avatar;
-                document.getElementById('call-partner-name').textContent = contact.name;
+                document.getElementById('call-partner-name').textContent = dispName(contact);
                 var nameEl = document.getElementById('call-partner-name-active');
-                if (nameEl) nameEl.textContent = contact.name;
+                if (nameEl) nameEl.textContent = dispName(contact);
                 document.getElementById('call-interface').classList.remove('hidden');
                 document.getElementById('call-waiting').classList.remove('hidden');
                 document.getElementById('call-active').classList.add('hidden');
@@ -13183,14 +13192,14 @@ const myTile = selfCamStream
                 var avatarUrl = contact?.avatar || 'https://picsum.photos/200/200?random=1';
                 document.getElementById('call-active-avatar').src = avatarUrl;
                 var simName = document.getElementById('call-partner-sim-name');
-                if (simName) simName.textContent = contact?.name || '';
+                if (simName) simName.textContent = dispName(contact);
                 callWindowSwapped = false;
                 var selfAv1 = document.getElementById('self-cam-avatar');
                 if (selfAv1 && settings.myAvatar) selfAv1.src = settings.myAvatar;
                 var pipSelfAv1 = document.getElementById('pip-self-cam-avatar');
                 if (pipSelfAv1 && settings.myAvatar) pipSelfAv1.src = settings.myAvatar;
                 var nameEl = document.getElementById('call-partner-name-active');
-                if (nameEl) nameEl.textContent = contact?.name || '';
+                if (nameEl) nameEl.textContent = dispName(contact);
                 resetCallUI();
                 startPrivateCallDuration();
                 schedulePartnerHangup();
@@ -13236,10 +13245,10 @@ const myTile = selfCamStream
                 document.getElementById('call-active').classList.add('hidden');
                 document.getElementById('call-result').classList.remove('hidden');
                 let txt = '';
-                if (reason === 'reject') txt = `${contact?.name || 'TA'}拒绝了${settings.myName}的视频通话`;
-                else if (reason === 'partner-hangup') txt = `${contact?.name || 'TA'}挂断了通话，通话时长 ${formatCallDuration(dur)}`;
+                if (reason === 'reject') txt = `$${dispName(contact)}拒绝了${settings.myName}的视频通话`;
+                else if (reason === 'partner-hangup') txt = `$${dispName(contact)}挂断了通话，通话时长 ${formatCallDuration(dur)}`;
                 else if (reason === 'cancel') txt = `${settings.myName}挂断了通话，通话时长 ${formatCallDuration(dur)}`;
-                else if (reason === 'missed') txt = `${contact?.name || 'TA'}未接听${settings.myName}的来电`;
+                else if (reason === 'missed') txt = `$${dispName(contact)}未接听${settings.myName}的来电`;
                 document.getElementById('call-result-text').textContent = txt;
                 document.getElementById('call-duration-result').textContent = (reason === 'reject' || reason === 'missed') ?
                     '' : `时长${formatCallDuration(dur)}`;
@@ -13277,7 +13286,7 @@ const myTile = selfCamStream
                     cf.classList.add('hidden');
                     cp.classList.remove('hidden');
                     document.getElementById('pip-avatar').src = contact?.avatar || 'https://picsum.photos/200/200?random=1';
-                    document.getElementById('pip-name').textContent = contact?.name || '';
+                    document.getElementById('pip-name').textContent = dispName(contact);
                     // 主窗口隐藏时暂停主 video（省 GPU，只留 PiP 小窗渲染）
                     var mv = document.getElementById('self-cam-video');
                     if (mv && mv.srcObject) { try { mv.pause(); } catch (e) {} }
@@ -13299,7 +13308,7 @@ const myTile = selfCamStream
                     cf.classList.add('hidden');
                     cp.classList.remove('hidden');
                     document.getElementById('pip-avatar').src = contact?.avatar || 'https://picsum.photos/200/200?random=1';
-                    document.getElementById('pip-name').textContent = contact?.name || '';
+                    document.getElementById('pip-name').textContent = dispName(contact);
                 } else if (callState.displayMode === 'pip') {
                     // pip → full
                     callState.displayMode = 'full';
@@ -13327,7 +13336,7 @@ const myTile = selfCamStream
                 const contact = getCurrentContact();
                 if (callState.status !== 'idle' || !contact) return;
                 document.getElementById('incoming-call-avatar').src = contact.avatar;
-                document.getElementById('incoming-call-title').textContent = `${contact.name} 邀请你视频通话`;
+                document.getElementById('incoming-call-title').textContent = `${contact.remark || contact.name} 邀请你视频通话`;
                 document.getElementById('incoming-call-panel').classList.remove('hidden');
                 callState.status = 'incoming';
                 callState.initiator = 'partner';
@@ -13335,14 +13344,14 @@ const myTile = selfCamStream
                 autoHangup = setTimeout(() => { if (callState.status === 'incoming') { document.getElementById(
                             'incoming-call-panel').classList.add('hidden');
                         callState.status = 'idle';
-                        addCallRecord(0, `${settings.myName}未接听${contact.name}的来电`); } }, 60000);
+                        addCallRecord(0, `${settings.myName}未接听${contact.remark || contact.name}的来电`); } }, 60000);
             }
 
             function incomingCallFromContact(contactId) {
                 const contact = contacts.find(c => c.id === contactId);
                 if (!contact || callState.status !== 'idle') return;
                 document.getElementById('incoming-call-avatar').src = contact.avatar;
-                document.getElementById('incoming-call-title').textContent = `${contact.name} 邀请你视频通话`;
+                document.getElementById('incoming-call-title').textContent = `${contact.remark || contact.name} 邀请你视频通话`;
                 document.getElementById('incoming-call-panel').classList.remove('hidden');
                 callState.status = 'incoming';
                 callState.initiator = 'partner';
@@ -13350,7 +13359,7 @@ const myTile = selfCamStream
                 autoHangup = setTimeout(() => { if (callState.status === 'incoming') { document.getElementById(
                             'incoming-call-panel').classList.add('hidden');
                         callState.status = 'idle';
-                        addCallRecord(0, `${settings.myName}未接听${contact.name}的来电`); } }, 60000);
+                        addCallRecord(0, `${settings.myName}未接听${contact.remark || contact.name}的来电`); } }, 60000);
             }
 
             function acceptIncomingCall() {
@@ -13368,14 +13377,14 @@ const myTile = selfCamStream
                 var avatarUrl = contact?.avatar || 'https://picsum.photos/200/200?random=1';
                 document.getElementById('call-active-avatar').src = avatarUrl;
                 var simName2 = document.getElementById('call-partner-sim-name');
-                if (simName2) simName2.textContent = contact?.name || '';
+                if (simName2) simName2.textContent = dispName(contact);
                 callWindowSwapped = false;
                 var selfAv2 = document.getElementById('self-cam-avatar');
                 if (selfAv2 && settings.myAvatar) selfAv2.src = settings.myAvatar;
                 var pipSelfAv2 = document.getElementById('pip-self-cam-avatar');
                 if (pipSelfAv2 && settings.myAvatar) pipSelfAv2.src = settings.myAvatar;
                 var nameEl = document.getElementById('call-partner-name-active');
-                if (nameEl) nameEl.textContent = contact?.name || '';
+                if (nameEl) nameEl.textContent = dispName(contact);
                 document.getElementById('call-interface').classList.remove('hidden');
                 document.getElementById('call-active').classList.remove('hidden');
                 document.getElementById('call-waiting').classList.add('hidden');
@@ -13394,7 +13403,7 @@ const myTile = selfCamStream
                 document.getElementById('incoming-group-call-avatar').src = initiator?.avatar ||
                     'https://picsum.photos/200/200?random=1';
                 document.getElementById('incoming-group-call-title').textContent =
-                `${initiator?.name || '成员'} 邀请你群视频通话`;
+                `$${(initiator?.remark || initiator?.name || '成员')} 邀请你群视频通话`;
                 document.getElementById('incoming-group-call-panel').classList.remove('hidden');
                 groupCallState.status = 'incoming';
                 groupCallState.groupId = groupId;
@@ -13457,7 +13466,7 @@ const myTile = selfCamStream
 
             function showChatInvite(contact) {
                 document.getElementById('incoming-chat-avatar').src = contact.avatar;
-                document.getElementById('incoming-chat-title').textContent = `${contact.name} 邀请你私聊`;
+                document.getElementById('incoming-chat-title').textContent = `${contact.remark || contact.name} 邀请你私聊`;
                 document.getElementById('incoming-chat-panel').classList.remove('hidden');
                 document.getElementById('incoming-chat-panel').dataset.contactId = contact.id;
             }
@@ -13597,7 +13606,7 @@ const myTile = selfCamStream
                 letter.id = id;
                 letters.push(letter);
                 if (currentContactId === contactId) renderLetterList();
-                showLetterNotification(`${contact.name} 给你写信啦 💌`);
+                showLetterNotification(`$${dispName(contact)} 给你写信啦 💌`);
             }
 
             function setupFloatWindowDrag() {
@@ -14428,7 +14437,7 @@ const myTile = selfCamStream
                 contacts.forEach(c => {
                     const o = document.createElement('option');
                     o.value = c.id;
-                    o.textContent = c.name;
+                    o.textContent = c.remark || c.name;
                     select.appendChild(o);
                 });
                 container.innerHTML = '';
@@ -14722,12 +14731,12 @@ const myTile = selfCamStream
                     }
                     div.querySelector('.ex-wc-export-group').addEventListener('click', function(e) {
                         e.stopPropagation();
-                        var data = { type: 'exclusive-wordcards', contactName: contact.name, groupName: g.name, cards: g.cards, exportTime: new Date().toISOString() };
+                        var data = { type: 'exclusive-wordcards', contactName: dispName(contact), groupName: g.name, cards: g.cards, exportTime: new Date().toISOString() };
                         var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                         var url2 = URL.createObjectURL(blob);
                         var a = document.createElement('a');
                         a.href = url2;
-                        a.download = '专属字卡_' + contact.name + '_' + g.name + '_' + new Date().toISOString().slice(0, 10) + '.json';
+                        a.download = '专属字卡_' + (contact.remark || contact.name) + '_' + g.name + '_' + new Date().toISOString().slice(0, 10) + '.json';
                         document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url2);
                         showToast('导出成功 ✅');
                     });
@@ -14841,7 +14850,7 @@ const myTile = selfCamStream
                     e.stopPropagation();
                     const data = {
                         type: 'exclusive-wordcards',
-                        contactName: contact.name,
+                        contactName: dispName(contact),
                         groupName: group.name,
                         cards: group.cards,
                         exportTime: new Date().toISOString()
@@ -14850,7 +14859,7 @@ const myTile = selfCamStream
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `专属字卡_${contact.name}_${group.name}_${new Date().toISOString().slice(0, 10)}.json`;
+                    a.download = `专属字卡_$${dispName(contact)}_${group.name}_${new Date().toISOString().slice(0, 10)}.json`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
@@ -15754,12 +15763,12 @@ const myTile = selfCamStream
                             if (!sel.length || !contact2?.uniqueWordCardGroups) { showToast('请先勾选字卡'); return; }
                             var action = this.dataset.action;
                             if (action === 'export') {
-                                var exData = { type: 'exclusive-wordcards-all', contactName: contact2.name, exportTime: new Date().toISOString(), groups: contact2.uniqueWordCardGroups.map(function(g) { return { name: g.name, enabled: g.enabled, cards: g.cards, blockedCards: g.blockedCards || [] }; }) };
+                                var exData = { type: 'exclusive-wordcards-all', contactName: contact2.remark || contact2.name, exportTime: new Date().toISOString(), groups: contact2.uniqueWordCardGroups.map(function(g) { return { name: g.name, enabled: g.enabled, cards: g.cards, blockedCards: g.blockedCards || [] }; }) };
                                 var exBlob = new Blob([JSON.stringify(exData, null, 2)], { type: 'application/json' });
                                 var exUrl = URL.createObjectURL(exBlob);
                                 var exA = document.createElement('a');
                                 exA.href = exUrl;
-                                exA.download = '专属字卡_' + contact2.name + '_全部_' + new Date().toISOString().slice(0, 10) + '.json';
+                                exA.download = '专属字卡_' + (contact2.remark || contact2.name) + '_全部_' + new Date().toISOString().slice(0, 10) + '.json';
                                 document.body.appendChild(exA); exA.click(); exA.remove(); URL.revokeObjectURL(exUrl);
                                 showToast('已导出全部字卡 ✅');
                                 return;
@@ -15823,12 +15832,12 @@ const myTile = selfCamStream
                         var cid2 = getExCid();
                         var contact2 = contacts.find(function(c) { return c.id === cid2; });
                         if (!contact2?.uniqueWordCardGroups?.length) { showToast('没有字卡可导出'); return; }
-                        var exData = { type: 'exclusive-wordcards-all', contactName: contact2.name, exportTime: new Date().toISOString(), groups: contact2.uniqueWordCardGroups.map(function(g) { return { name: g.name, enabled: g.enabled, cards: g.cards, blockedCards: g.blockedCards || [] }; }) };
+                        var exData = { type: 'exclusive-wordcards-all', contactName: contact2.remark || contact2.name, exportTime: new Date().toISOString(), groups: contact2.uniqueWordCardGroups.map(function(g) { return { name: g.name, enabled: g.enabled, cards: g.cards, blockedCards: g.blockedCards || [] }; }) };
                         var exBlob = new Blob([JSON.stringify(exData, null, 2)], { type: 'application/json' });
                         var exUrl = URL.createObjectURL(exBlob);
                         var exA = document.createElement('a');
                         exA.href = exUrl;
-                        exA.download = '专属字卡_' + contact2.name + '_全部_' + new Date().toISOString().slice(0, 10) + '.json';
+                        exA.download = '专属字卡_' + (contact2.remark || contact2.name) + '_全部_' + new Date().toISOString().slice(0, 10) + '.json';
                         document.body.appendChild(exA); exA.click(); exA.remove(); URL.revokeObjectURL(exUrl);
                         showToast('导出成功 ✅');
                     });
@@ -16284,10 +16293,10 @@ const myTile = selfCamStream
                 contacts.forEach(c => { const card = document.createElement('div');
                     card.className = `contact-card ${c.id===currentContactId?'active':''}`;
                     card.innerHTML =
-                        `<img src="${escapeHtml(c.avatar)}" class="contact-avatar" onerror="this.src='https://picsum.photos/200/200?random=1'"><div class="contact-info"><p class="contact-name">${escapeHtml(c.name)}</p><p class="contact-status">${escapeHtml(c.status)}</p></div><div class="flex items-center space-x-2"><button class="switch-contact-btn text-[var(--theme)] text-sm" data-id="${c.id}">切换</button><button class="delete-contact-btn text-red-400" data-id="${c.id}"><i class="fa fa-trash"></i></button></div>`;
+                        `<img src="${escapeHtml(c.avatar)}" class="contact-avatar" onerror="this.src='https://picsum.photos/200/200?random=1'"><div class="contact-info"><p class="contact-name">${escapeHtml(c.remark || c.name)}</p><p class="contact-status">${escapeHtml(c.status)}</p></div><div class="flex items-center space-x-2"><button class="switch-contact-btn text-[var(--theme)] text-sm" data-id="${c.id}">切换</button><button class="delete-contact-btn text-red-400" data-id="${c.id}"><i class="fa fa-trash"></i></button></div>`;
                     card.querySelector('.switch-contact-btn').onclick = () => switchContact(c.id);
                     card.querySelector('.delete-contact-btn').onclick = async () => { if (confirm(
-                                `确定删除联系人「${c.name}」？所有聊天记录和信件都会被删除，不可恢复！`)) { await deleteContact(c
+                                `确定删除联系人「${c.remark || c.name}」？所有聊天记录和信件都会被删除，不可恢复！`)) { await deleteContact(c
                                 .id);
                             renderSettingsContactList(); } };
                     el.appendChild(card); }); }
@@ -16884,7 +16893,7 @@ const myTile = selfCamStream
                     var title = document.getElementById('ch-sub-title');
                     var content = document.getElementById('ch-sub-content');
                     if (!modal || !title || !content) return;
-                    title.textContent = '🎨 外观设置 - ' + c.name;
+                    title.textContent = '🎨 外观设置 - ' + dispName(c);
                     content.innerHTML = '<div class="space-y-2 p-2">'
                         + '<button id="ch-app-avatar" class="w-full py-3 bg-[var(--theme-light)] rounded-xl text-sm flex items-center justify-center space-x-2 hover:opacity-80"><i class="fa fa-square-o" style="color:var(--theme)"></i><span>头像框</span></button>'
                         + '<button id="ch-app-bubble" class="w-full py-3 bg-[var(--theme-light)] rounded-xl text-sm flex items-center justify-center space-x-2 hover:opacity-80"><i class="fa fa-comment-o" style="color:var(--theme)"></i><span>气泡CSS</span></button>'
@@ -16906,7 +16915,7 @@ const myTile = selfCamStream
                     var title = document.getElementById('ch-sub-title');
                     var content = document.getElementById('ch-sub-content');
                     if (!modal || !title || !content) return;
-                    title.textContent = '🖼️ 头像框 - ' + c.name;
+                    title.textContent = '🖼️ 头像框 - ' + dispName(c);
                     var frameOpts = ['none', 'glow', 'thin', 'double', 'rainbow'];
                     var frameLabels = { none: '无', glow: '💫 发光', thin: '细边', double: '双层', rainbow: '🌈 彩虹' };
                     var current = c.avatarFrame || 'none';
@@ -16937,7 +16946,7 @@ const myTile = selfCamStream
                 };
                 var rs = document.getElementById('ch-reply-settings'); if (rs) rs.onclick = function() { var c = getCurrentContact(); if (!c) return; openChSubModal('reply-settings', c); };
                 var mh = document.getElementById('ch-mood-history'); if (mh) mh.onclick = function() { var c = getCurrentContact(); if (!c) return; openChSubModal('mood-history', c); };
-                var dc = document.getElementById('ch-delete-contact'); if (dc) dc.onclick = function() { var c = getCurrentContact(); if (!c) return; if (!confirm('确定删除联系人"' + c.name + '"？\n将同时删除其所有聊天记录。')) return; deleteContactAndSwitch(c.id); };
+                var dc = document.getElementById('ch-delete-contact'); if (dc) dc.onclick = function() { var c = getCurrentContact(); if (!c) return; if (!confirm('确定删除联系人"' + dispName(c) + '"？\n将同时删除其所有聊天记录。')) return; deleteContactAndSwitch(c.id); };
                 window.openChBgOverlay = function(c) {
                     if (!c) return;
                     var existing = document.getElementById('ch-bg-actions');
@@ -16979,7 +16988,7 @@ const myTile = selfCamStream
                 var _acb = document.getElementById('add-contact-btn'); if (_acb) _acb.onclick = async () => { const name = prompt('输入联系人昵称'); if (name?.trim()) { const nc = await addContact({ name: name.trim() }); renderContactList(); await switchContact(nc.id); } };
                 var partnerName = document.getElementById('partner-name'); if (partnerName) partnerName.onclick = () => { const c = getCurrentContact(); if (!c) return;
                     const n = prompt('修改昵称', c.name); if (n?.trim()) { c.name = n.trim();
-                        document.getElementById('partner-name').textContent = c.name;
+                        document.getElementById('partner-name').textContent = dispName(c);
                         updateContact(c);
                         renderContactList(); } };
                 initContactHomeEvents();
@@ -16991,7 +17000,7 @@ const myTile = selfCamStream
                 var homeAddBtn = document.getElementById('home-add-btn'); if (homeAddBtn) homeAddBtn.onclick = function() { var sheet = document.getElementById('add-action-sheet'); if (sheet) sheet.classList.remove('hidden'); };
                 var homeSearchBtn = document.getElementById('home-search-btn'); var homeSearchPanel = document.getElementById('home-search-panel'); var homeSearchInput = document.getElementById('home-search-input'); var homeSearchResults = document.getElementById('home-search-results'); var homeSearchClear = document.getElementById('home-search-clear');
                 if (homeSearchBtn && homeSearchPanel) homeSearchBtn.onclick = function() { homeSearchPanel.classList.toggle('hidden'); if (!homeSearchPanel.classList.contains('hidden')) { setTimeout(function(){ homeSearchInput.focus(); }, 100); } else { homeSearchInput.value = ''; homeSearchResults.classList.add('hidden'); homeSearchClear.classList.add('hidden'); } };
-                if (homeSearchInput) homeSearchInput.oninput = function() { var q = this.value.trim().toLowerCase(); if (!q) { homeSearchResults.classList.add('hidden'); homeSearchClear.classList.add('hidden'); return; } homeSearchClear.classList.remove('hidden'); var results = contacts.filter(function(c) { return c.name.toLowerCase().includes(q); }); if (results.length === 0) { homeSearchResults.innerHTML = '<div class="text-xs text-[var(--text-secondary)] text-center py-3">未找到匹配的联系人</div>'; homeSearchResults.classList.remove('hidden'); return; } homeSearchResults.innerHTML = results.map(function(c) { var unread = cachedContactUnread && cachedContactUnread[c.id] ? cachedContactUnread[c.id] : 0; return '<div class="flex items-center px-3 py-2 rounded-xl hover:bg-[var(--theme-light)] transition-colors cursor-pointer" data-cid="' + c.id + '"><img src="' + c.avatar + '" class="w-8 h-8 rounded-full mr-3 flex-shrink-0" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><div class="flex-1 min-w-0"><p class="text-sm text-[var(--text-primary)] truncate">' + escapeHtml(c.name) + '</p><p class="text-xs text-[var(--text-secondary)] truncate">' + escapeHtml(c.status || '在线') + '</p></div>' + (unread > 0 ? '<span class="bg-red-400 text-white text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-tight">' + unread + '</span>' : '') + '</div>'; }).join(''); homeSearchResults.classList.remove('hidden'); homeSearchResults.querySelectorAll('[data-cid]').forEach(function(el) { el.onclick = function() { var cid = parseInt(this.dataset.cid); homeSearchPanel.classList.add('hidden'); homeSearchInput.value = ''; homeSearchResults.classList.add('hidden'); homeSearchClear.classList.add('hidden'); switchContact(cid); }; }); };
+                if (homeSearchInput) homeSearchInput.oninput = function() { var q = this.value.trim().toLowerCase(); if (!q) { homeSearchResults.classList.add('hidden'); homeSearchClear.classList.add('hidden'); return; } homeSearchClear.classList.remove('hidden'); var results = contacts.filter(function(c) { return (c.name || '').toLowerCase().includes(q) || (c.remark || '').toLowerCase().includes(q); }); if (results.length === 0) { homeSearchResults.innerHTML = '<div class="text-xs text-[var(--text-secondary)] text-center py-3">未找到匹配的联系人</div>'; homeSearchResults.classList.remove('hidden'); return; } homeSearchResults.innerHTML = results.map(function(c) { var unread = cachedContactUnread && cachedContactUnread[c.id] ? cachedContactUnread[c.id] : 0; return '<div class="flex items-center px-3 py-2 rounded-xl hover:bg-[var(--theme-light)] transition-colors cursor-pointer" data-cid="' + c.id + '"><img src="' + c.avatar + '" class="w-8 h-8 rounded-full mr-3 flex-shrink-0" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><div class="flex-1 min-w-0"><p class="text-sm text-[var(--text-primary)] truncate">' + escapeHtml(c.name) + '</p><p class="text-xs text-[var(--text-secondary)] truncate">' + escapeHtml(c.status || '在线') + '</p></div>' + (unread > 0 ? '<span class="bg-red-400 text-white text-[10px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-tight">' + unread + '</span>' : '') + '</div>'; }).join(''); homeSearchResults.classList.remove('hidden'); homeSearchResults.querySelectorAll('[data-cid]').forEach(function(el) { el.onclick = function() { var cid = parseInt(this.dataset.cid); homeSearchPanel.classList.add('hidden'); homeSearchInput.value = ''; homeSearchResults.classList.add('hidden'); homeSearchClear.classList.add('hidden'); switchContact(cid); }; }); };
                 if (homeSearchClear) homeSearchClear.onclick = function() { homeSearchInput.value = ''; homeSearchResults.classList.add('hidden'); this.classList.add('hidden'); homeSearchInput.focus(); };
                 var sendBtn = document.getElementById('send-btn'); if (sendBtn) sendBtn.onclick = sendMessage;
                 if (messageInput) {
@@ -17197,8 +17206,8 @@ const myTile = selfCamStream
                     const fEl = document.getElementById('template-from-name');
                     const tEl = document.getElementById('template-to-name');
                     const dEl = document.getElementById('template-date');
-                    if (gEl) gEl.innerHTML = '亲爱的' + (c3?.name || 'TA');
-                    if (tEl) tEl.textContent = (c3?.name || 'TA');
+                    if (gEl) gEl.innerHTML = '亲爱的' + dispName(c3);
+                    if (tEl) tEl.textContent = dispName(c3);
                     if (fEl) fEl.textContent = settings.myName || '我';
                     if (dEl) { const n3 = new Date(); dEl.textContent = n3.getFullYear() + '-' + String(n3.getMonth()+1).padStart(2,'0') + '-' + String(n3.getDate()).padStart(2,'0') + ' ' + String(n3.getHours()).padStart(2,'0') + ':' + String(n3.getMinutes()).padStart(2,'0'); }
                     document.getElementById('letter-compose').classList.add('open');
@@ -17567,10 +17576,10 @@ const myTile = selfCamStream
                             if (typeof c.id !== 'number') return;
                             var row = document.createElement('div');
                             row.className = 'moment-at-row';
-                            row.innerHTML = '<img src="' + escapeHtml(c.avatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="text-sm text-[var(--text-primary)]">' + escapeHtml(c.name) + '</span>';
+                            row.innerHTML = '<img src="' + escapeHtml(c.avatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="text-sm text-[var(--text-primary)]">' + escapeHtml(c.remark || c.name) + '</span>';
                             row.onclick = function() {
                                 var ta = document.getElementById('moment-text');
-                                if (ta) ta.value += (ta.value && !ta.value.endsWith(' ') ? ' ' : '') + '@' + c.name + ' ';
+                                if (ta) ta.value += (ta.value && !ta.value.endsWith(' ') ? ' ' : '') + '@' + (c.remark || c.name) + ' ';
                                 ta.focus();
                                 openMomentSheet('');
                             };
@@ -17588,7 +17597,7 @@ const myTile = selfCamStream
                         if (typeof c.id !== 'number') return;
                         var lab = document.createElement('label');
                         lab.className = 'flex items-center px-3 py-2 cursor-pointer text-xs gap-1.5';
-                        lab.innerHTML = '<input type="checkbox" class="mv-cb accent-[var(--theme)]" value="' + c.id + '"' + (curIds.indexOf(c.id) >= 0 ? ' checked' : '') + '><img src="' + escapeHtml(c.avatar) + '" class="w-5 h-5 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="text-[var(--text-primary)]">' + escapeHtml(c.name) + '</span>';
+                        lab.innerHTML = '<input type="checkbox" class="mv-cb accent-[var(--theme)]" value="' + c.id + '"' + (curIds.indexOf(c.id) >= 0 ? ' checked' : '') + '><img src="' + escapeHtml(c.avatar) + '" class="w-5 h-5 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="text-[var(--text-primary)]">' + escapeHtml(c.remark || c.name) + '</span>';
                         wrap.appendChild(lab);
                     });
                     var doneBtn = document.createElement('button');
@@ -17981,7 +17990,7 @@ const myTile = selfCamStream
                     document.getElementById('incoming-call-panel').classList.add('hidden');
                     callState.status = 'idle';
                     var rjContact = contacts.find(function(c) { return c.id === callState.contactId; }) || getCurrentContact();
-                    addCallRecord(0, `${settings.myName}拒绝了${rjContact ? rjContact.name : '对方'}的视频通话`); };
+                    addCallRecord(0, `${settings.myName}拒绝了${rjContact ? dispName(rjContact) : '对方'}的视频通话`); };
                 document.getElementById('accept-incoming-chat').onclick = acceptChatInvite;
                 document.getElementById('reject-incoming-chat').onclick = () => document.getElementById(
                         'incoming-chat-panel').classList.add('hidden');
@@ -18143,9 +18152,8 @@ const myTile = selfCamStream
                             .find(m => m.id === msgId); if (msg) { if (msg.type === 'pat') { showToast(
                                     '拍一拍消息不可引用'); return; }
                             quotedMessage = msg; const author = currentChatType === 'group' ? (msg
-                                .senderId === 'me' ? settings.myName : contacts.find(c => c.id ===
-                                    msg.senderId)?.name || '未知') : (msg.isMe ? settings.myName :
-                                getCurrentContact()?.name || 'TA');
+                                .senderId === 'me' ? settings.myName : dispNameById(msg.senderId)) : (msg.isMe ? settings.myName :
+                                dispName(getCurrentContact()));
                             document.getElementById('quote-author').textContent = author; const
                                 quoteText = msg.type === 'text' ? msg.text : (msg.type === 'image' ?
                                     '[图片]' : (msg.type === 'voice' ? '[语音]' : (msg.type === 'redpacket' ? '[红包]' : '[消息]')));
@@ -18291,7 +18299,7 @@ const myTile = selfCamStream
                 if (contact) { document.getElementById('partner-avatar').src = contact.avatar;
                     var chPa = document.getElementById('ch-partner-avatar');
                     if (chPa) chPa.src = contact.avatar;
-                    document.getElementById('partner-name').textContent = contact.name;
+                    document.getElementById('partner-name').textContent = dispName(contact);
                     document.getElementById('partner-status').textContent = contact.status; }
                 applySkin();
                 applyChatLayout();
@@ -20119,6 +20127,7 @@ const myTile = selfCamStream
             _api.compressImage = compressImage;
             // ===== 相册操作（直接选图） =====
             window.pickFromGallery = function() {
+                var fi = document.createElement('input');
                 fi.type = 'file';
                 fi.accept = 'image/*,video/*';
                 fi.multiple = false;
@@ -20171,7 +20180,7 @@ const myTile = selfCamStream
             window.handleAddContact = function() { closeAddSheet(); var name = prompt('输入联系人昵称'); if (name && name.trim()) { addContact({ name: name.trim() }).then(function(c) { renderContactList(); window._pendingContactId = c.id; document.getElementById('add-contact-result-text').textContent = '已添加联系人 "' + c.name + '"，是否进入他的主页？'; document.getElementById('add-contact-result-modal').classList.remove('hidden'); }); } };
             document.getElementById('add-contact-go-btn').onclick = function() { document.getElementById('add-contact-result-modal').classList.add('hidden'); var cid = window._pendingContactId; if (cid) { switchContact(cid); setTimeout(showContactHome, 500); } window._pendingContactId = null; };
             document.getElementById('add-contact-later-btn').onclick = function() { document.getElementById('add-contact-result-modal').classList.add('hidden'); window._pendingContactId = null; };
-            window.handleCreateGroup = function() { closeAddSheet(); var list = document.getElementById('group-member-list'); list.innerHTML = ''; contacts.forEach(function(c) { list.innerHTML += '<label class="flex items-center px-3 py-2 rounded-xl hover:bg-[var(--theme-light)] cursor-pointer border border-[var(--border-color)]"><input type="checkbox" class="group-member-cb mr-3" data-cid="' + c.id + '"><img src="' + c.avatar + '" class="w-8 h-8 rounded-full mr-2" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="text-sm text-[var(--text-primary)]">' + escapeHtml(c.name) + '</span></label>'; }); document.getElementById('group-member-select-modal').classList.remove('hidden'); document.getElementById('group-member-next-btn').classList.add('hidden'); };
+            window.handleCreateGroup = function() { closeAddSheet(); var list = document.getElementById('group-member-list'); list.innerHTML = ''; contacts.forEach(function(c) { list.innerHTML += '<label class="flex items-center px-3 py-2 rounded-xl hover:bg-[var(--theme-light)] cursor-pointer border border-[var(--border-color)]"><input type="checkbox" class="group-member-cb mr-3" data-cid="' + c.id + '"><img src="' + c.avatar + '" class="w-8 h-8 rounded-full mr-2" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="text-sm text-[var(--text-primary)]">' + escapeHtml(c.remark || c.name) + '</span></label>'; }); document.getElementById('group-member-select-modal').classList.remove('hidden'); document.getElementById('group-member-next-btn').classList.add('hidden'); };
             document.getElementById('group-member-list').addEventListener('change', function() { var checked = document.querySelectorAll('.group-member-cb:checked'); document.getElementById('group-member-next-btn').classList.toggle('hidden', checked.length === 0); });
             document.getElementById('group-member-next-btn').onclick = function() { var checked = document.querySelectorAll('.group-member-cb:checked'); var selected = []; checked.forEach(function(cb) { selected.push(parseInt(cb.dataset.cid)); }); document.getElementById('group-member-select-modal').classList.add('hidden'); document.getElementById('group-name-input').value = ''; document.getElementById('group-avatar-preview-create').src = 'https://picsum.photos/200/200?random=group'; var createBtn = document.getElementById('group-create-btn'); createBtn.dataset.memberIds = JSON.stringify(selected); document.getElementById('group-create-modal').classList.remove('hidden'); };
             document.getElementById('group-avatar-upload-create').onchange = function(e) { var f = e.target.files[0]; if (!f) return; var reader = new FileReader(); reader.onload = function(ev) { document.getElementById('group-avatar-preview-create').src = ev.target.result; }; reader.readAsDataURL(f); e.target.value = ''; };
@@ -20205,7 +20214,7 @@ const myTile = selfCamStream
                 var now = new Date();
                 document.getElementById('my-profile-time-val').textContent = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ' ' + getTimePeriod(now.getHours());
                 var bEl = document.getElementById('my-battery');
-                document.getElementById('my-profile-battery-val').innerHTML = bEl ? bEl.innerHTML : '--';
+                document.getElementById('my-profile-battery-val').innerHTML = (bEl && bEl.innerHTML) ? bEl.innerHTML : '--';
                 document.getElementById('my-profile-mood-val').onclick = function() {
                     var n = prompt('输入你的心情百分比（0-100）', settings.myMoodIndex);
                     if (n !== null) {
@@ -20264,7 +20273,7 @@ const myTile = selfCamStream
                 if (moodEl) moodEl.innerHTML = '<i class="fa fa-heart" style="color:var(--theme)"></i> <span>' + moodPct + '%</span>';
                 var bEl = document.getElementById('my-battery');
                 var bEl2 = document.getElementById('sidebar-battery-val');
-                if (bEl2) bEl2.innerHTML = bEl ? bEl.innerHTML : '🔋 --';
+                if (bEl2) bEl2.innerHTML = (bEl && bEl.innerHTML) ? bEl.innerHTML : '🔋 --';
                 var dot = document.getElementById('sidebar-online-dot');
                 if (dot) {
                     dot.className = 'absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white bg-green-400';
@@ -20434,7 +20443,7 @@ const myTile = selfCamStream
             window.showChangeDetail = function() {
                 var sel = document.getElementById('change-viewer-select');
                 sel.innerHTML = '<option value="0">我</option>';
-                contacts.forEach(function(c) { sel.innerHTML += '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>'; });
+                contacts.forEach(function(c) { sel.innerHTML += '<option value="' + c.id + '">' + escapeHtml(c.remark || c.name) + '</option>'; });
                 updateChangeDetailDisplay(0);
                 document.getElementById('change-detail-page').classList.add('open');
             };
@@ -20471,7 +20480,7 @@ const myTile = selfCamStream
                 var cid = parseInt(document.getElementById('recharge-modal').dataset.rechargeCid || '0');
                 setBalance(cid, amount, true);
                 // record transaction
-                var cname = cid === 0 ? settings.myName : (contacts.find(function(c) { return c.id === cid; })?.name || 'TA');
+                var cname = cid === 0 ? settings.myName : ((function() { var cc = contacts.find(function(c) { return c.id === cid; }); return cc ? (cc.remark || cc.name) : 'TA'; })());
                 var tx = { contactId: cid, type: 'income', category: 'recharge', amount: amount, note: cname + ' 充值', counterparty: '', timestamp: new Date().toISOString() };
                 addData('transactions', tx).then(function(id) { tx.id = id; transactions.push(tx); });
                 // update displays
@@ -20687,7 +20696,7 @@ const myTile = selfCamStream
             window.showFamilyCardSendSelect = function() {
                 var list = document.getElementById('fc-recipient-list'); list.innerHTML = '';
                 contacts.forEach(function(c) {
-                    list.innerHTML += '<label class="flex items-center px-3 py-2 rounded-xl hover:bg-[var(--theme-light)] cursor-pointer border border-[var(--border-color)]"><input type="checkbox" class="fc-recipient-cb mr-3" data-cid="' + c.id + '"><img src="' + c.avatar + '" class="w-8 h-8 rounded-full mr-2" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="text-sm text-[var(--text-primary)]">' + escapeHtml(c.name) + '</span></label>';
+                    list.innerHTML += '<label class="flex items-center px-3 py-2 rounded-xl hover:bg-[var(--theme-light)] cursor-pointer border border-[var(--border-color)]"><input type="checkbox" class="fc-recipient-cb mr-3" data-cid="' + c.id + '"><img src="' + c.avatar + '" class="w-8 h-8 rounded-full mr-2" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="text-sm text-[var(--text-primary)]">' + escapeHtml(c.remark || c.name) + '</span></label>';
                 });
                 document.getElementById('fc-send-select').classList.remove('hidden');
                 document.getElementById('fc-send-next-btn').classList.add('hidden');
@@ -20698,7 +20707,7 @@ const myTile = selfCamStream
             });
             document.getElementById('fc-send-next-btn').onclick = function() {
                 var checked = document.querySelectorAll('.fc-recipient-cb:checked');
-                var names = []; checked.forEach(function(cb) { var c = contacts.find(function(ct) { return ct.id == cb.dataset.cid; }); if (c) names.push(c.name); });
+                var names = []; checked.forEach(function(cb) { var c = contacts.find(function(ct) { return ct.id == cb.dataset.cid; }); if (c) names.push(c.remark || c.name); });
                 document.getElementById('fc-send-recipient-label').textContent = '赠送给: ' + names.join(', ');
                 document.getElementById('fc-limit-input').value = 3000;
                 document.getElementById('fc-send-select').classList.add('hidden');
@@ -20720,7 +20729,7 @@ const myTile = selfCamStream
                 checked.forEach(function(cb) {
                     var c = contacts.find(function(ct) { return ct.id == cb.dataset.cid; });
                     if (!c) return;
-                    var card = { giverContactId: 0, giverName: settings.myName, receiverContactId: c.id, receiverName: c.name, monthlyLimit: limit, usedAmount: 0, status: 'pending', createdAt: timestamp };
+                    var card = { giverContactId: 0, giverName: settings.myName, receiverContactId: c.id, receiverName: c.remark || c.name, monthlyLimit: limit, usedAmount: 0, status: 'pending', createdAt: timestamp };
                     addData('familyCards', card).then(function(id) {
                         card.id = id; familyCards.push(card);
                         addFamilyCardMessageToChat(card, true);
@@ -21057,7 +21066,7 @@ const myTile = selfCamStream
                 if (sel) {
                     var prevVal = rpStylePickerContactId !== null ? String(rpStylePickerContactId) : '';
                     sel.innerHTML = '<option value="">当前会话（本次发红包封面）</option>' + contacts.map(function(c) {
-                        return '<option value="' + c.id + '"' + (String(c.id) === prevVal ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>';
+                        return '<option value="' + c.id + '"' + (String(c.id) === prevVal ? ' selected' : '') + '>' + escapeHtml(c.remark || c.name) + '</option>';
                     }).join('');
                     sel.onchange = function() {
                         rpStylePickerContactId = sel.value ? parseInt(sel.value) : null;
@@ -21093,7 +21102,7 @@ const myTile = selfCamStream
                     if (target) {
                         target.rpCover = id;
                         queuedUpdateContact(target);
-                        showToast('已为 ' + target.name + ' 设置专属红包封面（TA发红包给你时使用）');
+                        showToast('已为 ' + (target.remark || target.name) + ' 设置专属红包封面（TA发红包给你时使用）');
                         closeRpStylePicker();
                         return;
                     }
@@ -21151,7 +21160,7 @@ const myTile = selfCamStream
                 if (amt > bal) { showToast('零钱余额不足'); return; }
                 var note = (document.getElementById('rps-note-input').value || '').trim() || '恭喜发财';
                 setBalance(0, -amt, true);
-                rpAddTxn(0, 'expense', 'red_packet', amt, '发红包给 ' + contact.name, contact.name);
+                rpAddTxn(0, 'expense', 'red_packet', amt, '发红包给 ' + dispName(contact), dispName(contact));
                 var msg = createRedpacketMsg(contact.id, true, amt, note, currentRpStyleId);
                 addData('messages', msg).then(function(id) {
                     msg.id = id;
@@ -21282,12 +21291,12 @@ const myTile = selfCamStream
                                 }
                             }
                         }
-                        msg.claims.push({ id: mid, name: c.name, avatar: c.avatar, amount: amount, time: new Date().toISOString() });
+                        msg.claims.push({ id: mid, name: c.remark || c.name, avatar: c.avatar, amount: amount, time: new Date().toISOString() });
                         setBalance(mid, amount, true);
                         rpAddTxn(mid, 'income', 'red_packet', amount, '领取了群红包' + (grp.name ? '「' + grp.name + '」' : ''), grp.name || '');
                         updateData('groupMessages', msg);
                         if (isMine) {
-                            addGroupClaimMsg(msg.groupId, mid, c.name + ' 领取了你的红包', false);
+                            addGroupClaimMsg(msg.groupId, mid, (c.remark || c.name) + ' 领取了你的红包', false);
                         }
                         rpRerender(msg);
                     }, delay);
@@ -21408,7 +21417,7 @@ const myTile = selfCamStream
                     msg.claims.push({ id: 'me', name: settings.myName || '我', avatar: settings.myAvatar, amount: amount, time: new Date().toISOString() });
                     setBalance(0, amount, true);
                     var sender = msg.senderId === 'me' ? { name: settings.myName || '我', remark: settings.myName || '我' } : contacts.find(function(c) { return c.id === msg.senderId; });
-                    rpAddTxn(0, 'income', 'red_packet', amount, '领取了 ' + (sender ? sender.name : 'TA') + ' 的群红包', sender ? sender.name : '');
+                    rpAddTxn(0, 'income', 'red_packet', amount, '领取了 ' + (sender ? (sender.remark || sender.name) : 'TA') + ' 的群红包', sender ? (sender.remark || sender.name) : '');
                     updateData('groupMessages', msg);
                     rpRerender(msg);
                     addGroupClaimMsg(msg.groupId, 'me', '你领取了' + (sender ? (sender.remark || sender.name) : 'TA') + '发的红包', true);
@@ -21485,7 +21494,7 @@ const myTile = selfCamStream
                 rpAddTxn(msg.contactId, 'income', 'red_packet', msg.amount, '领取了你的红包', settings.myName || '我');
                 updateData('messages', msg);
                 rpRerender(msg);
-                addRedpacketClaimMsg(msg.contactId, false, (contact ? contact.name : '对方') + ' 领取了你的红包');
+                addRedpacketClaimMsg(msg.contactId, false, (contact ? dispName(contact) : '对方') + ' 领取了你的红包');
             }
             function partnerReturnRedpacket(msg) {
                 if (msg.status !== 'pending') return;
@@ -21528,7 +21537,7 @@ const myTile = selfCamStream
                 var content = document.getElementById('rp-popup-content');
                 var cover = document.getElementById('rp-cover');
                 var contact = getCurrentContact();
-                var senderName = msg.isMe ? settings.myName || '我' : (contact ? contact.name : 'TA');
+                var senderName = msg.isMe ? settings.myName || '我' : (contact ? dispName(contact) : 'TA');
                 var coverHtml = '';
                 var grayed = msg.status === 'expired' || msg.status === 'returned';
                 var rpStyle = rpStyleById(msg.rpStyle);
@@ -21536,11 +21545,11 @@ const myTile = selfCamStream
                 setRpCoverMedia(cover, grayed ? null : rpStyle);
                 if (msg.isMe) {
                     if (msg.status === 'pending') {
-                        coverHtml = '<div class="rp-coin-big"><i class="fa fa-rmb"></i></div><p class="rp-sender">发给 ' + escapeHtml(contact ? contact.name : 'TA') + ' 的红包</p><p class="rp-note-text">' + escapeHtml(msg.note || rpStyle.line1) + '</p><p class="rp-sub" style="margin-top:14px">等待对方领取</p>';
+                        coverHtml = '<div class="rp-coin-big"><i class="fa fa-rmb"></i></div><p class="rp-sender">发给 ' + escapeHtml(contact ? dispName(contact) : 'TA') + ' 的红包</p><p class="rp-note-text">' + escapeHtml(msg.note || rpStyle.line1) + '</p><p class="rp-sub" style="margin-top:14px">等待对方领取</p>';
                     } else if (msg.status === 'opened') {
-                        coverHtml = '<div class="rp-coin-big"><i class="fa fa-rmb"></i></div><p class="rp-sender">发给 ' + escapeHtml(contact ? contact.name : 'TA') + ' 的红包</p><p class="rp-amount">¥' + msg.amount.toFixed(2) + '</p><p class="rp-sub">对方已领取</p><button class="rp-btn-ok" onclick="closeRedpacketPopup()">好的</button>';
+                        coverHtml = '<div class="rp-coin-big"><i class="fa fa-rmb"></i></div><p class="rp-sender">发给 ' + escapeHtml(contact ? dispName(contact) : 'TA') + ' 的红包</p><p class="rp-amount">¥' + msg.amount.toFixed(2) + '</p><p class="rp-sub">对方已领取</p><button class="rp-btn-ok" onclick="closeRedpacketPopup()">好的</button>';
                     } else {
-                        coverHtml = '<div class="rp-coin-big"><i class="fa fa-rmb"></i></div><p class="rp-sender">发给 ' + escapeHtml(contact ? contact.name : 'TA') + ' 的红包</p><p class="rp-note-text">' + escapeHtml(msg.note || rpStyle.line1) + '</p><p class="rp-sub" style="margin-top:14px">' + (msg.status === 'returned' ? '对方已退回，金额已退还' : '红包已过期，金额已退还') + '</p><button class="rp-btn-ok" onclick="closeRedpacketPopup()">好的</button>';
+                        coverHtml = '<div class="rp-coin-big"><i class="fa fa-rmb"></i></div><p class="rp-sender">发给 ' + escapeHtml(contact ? dispName(contact) : 'TA') + ' 的红包</p><p class="rp-note-text">' + escapeHtml(msg.note || rpStyle.line1) + '</p><p class="rp-sub" style="margin-top:14px">' + (msg.status === 'returned' ? '对方已退回，金额已退还' : '红包已过期，金额已退还') + '</p><button class="rp-btn-ok" onclick="closeRedpacketPopup()">好的</button>';
                     }
                 } else {
                     if (msg.status === 'pending') {
@@ -21585,7 +21594,7 @@ const myTile = selfCamStream
                     untrackRedpacket(msg);
                     setBalance(0, msg.amount, true);
                     var contact = contacts.find(function(c) { return c.id === msg.contactId; });
-                    rpAddTxn(0, 'income', 'red_packet', msg.amount, '领取了 ' + (contact ? contact.name : 'TA') + ' 的红包', contact ? contact.name : '');
+                    rpAddTxn(0, 'income', 'red_packet', msg.amount, '领取了 ' + (contact ? dispName(contact) : 'TA') + ' 的红包', contact ? contact.name : '');
                     updateData('messages', msg);
                     rpRerender(msg);
                     anim.classList.remove('show');

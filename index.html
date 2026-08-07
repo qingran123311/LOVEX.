@@ -249,10 +249,10 @@
             object-fit: cover;
             border: 2px solid var(--theme-light);
         }
-        #chat-container img.rounded-full.avatar-floating {
+        img.rounded-full.avatar-floating {
             animation: avatarFloat 3s ease-in-out infinite;
         }
-        #chat-container img.rounded-full.avatar-square {
+        img.rounded-full.avatar-square {
             border-radius: 6px !important;
         }
         .moment-notif-toast { position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--card-bg);padding:14px 16px;display:flex;align-items:center;font-size:14px;color:var(--text-primary);box-shadow:0 2px 16px rgba(0,0,0,0.12);transform:translateY(-100%);transition:transform 0.3s ease;border-bottom:1px solid var(--border-color); }
@@ -952,19 +952,39 @@
             gap: 4px;
             border-radius: 8px;
             overflow: hidden;
+            max-width: 320px;
         }
         .moment-images-grid img, .moment-images-grid video {
             width: 100%;
             height: 100%;
+            aspect-ratio: 1 / 1;
             object-fit: cover;
             border-radius: 4px;
             cursor: pointer;
         }
-        .moment-images-grid.one { grid-template-columns: 1fr; max-width: 200px; }
+        .moment-images-grid.one { max-width: 160px; }
+        .moment-images-grid.one img { aspect-ratio: auto; height: auto; max-height: 160px; }
         .moment-images-grid.two { grid-template-columns: 1fr 1fr; }
-        .moment-images-grid.three, .moment-images-grid.four { grid-template-columns: 1fr 1fr; }
+        .moment-images-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+        .moment-images-grid.four { grid-template-columns: 1fr 1fr; }
         .moment-images-grid.many { grid-template-columns: 1fr 1fr 1fr; }
-        .moment-images-grid.one img { max-height: 200px; width: auto; }
+        .moment-preview-cell { position: relative; }
+        .moment-grid-del { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; font-size: 11px; line-height: 18px; text-align: center; cursor: pointer; z-index: 2; }
+        .moment-toolbar { display: flex; align-items: center; gap: 10px; padding: 10px 14px 14px; border-top: 1px solid var(--border-color); }
+        .moment-tool-btn { width: 30px; height: 30px; border-radius: 8px; background: var(--theme-light); color: var(--theme); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; transition: transform 0.15s; }
+        .moment-tool-btn:active { transform: scale(0.9); }
+        .moment-sheet { position: fixed; inset: 0; z-index: 200000; display: flex; align-items: flex-end; justify-content: center; }
+        .moment-sheet.hidden { display: none; }
+        .moment-sheet-mask { position: absolute; inset: 0; background: rgba(0,0,0,0.35); }
+        .moment-sheet-card { position: relative; width: 100%; max-width: 420px; background: var(--card-bg); border-radius: 16px 16px 0 0; padding: 10px 12px 14px; box-shadow: 0 -6px 24px rgba(0,0,0,0.12); }
+        .moment-sheet-title { text-align: center; font-size: 13px; font-weight: 600; color: var(--text-primary); padding: 6px 0 10px; }
+        .moment-cell { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 4px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 14px; color: var(--text-primary); border-radius: 6px; }
+        .moment-cell:active { background: var(--theme-light); }
+        .moment-cell.active > span:first-child { color: var(--theme); font-weight: 600; }
+        .moment-cell .moment-cell-desc { font-size: 11px; color: var(--text-secondary); }
+        .moment-sheet-cancel { display: block; width: 100%; margin-top: 10px; padding: 11px 0; text-align: center; font-size: 14px; color: var(--text-primary); background: var(--theme-light); border-radius: 10px; cursor: pointer; }
+        .moment-at-row { display: flex; align-items: center; gap: 8px; padding: 9px 4px; border-bottom: 1px solid var(--border-color); cursor: pointer; }
+        .moment-at-row:active { background: var(--theme-light); }
         .moment-link-preview {
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -2554,7 +2574,7 @@
         </div>
     </div>
     <footer id="footer" class="relative bg-[var(--bg-footer)] border-t border-[var(--border-color)] px-2 py-2 card-shadow z-20 transition-colors duration-400 footer-safe">
-        <div class="flex items-end space-x-1.5">
+        <div class="flex items-end space-x-1">
             <button id="voice-mode-btn" class="text-[var(--text-secondary)] hover:text-[var(--theme)] w-10 h-10 flex items-center justify-center flex-shrink-0 transition-colors" title="语音"><i class="fa fa-microphone text-lg"></i></button>
             <div class="flex-1 relative flex items-center">
                 <textarea id="message-input" rows="1" placeholder="输入消息..." class="w-full px-4 py-2.5 rounded-full bg-[var(--card-bg)] border border-[var(--border-color)] focus:ring-2 focus:outline-none resize-none text-sm text-[var(--text-primary)] pr-10" style="--tw-ring-color:var(--theme);max-height:80px;height:auto;"></textarea>
@@ -2654,8 +2674,8 @@
                 <p id="ch-original-name" class="text-xs text-[var(--text-secondary)] mt-0.5 hidden"></p>
                 <p id="ch-status" class="text-xs text-[var(--text-secondary)] mt-0.5"></p>
                 <div id="ch-partner-stats" class="flex items-center space-x-4 text-xs text-[var(--text-secondary)] mt-2">
-                    <span>🔋 <span id="ch-partner-battery"></span></span>
-                    <span>🕐 <span id="ch-partner-time"></span></span>
+                    <span><span id="ch-partner-battery"></span></span>
+                    <span><i class="fa fa-clock-o" style="color:var(--theme)"></i> <span id="ch-partner-time"></span></span>
                     <span>字卡 <span id="ch-card-count">0</span></span>
                 </div>
                 <span id="ch-my-mood" class="hidden"></span>
@@ -2818,6 +2838,10 @@
                 <span id="sidebar-status" class="text-xs text-[var(--text-secondary)] mt-0.5 flex items-center cursor-pointer hover:opacity-80" title="点击修改状态" onclick="editMyStatusFromSidebar()">
                     <span id="sidebar-status-text"></span>
                 </span>
+                <div id="sidebar-mood-batt" class="flex items-center gap-2 text-xs text-[var(--text-secondary)] mt-1.5">
+                    <span id="sidebar-mood-val" title="点击修改心情" style="cursor:pointer" onclick="editMyMoodFromSidebar()">😊 --</span>
+                    <span id="sidebar-battery-val" title="我的电量">🔋 --</span>
+                </div>
             </div>
             <hr class="border-[var(--border-color)] mb-4">
             <div class="space-y-1 flex-1">
@@ -2861,15 +2885,15 @@
                 </div>
                 <input type="file" id="mp-avatar-upload" accept="image/*" class="hidden">
                 <p id="mp-name" class="mt-3 text-xl font-bold text-[var(--text-primary)]"></p>
+                <p id="mp-status" class="text-sm text-[var(--text-secondary)] mt-1"></p>
+                <button id="mp-my-moments-btn" class="mt-3 flex items-center gap-1.5 px-4 py-1.5 bg-[var(--theme-light)] rounded-full text-xs cursor-pointer hover:opacity-80">
+                    <i class="fa fa-user-circle text-[var(--theme)]"></i><span>我的朋友圈</span>
+                </button>
             </div>
             <div class="divide-y divide-[var(--border-color)]">
                 <div class="flex items-center justify-between px-4 py-3.5">
                     <span class="text-sm text-[var(--text-secondary)]">名字</span>
                     <input id="mp-name-input" class="text-right text-sm text-[var(--text-primary)] bg-transparent outline-none border-none max-w-[180px]" value="">
-                <div class="flex items-center justify-between px-4 py-3.5">
-                    <span class="text-sm text-[var(--text-secondary)]">状态</span>
-                    <input id="mp-status-input" class="text-right text-sm text-[var(--text-primary)] bg-transparent outline-none border-none max-w-[180px]" placeholder="填写状态" value="">
-                </div>
                 </div>
                 <div class="flex items-center justify-between px-4 py-3.5">
                     <span class="text-sm text-[var(--text-secondary)]">地区</span>
@@ -3133,7 +3157,7 @@
                 <input id="qc-loc-input" type="text" placeholder="自定义地点，如：书房 / 公司楼下" class="pr-input" value="">
                 <div id="qc-loc-chips" class="flex flex-wrap gap-2 mt-2"></div>
                 <div class="flex items-center space-x-2 mt-2">
-                    <span id="qc-location-display" class="flex-1 text-xs bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2.5 text-[var(--text-secondary)]">📍 未选定位</span>
+                    <span id="qc-location-display" class="flex-1 text-xs bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2.5 text-[var(--text-secondary)]"><i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>未选定位</span>
                 </div>
             </div>
             <div class="px-4 mt-3">
@@ -3389,22 +3413,6 @@
             <button id="ch-sub-close" class="absolute top-4 right-4 text-[var(--text-secondary)]"><i class="fa fa-times text-xl"></i></button>
             <h3 id="ch-sub-title" class="font-semibold text-lg mb-4 text-[var(--text-primary)]"></h3>
             <div id="ch-sub-content" class="text-sm"></div>
-        </div>
-    </div>
-
-    <!-- ===== 相册操作底部动作表 ===== -->
-    <div id="album-action-sheet" class="fixed inset-0 bg-black/30 z-[90] hidden flex items-end justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="bg-[var(--card-bg)] rounded-3xl w-full max-w-sm p-6 shadow-xl">
-            <h3 class="font-semibold text-lg mb-4 text-[var(--text-primary)] text-center">选择方式</h3>
-            <div class="space-y-3">
-                <button class="w-full py-3 flex items-center justify-center space-x-3 bg-[var(--theme-light)] rounded-xl text-sm font-medium" onclick="pickFromCamera()">
-                    <span>📷</span><span>拍照</span>
-                </button>
-                <button class="w-full py-3 flex items-center justify-center space-x-3 bg-[var(--theme-light)] rounded-xl text-sm font-medium" onclick="pickFromGallery()">
-                    <span>🖼️</span><span>从相册选择</span>
-                </button>
-            </div>
-            <button class="w-full mt-4 py-2 text-[var(--text-secondary)] text-sm" onclick="document.getElementById('album-action-sheet').classList.add('hidden')">取消</button>
         </div>
     </div>
 
@@ -4030,56 +4038,78 @@
     <div id="moment-compose" class="slide-panel">
         <div class="panel-header">
             <button id="close-moment-compose" class="text-[var(--text-secondary)]"><i class="fa fa-arrow-left text-lg"></i></button>
-            <h2 class="font-semibold text-lg text-[var(--text-primary)]">发布动态</h2>
+            <h2 class="font-semibold text-lg text-[var(--text-primary)]" style="flex:1;text-align:center;transform:translateX(8px);">发布动态</h2>
             <button id="publish-moment-btn" class="text-white bg-[var(--theme)] rounded-xl px-4 py-1.5 text-sm font-medium">发布</button>
         </div>
         <div class="panel-body">
-            <textarea id="moment-text" rows="4" placeholder="说点什么... 使用 @+名字 可艾特联系人" class="w-full px-4 py-3 border border-[var(--border-color)] rounded-xl text-sm resize-none mb-3"></textarea>
-            <div class="flex items-center space-x-2 mb-3 flex-wrap gap-y-2">
-                <label for="moment-image-upload" class="px-3 py-1.5 bg-[var(--theme-light)] rounded-lg text-sm cursor-pointer">📷 图片</label>
-                <input type="file" id="moment-image-upload" accept="image/*" class="hidden">
-                <label for="moment-video-upload" class="px-3 py-1.5 bg-[var(--theme-light)] rounded-lg text-sm cursor-pointer">🎬 视频</label>
-                <input type="file" id="moment-video-upload" accept="video/*" class="hidden">
-                <button id="moment-add-link-btn" class="px-3 py-1.5 bg-[var(--theme-light)] rounded-lg text-sm cursor-pointer">🔗 链接</button>
-                <span id="moment-file-name" class="text-xs text-[var(--text-secondary)] truncate max-w-[120px]"></span>
-                <button id="clear-moment-file" class="text-xs text-red-400 hidden ml-auto">清除</button>
-            </div>
-            <div id="moment-media-preview" class="hidden mb-3">
-                <img id="moment-preview-img" class="max-w-full max-h-40 rounded-xl hidden">
-                <video id="moment-preview-video" class="max-w-full max-h-40 rounded-xl hidden" controls></video>
-            </div>
+            <textarea id="moment-text" rows="4" placeholder="这一刻的想法..." class="w-full px-3 py-2 border border-[var(--border-color)] rounded-xl text-sm resize-none mb-3"></textarea>
+            <div id="moment-preview-grid" class="moment-images-grid hidden mb-3" style="max-width:100%;"></div>
+            <video id="moment-preview-video" class="max-w-full max-h-40 rounded-xl hidden mb-3" controls></video>
             <div id="moment-link-input-area" class="hidden mb-3">
-                <input type="url" id="moment-link-input" placeholder="输入链接地址..." class="w-full px-3 py-2 border border-[var(--border-color)] rounded-xl text-sm">
-            </div>
-            <div class="border-t border-[var(--border-color)] pt-3 mt-2">
-                <label class="text-xs font-medium text-[var(--text-secondary)] block mb-2">谁可以看</label>
-                <div class="flex flex-wrap gap-2 text-xs">
-                    <label class="flex items-center space-x-1 cursor-pointer px-2.5 py-1.5 rounded-lg border border-[var(--border-color)]" id="privacy-public-label">
-                        <input type="radio" name="moment-privacy" value="public" checked class="accent-[var(--theme)]"><span>公开</span>
-                    </label>
-                    <label class="flex items-center space-x-1 cursor-pointer px-2.5 py-1.5 rounded-lg border border-[var(--border-color)]" id="privacy-private-label">
-                        <input type="radio" name="moment-privacy" value="private"><span>私密</span>
-                    </label>
-                    <label class="flex items-center space-x-1 cursor-pointer px-2.5 py-1.5 rounded-lg border border-[var(--border-color)]" id="privacy-select-label">
-                        <input type="radio" name="moment-privacy" value="select"><span>选择可见</span>
-                    </label>
-                    <label class="flex items-center space-x-1 cursor-pointer px-2.5 py-1.5 rounded-lg border border-[var(--border-color)]" id="privacy-exclude-label">
-                        <input type="radio" name="moment-privacy" value="exclude"><span>不给谁看</span>
-                    </label>
+                <div class="flex items-center gap-2">
+                    <input type="url" id="moment-link-input" placeholder="输入链接地址..." class="flex-1 px-3 py-2 border border-[var(--border-color)] rounded-xl text-sm">
+                    <button id="moment-link-add-btn" class="px-3 py-2 text-xs text-white rounded-xl" style="background:var(--theme)">添加</button>
                 </div>
-                <div id="moment-privacy-select-area" class="hidden mt-2 p-2 bg-[var(--theme-light)] rounded-xl max-h-32 overflow-y-auto">
-                    <p class="text-[10px] text-[var(--text-secondary)] mb-1">选择联系人：</p>
-                    <div id="moment-privacy-contact-list" class="space-y-1"></div>
+                <span id="moment-file-name" class="text-xs text-[var(--text-secondary)] truncate block mt-1"></span>
+            </div>
+            <div class="rounded-xl overflow-hidden border border-[var(--border-color)] mb-3 text-sm">
+                <div class="flex items-center justify-between px-3 py-2.5 cursor-pointer active:bg-[var(--theme-light)]" id="moment-row-visibility">
+                    <span class="text-[var(--text-primary)]">谁可以看</span>
+                    <span class="flex items-center text-xs text-[var(--text-secondary)]" id="moment-visibility-label">公开<i class="fa fa-chevron-right ml-1 text-[10px]"></i></span>
+                </div>
+                <div class="border-t border-[var(--border-color)] flex items-center justify-between px-3 py-2.5 cursor-pointer active:bg-[var(--theme-light)]" id="moment-row-location">
+                    <span class="text-[var(--text-primary)]">所在位置</span>
+                    <span class="flex items-center text-xs text-[var(--text-secondary)]" id="moment-location-label">不显示位置<i class="fa fa-chevron-right ml-1 text-[10px]"></i></span>
                 </div>
             </div>
-            <div class="mt-3 flex items-center space-x-2">
-                <input type="checkbox" id="moment-allow-comment" checked class="accent-[var(--theme)]">
-                <label for="moment-allow-comment" class="text-xs text-[var(--text-secondary)]">允许评论</label>
-            </div>
+        </div>
+        <div class="moment-toolbar" id="moment-toolbar">
+            <span class="moment-tool-btn" id="moment-tool-img" title="图片"><i class="fa fa-picture-o"></i></span>
+            <span class="moment-tool-btn" id="moment-tool-video" title="视频"><i class="fa fa-video-camera"></i></span>
+            <span class="moment-tool-btn" id="moment-tool-link" title="链接"><i class="fa fa-link"></i></span>
+            <span class="moment-tool-btn" id="moment-tool-at" title="@某人"><i class="fa fa-at"></i></span>
+        </div>
+        <input type="file" id="moment-image-upload" accept="image/*" multiple class="hidden">
+        <input type="file" id="moment-video-upload" accept="video/*" class="hidden">
+    </div>
+
+    <div id="moment-visibility-sheet" class="moment-sheet hidden">
+        <div class="moment-sheet-mask" data-close="visibility"></div>
+        <div class="moment-sheet-card">
+            <p class="moment-sheet-title">谁可以看</p>
+            <div class="moment-cell" data-vis="public"><span>公开</span><span class="moment-cell-desc">所有人可见，可点赞可评论</span></div>
+            <div class="moment-cell" data-vis="private"><span>私密</span><span class="moment-cell-desc">仅自己可见</span></div>
+            <div class="moment-cell" data-vis="select"><span>选择可见</span><span class="moment-cell-desc">只有选择的人可见</span></div>
+            <div class="moment-cell" data-vis="exclude"><span>不给谁看</span><span class="moment-cell-desc">选择的人不可见</span></div>
+            <div id="moment-visibility-contact-wrap" class="hidden max-h-40 overflow-y-auto border-t border-[var(--border-color)]"></div>
+            <button class="moment-sheet-cancel" data-sheet="visibility">取 消</button>
         </div>
     </div>
 
-    <div id="moment-lightbox" class="fixed inset-0 z-50 hidden bg-black/90 flex items-center justify-center" onclick="this.classList.add('hidden')">
+    <div id="moment-location-sheet" class="moment-sheet hidden">
+        <div class="moment-sheet-mask" data-sheet="location"></div>
+        <div class="moment-sheet-card">
+            <p class="moment-sheet-title">所在位置</p>
+            <div class="moment-cell" id="moment-loc-none"><span>不显示位置</span></div>
+            <div class="moment-cell" id="moment-loc-auto"><span>获取当前位置</span></div>
+            <div class="border-t border-[var(--border-color)] flex items-center gap-2 px-3 py-2.5">
+                <input type="text" id="moment-location-input" placeholder="自定义位置名称" class="flex-1 px-2 py-1.5 border border-[var(--border-color)] rounded-lg text-sm">
+                <button id="moment-location-confirm" class="px-3 py-1.5 text-white rounded-lg text-xs" style="background:var(--theme)">确定</button>
+            </div>
+            <button class="moment-sheet-cancel" id="moment-loc-close">取 消</button>
+        </div>
+    </div>
+
+    <div id="moment-at-sheet" class="moment-sheet hidden">
+        <div class="moment-sheet-mask" data-sheet="at"></div>
+        <div class="moment-sheet-card">
+            <p class="moment-sheet-title">提醒某人</p>
+            <div id="moment-at-contact-list" class="max-h-60 overflow-y-auto"></div>
+            <button class="moment-sheet-cancel" data-sheet="moment">取 消</button>
+        </div>
+    </div>
+
+    <div id="moment-lightbox" class="fixed inset-0 z-[100000] hidden bg-black/90 flex items-center justify-center" onclick="this.classList.add('hidden')">
         <video id="moment-lightbox-video" class="max-w-full max-h-full" controls autoplay></video>
     </div>
 
@@ -6116,6 +6146,8 @@ async function createGroup(name, memberIds) {
                         this.classList.toggle('active', rs.momentEnabled);
                         var row = document.getElementById('ch-moment-row');
                         if (row) row.style.display = rs.momentEnabled ? '' : 'none';
+                        if (!rs.momentEnabled) { if (window.momentTimers && momentTimers[contact.id]) clearTimeout(momentTimers[contact.id]); }
+                        else startMomentTimers();
                     };
                     document.getElementById('ch-moment-post').oninput = function() {
                         rsv('momentPostProb', parseInt(this.value));
@@ -6477,8 +6509,9 @@ async function createGroup(name, memberIds) {
 
             function applyAvatarEffects(scopeEl) {
                 var frameClasses = ['avatar-frame-glow', 'avatar-frame-thin', 'avatar-frame-double', 'avatar-frame-rainbow'];
-                var avatars = scopeEl ? scopeEl.querySelectorAll('.header-avatar, #call-partner-avatar, #ch-avatar, img.rounded-full') : document.querySelectorAll('.header-avatar, #call-partner-avatar, #ch-avatar, #chat-container img.rounded-full');
+                var avatars = scopeEl ? scopeEl.querySelectorAll('img.rounded-full, .contact-avatar, .header-avatar, #call-partner-avatar, #ch-avatar') : document.querySelectorAll('img.rounded-full, .contact-avatar, .header-avatar, #call-partner-avatar, #ch-avatar');
                 avatars.forEach(function(av) {
+                    if (av.clientWidth > 0 && av.clientWidth < 26) return;
                     if (settings.avatarFlow) av.classList.add('avatar-flowing'); else av.classList.remove('avatar-flowing');
                     if (settings.avatarSquare) av.classList.add('avatar-square'); else av.classList.remove('avatar-square');
                     if (settings.avatarFloat) av.classList.add('avatar-floating'); else av.classList.remove('avatar-floating');
@@ -6969,8 +7002,8 @@ async function createGroup(name, memberIds) {
                         const kAccent = msg.kind === 'decide' ? 'linear-gradient(135deg,#fdf1f4,#f8e0e8)' : 'linear-gradient(135deg,#eefaf1,#d9f2e2)';
                         const kBorder = msg.kind === 'decide' ? '#eeb0c0' : '#8fd0a8';
                         const kTextColor = msg.kind === 'decide' ? 'var(--theme)' : '#3a9a66';
-                        const lines = (msg.text || '').split('\n').map(function(l) { return escapeHtml(l); }).join('<br>');
-                        kd.innerHTML = '<div class="flex items-end space-x-2 max-w-[82%]">' + (!msg.isMe ? '<img src="' + escapeHtml(kAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">' : '') + '<div><div class="dc-msg-bubble px-3.5 py-2.5 card-shadow" style="background:' + kAccent + ';border:1px solid ' + kBorder + ';border-radius:14px;min-width:200px;"><div class="flex items-center space-x-1.5">' + kIco + '<span class="text-sm font-semibold" style="color:' + kTextColor + '">' + kTitle + '</span></div><div class="text-xs text-[var(--text-primary)] mt-1 leading-relaxed">' + lines + '</div></div><div class="msg-meta"><span class="text-xs text-[var(--text-secondary)]">' + formatTime(msg.timestamp) + '<span class="read-status text-xs ml-1 ' + (msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400')) + '">' + (msg.read ? '' : '●') + '</span></span></div></div>' + (msg.isMe ? '<img src="' + escapeHtml(kAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=2\'">' : '</div>');
+                        const lines = (msg.text || '').split('\n').map(function(l) { return l.trim() ? '<div class="py-0.5">' + escapeHtml(l) + '</div>' : ''; }).join('');
+                        kd.innerHTML = '<div class="flex items-end space-x-2 max-w-[82%]">' + (!msg.isMe ? '<img src="' + escapeHtml(kAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">' : '') + '<div><div class="dc-msg-bubble px-3.5 py-2.5 card-shadow" style="background:' + kAccent + ';border:1px solid ' + kBorder + ';border-radius:14px;min-width:200px;"><div class="flex items-center space-x-1.5">' + kIco + '<span class="text-sm font-semibold" style="color:' + kTextColor + '">' + kTitle + '</span></div><div class="text-xs text-[var(--text-primary)] mt-2 space-y-1 leading-relaxed">' + lines + '</div></div></div>' + (msg.isMe ? '<img src="' + escapeHtml(kAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=2\'">' : '</div>');
                         return kd;
                     }
                     if (msg.qnId) {
@@ -6980,7 +7013,7 @@ async function createGroup(name, memberIds) {
                         const qc = getCurrentContact();
                         const qAvatar = msg.isMe ? settings.myAvatar : (qc?.avatar || 'https://picsum.photos/200/200?random=1');
                         const qWho = msg.isMe ? '我' : (qc?.remark || qc?.name || 'TA');
-                        qd.innerHTML = '<div class="flex items-end space-x-2 max-w-[82%]">' + (!msg.isMe ? '<img src="' + escapeHtml(qAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">' : '') + '<div><div class="qn-msg-bubble px-3.5 py-2.5 card-shadow" style="background:linear-gradient(160deg,var(--card-bg),var(--theme-light));border:1px solid var(--theme);border-radius:14px;min-width:200px;cursor:pointer;" onclick="window.openQnMsgFromChat(' + msg.id + ')"><div class="flex items-center space-x-2"><span class="text-lg">💌</span><span class="text-sm font-semibold" style="color:var(--theme)">心笺问卷</span></div><div class="text-xs text-[var(--text-primary)] mt-0.5">' + escapeHtml(qWho) + '：' + escapeHtml(msg.text || '') + '</div><div class="text-[10px] text-[var(--text-secondary)] mt-1">点击查看答卷 →</div></div><div class="msg-meta"><span class="text-xs text-[var(--text-secondary)]">' + formatTime(msg.timestamp) + '</span></div></div>' + (msg.isMe ? '<img src="' + escapeHtml(qAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=2\'">' : '</div>');
+                        qd.innerHTML = '<div class="flex items-end space-x-2 max-w-[82%]">' + (!msg.isMe ? '<img src="' + escapeHtml(qAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">' : '') + '<div><div class="qn-msg-bubble px-3.5 py-2.5 card-shadow" style="background:linear-gradient(160deg,var(--card-bg),var(--theme-light));border:1px solid var(--theme);border-radius:14px;min-width:200px;cursor:pointer;" onclick="window.openQnMsgFromChat(' + msg.id + ')"><div class="flex items-center space-x-2"><span class="text-lg">💌</span><span class="text-sm font-semibold" style="color:var(--theme)">心笺问卷</span></div><div class="text-xs text-[var(--text-primary)] mt-0.5">' + escapeHtml(qWho) + '：' + escapeHtml(msg.text || '') + '</div><div class="text-[10px] text-[var(--text-secondary)] mt-1">点击查看答卷 →</div></div><div class="msg-meta" style="justify-content:' + (msg.isMe ? 'flex-end' : 'flex-start') + '"><span class="text-xs text-[var(--text-secondary)]">' + formatTime(msg.timestamp) + '</span></div></div>' + (msg.isMe ? '<img src="' + escapeHtml(qAvatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=2\'">' : '</div>');
                         return qd;
                     }
                     const rDiv = document.createElement('div');
@@ -8160,7 +8193,7 @@ async function createGroup(name, memberIds) {
                         }
                     }
                 }
-                // ===== 计划撤回消息 =====
+                // ===== 计划撤回消息：随机撤回最近 10 条中对方发的某一条 =====
                 if (chatType === 'private' && msg.id && msg.type !== 'pat' && msg.type !== 'call' && msg.type !== 'redpacket' && msg.type !== 'rp-claim') {
                     var cReply = contacts.find(function(ct) { return ct.id === contactId; });
                     var rcRecall = getContactReplySetting(cReply, 'recallEnabled');
@@ -8170,23 +8203,27 @@ async function createGroup(name, memberIds) {
                         setTimeout(function() {
                             var store = 'messages';
                             var msgs = cachedContactMessages[contactId];
-                            if (!msgs) return;
-                            var rMsg = msgs.find(function(m) { return m.id === msg.id; });
+                            if (!msgs || !msgs.length) return;
+                            var candidates = msgs.filter(function(m) {
+                                return m && !m.isMe && m.contactId === contactId && !m.recalled && m.type !== 'pat' && m.type !== 'call' && m.type !== 'redpacket' && m.type !== 'rp-claim' && m.type !== 'letter';
+                            });
+                            if (!candidates.length) return;
+                            var rMsg = candidates.slice(-10)[Math.floor(Math.random() * Math.min(10, candidates.slice(-10).length))];
                             if (!rMsg || rMsg.recalled) return;
                             rMsg.recalled = true;
-                            rMsg.originalText = rMsg.text;
+                            rMsg.originalText = rMsg.text || '';
                             rMsg.text = '[消息已撤回]';
                             updateData(store, rMsg);
+                            renderContactList();
                             if (currentChatType === 'private' && currentContactId === contactId) {
                                 messages = cachedContactMessages[contactId] || messages;
-                                var el = chatContainer.querySelector('[data-id="' + msg.id + '"]');
+                                var el = chatContainer.querySelector('[data-id="' + rMsg.id + '"]');
                                 if (el) {
                                     var newEl = createMessageElement(rMsg, false);
                                     el.parentNode.replaceChild(newEl, el);
                                     postProcessMsgActions(newEl, rMsg);
                                 }
                             }
-                            renderContactList();
                         }, recallDelay);
                     }
                 }
@@ -8240,6 +8277,7 @@ async function createGroup(name, memberIds) {
                 if (window._activeEmojiPack === undefined) window._activeEmojiPack = -1;
                 var tabBar = document.createElement('div');
                 tabBar.className = 'flex items-center gap-1 mb-2 flex-shrink-0 overflow-x-auto scrollbar-hide';
+                tabBar.style.cssText = 'position:sticky;top:0;z-index:5;background:var(--card-bg);padding:2px 0;';
                 var addTab = function(label, isActive, onClick) {
                     var btn = document.createElement('button');
                     btn.className = 'text-xs px-2.5 py-1 rounded-lg whitespace-nowrap ' + (isActive ? 'text-white' : 'text-[var(--text-secondary)] border border-[var(--border-color)]');
@@ -8896,11 +8934,6 @@ async function createGroup(name, memberIds) {
   <label class="flex-1 py-2 bg-[var(--theme-light)] rounded-lg text-xs text-[var(--text-primary)] text-center cursor-pointer"><i class="fa fa-upload mr-1"></i>导入分享字卡<input type="file" id="fm-wc-import" accept=".json" class="hidden"></label>\
 </div>\
 <div class="flex mb-3"><button id="fm-wc-add-group" class="flex-1 py-2 border border-dashed border-[var(--border-color)] rounded-xl text-xs">+ 添加分组</button></div>\
-<div class="sticky top-0 z-20 mb-2 p-2 border border-[var(--border-color)] rounded-xl bg-[var(--card-bg)] shadow-sm">\
-  <div class="flex space-x-1 mb-1"><input type="text" id="fm-wc-quick-add" placeholder="快速添加：输入后回车" class="flex-1 px-2 py-1 border border-[var(--border-color)] rounded text-xs fm-wc-quick-add-input" data-gid="0"><button id="fm-wc-quick-add-btn" class="px-2 py-1 bg-[var(--theme-light)] rounded text-xs fm-wc-quick-add-btn" data-gid="0">添加</button></div>\
-  <div class="flex space-x-1"><textarea id="fm-wc-quick-batch" placeholder="批量导入：每行一张，自动去重" rows="2" class="flex-1 px-2 py-1 border border-[var(--border-color)] rounded text-xs resize-none fm-wc-quick-batch" data-gid="0"></textarea><button id="fm-wc-quick-batch-btn" class="px-2 py-1 text-white rounded text-xs self-end" data-gid="0" style="background:var(--theme)">批量<br>导入</button></div>\
-  <div class="text-[10px] text-[var(--text-secondary)] mt-1">快速添加/批量导入：写入第一个分组，避免滚动遮挡</div>\
-</div>\
 <div id="fm-word-card-groups" class="space-y-2 mb-16"></div>\
 <div id="fm-wc-batch-bar" class="hidden fixed bottom-0 left-0 right-0 p-3 bg-[var(--card-bg)] border-t border-[var(--border-color)] z-50 shadow-lg flex items-center justify-between" style="max-width:480px;margin:0 auto">\
   <span id="fm-wc-count" class="text-xs text-[var(--text-secondary)]">0 个已选</span>\
@@ -8953,25 +8986,6 @@ async function createGroup(name, memberIds) {
                     document.getElementById('fm-wc-batch-del').onclick = function() { fmWcBatchAction('delete'); };
                     document.getElementById('fm-wc-batch-export').onclick = function() { fmWcBatchAction('export'); };
                     document.getElementById('fm-wc-add-group').onclick = function() { var n = prompt('分组名称'); if (n && n.trim()) { wordCardGroups.push({ id: Date.now(), name: n.trim(), enabled: true, cards: [], blockedCards: [] }); saveWordCardGroups(); renderFmWordCardGroups(); } };
-                    var qaBtn = document.getElementById('fm-wc-quick-add-btn');
-                    if (qaBtn) qaBtn.onclick = function() { fmWcQuickAdd(false); };
-                    var qaInput = document.getElementById('fm-wc-quick-add');
-                    if (qaInput) qaInput.onkeydown = function(e) { if (e.key === 'Enter') fmWcQuickAdd(false); };
-                    var qbBtn = document.getElementById('fm-wc-quick-batch-btn');
-                    if (qbBtn) qbBtn.onclick = function() { fmWcQuickAdd(true); };
-                    function fmWcQuickAdd(isBatch) {
-                        var g = wordCardGroups[0];
-                        if (!g) { showToast('请先添加分组'); return; }
-                        var allCards = []; wordCardGroups.forEach(function(x) { (x.cards||[]).forEach(function(c) { if (allCards.indexOf(c)===-1) allCards.push(c); }); });
-                        var txt = isBatch ? (document.getElementById('fm-wc-quick-batch').value || '') : (document.getElementById('fm-wc-quick-add').value || '');
-                        if (!txt.trim()) return;
-                        var lines = txt.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-                        var added = 0;
-                        lines.forEach(function(l) { if (allCards.indexOf(l) === -1) { g.cards.push(l); allCards.push(l); added++; } });
-                        if (added) { updateData('wordCards', g); renderFmWordCardGroups(document.getElementById('fm-wc-search').value); showToast('导入 ' + added + ' 条 ✅'); } else { showToast('全部已存在，已去重'); }
-                        document.getElementById('fm-wc-quick-add').value = '';
-                        document.getElementById('fm-wc-quick-batch').value = '';
-                    }
                     document.getElementById('fm-wc-export-all').onclick = function() {
                         var data = { type: 'wordcards', exportTime: new Date().toISOString(), groups: wordCardGroups.map(function(g) { return { id: g.id, name: g.name, enabled: g.enabled, cards: g.cards, blockedCards: g.blockedCards || [] }; }) };
                         var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); var url = URL.createObjectURL(blob);
@@ -9194,7 +9208,7 @@ async function createGroup(name, memberIds) {
                     var groupDiv = document.createElement('div');
                     groupDiv.className = 'border border-[var(--border-color)] rounded-xl overflow-hidden mb-2';
                     if (g.enabled === undefined) g.enabled = true;
-                    groupDiv.innerHTML = '<div class="flex items-center justify-between p-2.5 bg-[var(--theme-light)] cursor-pointer fm-wc-header" data-gid="' + g.id + '"><div class="flex items-center flex-1 min-w-0"><span class="text-xs mr-1 select-none">' + toggleIcon + '</span>' + (selectMode ? '<input type="checkbox" class="fm-wc-group-cb mr-2" data-gid="' + g.id + '" ' + (groupSel ? 'checked' : '') + '>' : '') + '<span class="truncate font-medium text-xs flex-1">' + escapeHtml(g.name) + ' <span class="text-xs font-normal text-[var(--text-secondary)]">' + g.cards.length + '张' + (sq ? ' 匹配' + matched.length + '张' : '') + '</span></span></div><div class="flex items-center space-x-1 flex-shrink-0 ml-2"><input type="checkbox" class="fm-wc-g-toggle" data-gid="' + g.id + '" ' + (g.enabled ? 'checked' : '') + ' title="启用/屏蔽分组"><button class="fm-wc-g-edit text-[var(--text-secondary)] hover:text-[var(--theme)] p-1 text-xs" data-gid="' + g.id + '" title="编辑分组"><i class="fa fa-pencil"></i></button><label class="cursor-pointer text-[var(--text-secondary)] hover:text-[var(--theme)] p-1 text-xs" title="导入分组到该分组"><i class="fa fa-upload"></i><input type="file" class="fm-wc-g-import hidden" accept=".json,.txt" data-gid="' + g.id + '"></label><button class="fm-wc-g-export text-[var(--text-secondary)] hover:text-[var(--theme)] p-1 text-xs" data-gid="' + g.id + '" title="导出该分组"><i class="fa fa-download"></i></button><button class="fm-wc-g-del text-red-400 hover:text-red-600 p-1 text-xs" data-gid="' + g.id + '" title="删除分组"><i class="fa fa-trash"></i></button></div></div><div class="fm-wc-body" style="' + (isExpanded ? '' : 'display:none') + '"><div class="p-2 space-y-1">' + (cardHtml || '<p class="text-xs text-[var(--text-secondary)] text-center py-2">无匹配字卡</p>') + '</div><div class="flex space-x-1 px-2 pb-1"><input type="text" placeholder="添加字卡" class="flex-1 px-2 py-1 border border-[var(--border-color)] rounded text-xs fm-wc-add-input" data-gid="' + g.id + '"><button class="px-2 py-1 bg-[var(--theme-light)] rounded text-xs fm-wc-add-btn" data-gid="' + g.id + '">添加</button></div><div class="flex space-x-1 px-2 pb-2"><textarea placeholder="批量导入，每行一条（自动去重）" rows="2" class="flex-1 px-2 py-1 border border-[var(--border-color)] rounded text-xs resize-none fm-wc-batch" data-gid="' + g.id + '"></textarea><button class="px-2 py-1 text-white rounded text-xs self-end fm-wc-batch-btn" data-gid="' + g.id + '" style="background:var(--theme)">批量<br>导入</button></div></div>';
+                    groupDiv.innerHTML = '<div class="flex items-center justify-between p-2.5 bg-[var(--theme-light)] cursor-pointer fm-wc-header" data-gid="' + g.id + '"><div class="flex items-center flex-1 min-w-0"><span class="text-xs mr-1 select-none">' + toggleIcon + '</span>' + (selectMode ? '<input type="checkbox" class="fm-wc-group-cb mr-2" data-gid="' + g.id + '" ' + (groupSel ? 'checked' : '') + '>' : '') + '<span class="truncate font-medium text-xs flex-1">' + escapeHtml(g.name) + ' <span class="text-xs font-normal text-[var(--text-secondary)]">' + g.cards.length + '张' + (sq ? ' 匹配' + matched.length + '张' : '') + '</span></span></div><div class="flex items-center space-x-1 flex-shrink-0 ml-2"><input type="checkbox" class="fm-wc-g-toggle" data-gid="' + g.id + '" ' + (g.enabled ? 'checked' : '') + ' title="启用/屏蔽分组"><button class="fm-wc-g-edit text-[var(--text-secondary)] hover:text-[var(--theme)] p-1 text-xs" data-gid="' + g.id + '" title="编辑分组"><i class="fa fa-pencil"></i></button><label class="cursor-pointer text-[var(--text-secondary)] hover:text-[var(--theme)] p-1 text-xs" title="导入分组到该分组"><i class="fa fa-upload"></i><input type="file" class="fm-wc-g-import hidden" accept=".json,.txt" data-gid="' + g.id + '"></label><button class="fm-wc-g-export text-[var(--text-secondary)] hover:text-[var(--theme)] p-1 text-xs" data-gid="' + g.id + '" title="导出该分组"><i class="fa fa-download"></i></button><button class="fm-wc-g-del text-red-400 hover:text-red-600 p-1 text-xs" data-gid="' + g.id + '" title="删除分组"><i class="fa fa-trash"></i></button></div></div><div class="fm-wc-body" style="' + (isExpanded ? '' : 'display:none') + '"><div class="flex space-x-1 px-2 pt-2"><textarea placeholder="批量导入，每行一条（自动去重）" rows="2" class="flex-1 px-2 py-1 border border-[var(--border-color)] rounded text-xs resize-none fm-wc-batch" data-gid="' + g.id + '"></textarea><button class="px-2 py-1 text-white rounded text-xs self-end fm-wc-batch-btn" data-gid="' + g.id + '" style="background:var(--theme)">批量<br>导入</button></div><div class="p-2 space-y-1">' + (cardHtml || '<p class="text-xs text-[var(--text-secondary)] text-center py-2">无匹配字卡</p>') + '</div><div class="flex space-x-1 px-2 pb-2"><input type="text" placeholder="添加字卡" class="flex-1 px-2 py-1 border border-[var(--border-color)] rounded text-xs fm-wc-add-input" data-gid="' + g.id + '"><button class="px-2 py-1 bg-[var(--theme-light)] rounded text-xs fm-wc-add-btn" data-gid="' + g.id + '">添加</button></div></div>';
                     el.appendChild(groupDiv);
                 });
                 updateFmWcBatchBar();
@@ -9890,6 +9904,7 @@ async function createGroup(name, memberIds) {
                     d.className = 'cursor-pointer rounded p-1';
                     d.innerHTML = '<img src="' + e.src + '" class="w-12 h-12 object-contain rounded">';
                     d.onclick = function() { sendStickerMsg(e.src, 'shared'); };
+                    d.oncontextmenu = function(ev) { ev.preventDefault(); var esrc = e.src; if (confirm('删除这个专属表情？')) { contact.uniqueEmojis = contact.uniqueEmojis.filter(function(ue) { return ue.src !== esrc; }); updateContact(contact); renderContactEmojiContent(); } };
                     lib.appendChild(d);
                 });
             }
@@ -10447,8 +10462,10 @@ async function createGroup(name, memberIds) {
                         if (!isNaN(v)) { settings.myMoodIndex = Math.max(0, Math.min(100, v)); saveSettings(); updateMyMoodDisplay(); }
                     }
                 }
-if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHandler; el.style.cursor = 'pointer'; }
+                if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHandler; el.style.cursor = 'pointer'; }
                 if (chEl) { chEl.textContent = txt; chEl.style.color = color; chEl.onclick = moodClickHandler; chEl.style.cursor = 'pointer'; }
+                var sEl = document.getElementById('sidebar-mood-val');
+                if (sEl) sEl.innerHTML = '<i class="fa fa-heart" style="color:var(--theme)"></i> <span>' + pct + '%</span>';
             }
             function getTimePeriod(hour) {
                 if (hour >= 0 && hour < 6) return '凌晨';
@@ -10555,7 +10572,12 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                 else if (pct > 10) icon = 'fa-battery-quarter';
                 var html = '<i class="fa ' + icon + '" style="margin-right:1px;"></i>' + pct + '%';
                 if (partnerEl) partnerEl.innerHTML = html;
-                if (chPartnerEl) chPartnerEl.innerHTML = html;
+                if (chPartnerEl) {
+                    var barColor = pct > 50 ? 'var(--theme)' : pct > 20 ? '#eab308' : '#ef4444';
+                    chPartnerEl.innerHTML = '<div style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle">' +
+                        '<div style="width:38px;height:5px;background:var(--border-color);border-radius:3px;overflow:hidden;display:inline-block">' +
+                        '<div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:3px;transition:width 0.4s"></div></div>' + pct + '%</div>';
+                }
             }
             function startBatteryMonitor() {
                 if (navigator.getBattery) {
@@ -11502,6 +11524,7 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
 
             function renderMoments() {
                 var contactFilter = window._momentContactFilter;
+                var meOnly = window._momentMeOnly === true;
                 var coverImg = document.getElementById('moments-cover-img');
                 if (coverImg) applyMomentsCoverMedia();
                 var myAvatar = document.getElementById('moments-my-avatar');
@@ -11518,6 +11541,10 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                 if (!container) return;
 
                 let filtered = [...posts];
+                // my moments only (my profile entry)
+                if (meOnly) {
+                    filtered = filtered.filter(function(p) { return p.authorId === 'me'; });
+                }
                 // contact filter (from contact home page)
                 if (contactFilter) {
                     filtered = filtered.filter(function(p) { return p.authorId === contactFilter.id; });
@@ -11527,7 +11554,7 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                     filtered = filtered.filter(function(p) {
                         if (p.authorId !== 'me') return true;
                         if (!p.privacy || p.privacy === 'public') return true;
-                        if (p.privacy === 'private') return false;
+                        if (p.privacy === 'private') return true;
                         if (p.privacy === 'select') return p.visibleTo && p.visibleTo.indexOf(currentContactId) >= 0;
                         if (p.privacy === 'exclude') return !p.excludeIds || p.excludeIds.indexOf(currentContactId) < 0;
                         return true;
@@ -11560,19 +11587,22 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                 }
 
                 // parse @mentions in text
-                var displayText = escapeHtml(p.text || '').replace(/@(\S+)/g, function(m, name) {
+                var ptext = (p.type === 'image' && p.image && (p.text === ' [图片]' || p.text === '[图片]' || !p.text)) ? '' : (p.text || '');
+                var displayText = escapeHtml(ptext).replace(/@(\S+)/g, function(m, name) {
                     return '<span class="moment-at-mention">' + m + '</span>';
                 });
 
                 var mediaHtml = '';
                 if (p.images && p.images.length) {
                     var count = p.images.length;
-                    var cls = count === 1 ? 'one' : (count === 2 ? 'two' : (count <= 4 ? 'three four' : 'many'));
+                    var cls = count === 1 ? 'one' : (count === 2 ? 'two' : (count === 3 ? 'three' : (count === 4 ? 'four' : 'many')));
                     mediaHtml = '<div class="moment-images-grid ' + cls + ' mt-2" style="max-width:' + (count === 1 ? '200px' : '100%') + '">';
                     p.images.forEach(function(src) {
                         mediaHtml += '<img src="' + escapeHtml(src) + '" onclick="event.stopPropagation();showImageLightbox(\'' + escapeHtml(src).replace(/'/g, "\\'") + '\')" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">';
                     });
                     mediaHtml += '</div>';
+                } else if (p.image) {
+                    mediaHtml = '<div class="moment-images-grid one mt-2" style="max-width:200px"><img src="' + escapeHtml(p.image) + '" onclick="event.stopPropagation();showImageLightbox(\'' + escapeHtml(p.image).replace(/'/g, "\\'") + '\')" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"></div>';
                 } else if (p.video) {
                     mediaHtml = '<div class="mt-2 relative"><video src="' + escapeHtml(p.video) + '" class="w-full max-h-48 rounded-xl object-cover cursor-pointer" onclick="event.stopPropagation();openMomentVideo(\'' + escapeHtml(p.video).replace(/'/g, "\\'") + '\')" controls playsinline preload="metadata"></video></div>';
                 } else if (p.link) {
@@ -11590,7 +11620,7 @@ if (el) { el.textContent = txt; el.style.color = color; el.onclick = moodClickHa
                 var commentsHtml = '';
                 if (p.comments && p.comments.length) {
                     commentsHtml = '<div class="mt-2">';
-p.comments.slice(0, 5).forEach(function(c, idx) {
+p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c, idx) {
                         var ca = c.authorId === 'me' ? settings.myName : (contacts.find(function(ct) { return ct.id === c.authorId; })?.name || '未知');
                         var text = c.text || '';
                         var cm = '';
@@ -11601,13 +11631,13 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                             var targetName = p.comments[c.replyToIndex].authorId === 'me' ? settings.myName : (contacts.find(function(ct) { return ct.id === p.comments[c.replyToIndex].authorId; })?.name || '未知');
                             displayComment += '<span class="text-xs text-[var(--text-secondary)]"> 回复 </span><span class="font-medium text-xs">' + escapeHtml(targetName) + '</span>';
                         }
-                        if (text) displayComment += '<span class="text-xs">：' + escapeHtml(text) + '</span>';
+                        if (text && !((c.type === 'image' || c.type === 'voice') && c.media)) displayComment += '<span class="text-xs">：' + escapeHtml(text) + '</span>';
                         displayComment += cm;
                         commentsHtml += '<div class="moment-comment-item" onclick="event.stopPropagation();window.prepareReply(' + p.id + ',' + idx + ')">';
                         commentsHtml += '<div class="flex-1">' + displayComment + ' <span class="text-[10px] text-[var(--text-secondary)]">' + formatRelativeTime(c.timestamp) + '</span></div>';
                         commentsHtml += '</div>';
                     });
-                    if (p.comments.length > 5) {
+                    if (p.comments.length > 5 && !p._commentsOpen) {
                         commentsHtml += '<div class="text-xs text-[var(--text-secondary)] text-center mt-1 cursor-pointer" onclick="event.stopPropagation();window.showAllComments(' + p.id + ')">查看全部' + p.comments.length + '条评论</div>';
                     }
                     commentsHtml += '</div>';
@@ -11617,14 +11647,17 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                 if (p.type === 'voice') typeIcon = '<span class="text-xs mr-1">🎵</span>';
                 else if (p.type === 'card') typeIcon = '<span class="text-xs mr-1">📝</span>';
 
-                var deleteBtn = '<span class="text-red-400 text-xs ml-auto cursor-pointer flex-shrink-0 moment-delete-btn' + (isMe ? '' : (p._actReveal ? ' moment-del-show' : ' moment-del-hid')) + '" onclick="event.stopPropagation();deletePost(' + p.id + ')"><i class="fa fa-trash-o"></i></span>';
+                var deleteBtn = '<span class="text-red-400 text-xs ml-auto cursor-pointer flex-shrink-0 moment-delete-btn' + (p._actReveal ? ' moment-del-show' : ' moment-del-hid') + '" onclick="event.stopPropagation();deletePost(' + p.id + ')"><i class="fa fa-trash-o"></i></span>';
 
                 var avatarClick = isMe ? 'openMySidebar()' : 'window.momentGoProfile(' + p.authorId + ')';
-                return '<div class="moment-feed-card"' + (isMe ? '' : ' ondblclick="event.stopPropagation();window.toggleMomentDelete(' + p.id + ')"' + (p._actReveal ? ' style="outline:1px dashed rgba(239,68,68,0.35);outline-offset:2px;"' : '')) + '><div class="flex items-start">'
+                var locHtml = '';
+                if (p.location) locHtml = '<div class="moment-loc mt-1.5 flex items-center" style="font-size:0.72rem;color:var(--text-secondary);"><i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>' + escapeHtml(p.location) + '</div>';
+                return '<div class="moment-feed-card" ondblclick="event.stopPropagation();window.toggleMomentDelete(' + p.id + ')"' + (p._actReveal ? ' style="outline:1px dashed rgba(239,68,68,0.35);outline-offset:2px;"' : '') + '><div class="flex items-start">'
                     + '<img src="' + escapeHtml(author.avatar) + '" class="w-9 h-9 rounded-full mr-2.5 flex-shrink-0 cursor-pointer" onclick="event.stopPropagation();' + avatarClick + '" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">'
                     + '<div class="flex-1 min-w-0"><div class="flex items-center"><span class="font-medium text-sm text-[var(--text-primary)]">' + escapeHtml(author.name) + '</span>' + privacyBadge + '</div>'
                     + '<p class="moment-text mt-1" style="font-size:0.8rem;line-height:1.5;">' + typeIcon + displayText + '</p>'
                     + mediaHtml
+                    + locHtml
                     + '<div class="flex items-center justify-between mt-2 text-xs text-[var(--text-secondary)]">'
                     + '<span>' + timeStr + '</span>'
                     + '<div class="flex items-center space-x-4">'
@@ -11634,7 +11667,7 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                     + '</div></div>'
                     + likesHtml
                     + '<div id="comments-' + p.id + '" class="' + (p._commentsOpen ? '' : 'hidden') + '">' + commentsHtml + '</div>'
-                    + '<div class="mt-1 ' + (p._commentsOpen ? '' : 'hidden') + '" id="comment-input-' + p.id + '"><div id="cm-attach-preview-' + p.id + '" class="hidden mb-1"></div><div class="flex space-x-1"><input type="text" id="comment-text-' + p.id + '" placeholder="评论..." class="moment-reply-input flex-1 px-2 py-1 border border-[var(--border-color)] rounded-lg text-xs" oninput="cmUpdateSend(' + p.id + ')"><button type="button" onclick="event.stopPropagation();window.cmPickSticker(' + p.id + ')" class="px-2 py-1 rounded-lg text-sm cursor-pointer flex-shrink-0" style="background:var(--theme-light)" title="图片表情包/相册"><i class="fa fa-picture-o"></i></button><button id="comment-send-' + p.id + '" onclick="(function(){var inp=document.getElementById(\'comment-text-' + p.id + '\');var rt=inp?inp.dataset.replyTo:null;addComment(' + p.id + ',rt?parseInt(rt):null);})()" class="px-3 py-1 text-white rounded-lg text-xs hidden flex-shrink-0" style="background:var(--theme)">发送</button></div><input type="file" id="comment-file-' + p.id + '" accept="image/*" class="hidden" onchange="cmOnFile(this,' + p.id + ')"></div>'
+                    + '<div class="mt-1 ' + (p._commentsOpen ? '' : 'hidden') + '" id="comment-input-' + p.id + '"><div id="cm-attach-preview-' + p.id + '" class="hidden mb-1"></div><div class="flex space-x-1"><input type="text" id="comment-text-' + p.id + '" placeholder="评论..." class="moment-reply-input flex-1 px-2 py-1 border border-[var(--border-color)] rounded-lg text-xs" oninput="cmUpdateSend(' + p.id + ')" onfocus="cmShowEmoji(' + p.id + ')"><button type="button" id="comment-emoji-' + p.id + '" onclick="event.stopPropagation();window.cmPickSticker(' + p.id + ')" class="cm-emoji-btn px-2 py-1 rounded-lg text-sm cursor-pointer flex-shrink-0 hidden" style="background:var(--theme-light)" title="图片表情包/相册"><i class="fa fa-picture-o"></i></button><button id="comment-send-' + p.id + '" onclick="(function(){var inp=document.getElementById(\'comment-text-' + p.id + '\');var rt=inp?inp.dataset.replyTo:null;addComment(' + p.id + ',rt?parseInt(rt):null);})()" class="px-3 py-1 text-white rounded-lg text-xs hidden flex-shrink-0" style="background:var(--theme)">发送</button></div><input type="file" id="comment-file-' + p.id + '" accept="image/*" class="hidden" onchange="cmOnFile(this,' + p.id + ')"></div>'
                     + '</div></div></div>';
             }
 
@@ -11816,6 +11849,10 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                 var inp = document.getElementById('comment-text-' + postId);
                 if (inp) inp.focus();
             };
+            window.cmShowEmoji = function(postId) {
+                var e = document.getElementById('comment-emoji-' + postId);
+                if (e) e.classList.remove('hidden');
+            };
             window.cmUpdateSend = function(postId) {
                 var inp = document.getElementById('comment-text-' + postId);
                 var btn = document.getElementById('comment-send-' + postId);
@@ -11823,6 +11860,7 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                 var hasText = inp && inp.value.trim();
                 var hasAttach = !!((window.__cmAttach || {})[postId]);
                 if (hasText || hasAttach) btn.classList.remove('hidden'); else btn.classList.add('hidden');
+                window.cmShowEmoji(postId);
             };
             window.cmPickSticker = function(postId) {
                 cmClosePanel();
@@ -11931,12 +11969,12 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                 var comment = { authorId: authorId, text: '' };
                 // 语音：对标回复设置 voiceReplyChance
                 if (voicePool.length && Math.random() < (rc('voiceReplyChance') || 0.06)) {
-                    comment.type = 'voice'; comment.media = voicePool[Math.floor(Math.random() * voicePool.length)].src; comment.text = '[语音]';
+                    comment.type = 'voice'; comment.media = voicePool[Math.floor(Math.random() * voicePool.length)].src; comment.text = '';
                     return comment;
                 }
                 // 单独表情包（固定 15% 概率，与字卡池是否为空无关）
                 if (stickerPool.length && Math.random() < 0.15) {
-                    comment.type = 'image'; comment.media = stickerPool[Math.floor(Math.random() * stickerPool.length)].src; comment.text = '[图片]';
+                    comment.type = 'image'; comment.media = stickerPool[Math.floor(Math.random() * stickerPool.length)].src; comment.text = '';
                     return comment;
                 }
                 // 字卡主文本（对标拼字卡设置）
@@ -12044,6 +12082,16 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                 var post = posts.find(function(p) { return p.id === postId; });
                 if (!post) return;
                 post._actReveal = !post._actReveal;
+                if (post._actReveal) {
+                    posts.forEach(function(p) { if (p.id !== postId) p._actReveal = false; });
+                    if (window._momentDelTimer) clearTimeout(window._momentDelTimer);
+                    window._momentDelTimer = setTimeout(function() {
+                        var p2 = posts.find(function(p) { return p.id === postId; });
+                        if (p2 && p2._actReveal) { p2._actReveal = false; renderMoments(); }
+                    }, 5000);
+                } else {
+                    if (window._momentDelTimer) clearTimeout(window._momentDelTimer);
+                }
                 renderMoments();
             };
 
@@ -12059,35 +12107,35 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
 
             async function publishMoment() {
                 var text = document.getElementById('moment-text').value.trim();
-                var previewImg = document.getElementById('moment-preview-img');
                 var previewVideo = document.getElementById('moment-preview-video');
-                var imageData = previewImg && previewImg.classList.contains('hidden') === false ? (previewImg.src || null) : null;
                 var videoData = previewVideo && previewVideo.classList.contains('hidden') === false ? (previewVideo.src || null) : null;
-                var linkData = document.getElementById('moment-link-input')?.value?.trim() || null;
-                if (!text && !imageData && !videoData && !linkData) { showToast('请输入内容或选择媒体'); return; }
+                var linkData = window.__momentLink || null;
+                var hasImgs = !!(window.__momentImgs && window.__momentImgs.length);
+                if (!text && !hasImgs && !videoData && !linkData) { showToast('请输入内容或选择媒体'); return; }
 
-                var privacyEl = document.querySelector('input[name="moment-privacy"]:checked');
-                var privacy = privacyEl ? privacyEl.value : 'public';
+                var vis = window.__momentVis || {};
+                var privacy = vis.privacy || 'public';
                 var visibleTo = [];
                 var excludeIds = [];
                 if (privacy === 'select') {
-                    document.querySelectorAll('#moment-privacy-contact-list input:checked').forEach(function(cb) {
+                    document.querySelectorAll('#moment-visibility-contact-wrap .mv-cb:checked').forEach(function(cb) {
                         visibleTo.push(parseInt(cb.value));
                     });
                 } else if (privacy === 'exclude') {
-                    document.querySelectorAll('#moment-privacy-contact-list input:checked').forEach(function(cb) {
+                    document.querySelectorAll('#moment-visibility-contact-wrap .mv-cb:checked').forEach(function(cb) {
                         excludeIds.push(parseInt(cb.value));
                     });
                 }
 
-                var allowComment = document.getElementById('moment-allow-comment')?.checked !== false;
+                var allowComment = true;
 
                 var post = { authorId: 'me', text: text, timestamp: new Date().toISOString(), likes: [], comments: [], allowComment: allowComment, privacy: privacy };
-                if (imageData) { post.images = [imageData]; }
+                if (window.__momentImgs && window.__momentImgs.length) { post.images = window.__momentImgs.slice(); }
                 if (videoData) { post.video = videoData; }
                 if (linkData) { post.link = linkData; post.linkTitle = linkData; }
                 if (visibleTo.length) { post.visibleTo = visibleTo; }
                 if (excludeIds.length) { post.excludeIds = excludeIds; }
+                if (window.__momentLocation) { post.location = window.__momentLocation; }
 
                 var id = await addData('posts', post);
                 post.id = id;
@@ -12098,11 +12146,18 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                 document.getElementById('moment-link-input').value = '';
                 document.getElementById('moment-link-input-area').classList.add('hidden');
                 document.getElementById('moment-file-name').textContent = '';
-                document.getElementById('moment-media-preview').classList.add('hidden');
-                document.getElementById('moment-preview-img').classList.add('hidden');
                 document.getElementById('moment-preview-video').classList.add('hidden');
-                document.getElementById('clear-moment-file').classList.add('hidden');
-                document.getElementById('moment-privacy-select-area').classList.add('hidden');
+                document.getElementById('moment-preview-grid').classList.add('hidden');
+                if (window.__momentImgs) { window.__momentImgs = []; if (window.renderMomentGridPreview) renderMomentGridPreview(); }
+                window.__momentLink = null;
+                window.__momentLocation = '';
+                window.__momentVis = {};
+                var vl = document.getElementById('moment-visibility-label');
+                if (vl) vl.innerHTML = '公开<i class="fa fa-chevron-right ml-1 text-[10px]"></i>';
+                var ll = document.getElementById('moment-location-label');
+                if (ll) ll.innerHTML = '不显示位置<i class="fa fa-chevron-right ml-1 text-[10px]"></i>';
+                var vcw = document.getElementById('moment-visibility-contact-wrap');
+                if (vcw) { vcw.classList.add('hidden'); vcw.innerHTML = ''; }
                 document.getElementById('moment-compose').classList.remove('open');
                 renderMoments();
                 showToast('发布成功');
@@ -12110,11 +12165,21 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                 schedulePostCommentsFromContacts(post);
             }
 
+            function momentPostVisibleToContact(post, c) {
+                if (!post || post.authorId !== 'me') return true;
+                if (!post.privacy || post.privacy === 'public') return true;
+                if (post.privacy === 'private') return false;
+                if (post.privacy === 'select') return post.visibleTo && post.visibleTo.indexOf(c.id) >= 0;
+                if (post.privacy === 'exclude') return !post.excludeIds || post.excludeIds.indexOf(c.id) < 0;
+                return true;
+            }
+
             async function schedulePostLikesFromContacts(post) {
                 if (post.authorId !== 'me') return;
                 const otherContacts = contacts.filter(c => c.id !== 'me' && typeof c.id === 'number');
                 if (!otherContacts.length) return;
                 for (const liker of otherContacts) {
+                    if (!momentPostVisibleToContact(post, liker)) continue;
                     const chance = getContactReplySetting(liker, 'postReplyChance') ?? 0.3;
                     if (Math.random() > chance) continue;
                     const minDelay = (getContactReplySetting(liker, 'postReplyMin') || 300) * 1000;
@@ -12151,6 +12216,7 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                 if (!otherContacts.length) return;
                 let accumulatedDelay = 0;
                 for (const commenter of otherContacts) {
+                    if (!momentPostVisibleToContact(post, commenter)) continue;
                     const cMinDelay = getContactReplySetting(commenter, 'postReplyMin') || (settings.postReplyMin || 300);
                     const cMaxDelay = getContactReplySetting(commenter, 'postReplyMax') || (settings.postReplyMax || 21600);
                     const minDelay = cMinDelay * 1000;
@@ -12476,29 +12542,34 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                 document.getElementById('moment-link-input').value = '';
                 document.getElementById('moment-link-input-area').classList.add('hidden');
                 document.getElementById('moment-file-name').textContent = '';
-                document.getElementById('moment-media-preview').classList.add('hidden');
-                document.getElementById('moment-preview-img').classList.add('hidden');
                 document.getElementById('moment-preview-video').classList.add('hidden');
-                document.getElementById('clear-moment-file').classList.add('hidden');
-                document.getElementById('moment-privacy-select-area').classList.add('hidden');
-                document.querySelector('input[name="moment-privacy"][value="public"]').checked = true;
-                document.getElementById('moment-allow-comment').checked = true;
+                document.getElementById('moment-preview-grid').classList.add('hidden');
+                if (window.__momentImgs) { window.__momentImgs = []; if (window.renderMomentGridPreview) renderMomentGridPreview(); }
+                window.__momentLink = null;
+                window.__momentLocation = '';
+                window.__momentVis = {};
+                var vl = document.getElementById('moment-visibility-label');
+                if (vl) vl.innerHTML = '公开<i class="fa fa-chevron-right ml-1 text-[10px]"></i>';
+                var ll = document.getElementById('moment-location-label');
+                if (ll) ll.innerHTML = '不显示位置<i class="fa fa-chevron-right ml-1 text-[10px]"></i>';
+                var vcw = document.getElementById('moment-visibility-contact-wrap');
+                if (vcw) { vcw.classList.add('hidden'); vcw.innerHTML = ''; }
             }
 
             function startMomentTimers() {
                 contacts.forEach(contact => {
                     if (momentTimers[contact.id]) clearTimeout(momentTimers[contact.id]);
-                    scheduleNextMoment(contact.id, true);
+                    scheduleNextMoment(contact.id);
                 });
             }
 
-            function scheduleNextMoment(contactId, isFirst) {
+            function scheduleNextMoment(contactId) {
                 const contact0 = contacts.find(c => c.id === contactId);
                 const mMin = contact0 ? (getContactReplySetting(contact0, 'momentMin') || 480) : 480;
                 const mMax = contact0 ? (getContactReplySetting(contact0, 'momentMax') || 720) : 720;
                 const minMs = mMin * 60000;
                 const maxMs = Math.max(mMax * 60000, minMs);
-                const base = isFirst ? (20 + Math.random() * 100) * 1000 : minMs + Math.random() * (maxMs - minMs);
+                const base = minMs + Math.random() * (maxMs - minMs);
                 momentTimers[contactId] = setTimeout(async () => {
                     const contact = contacts.find(c => c.id === contactId);
                     if (!contact) { scheduleNextMoment(contactId); return; }
@@ -12509,7 +12580,7 @@ p.comments.slice(0, 5).forEach(function(c, idx) {
                         // 单独表情包帖：固定 15% 概率，与字卡池是否为空无关
                         if (stickerPool.length && Math.random() < 0.15) {
                             const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
-                            let post = { authorId: contactId, text: '[图片]', image: sticker.src, type: 'image', likes: [], comments: [], timestamp: new Date().toISOString() };
+                            let post = { authorId: contactId, text: '', image: sticker.src, type: 'image', likes: [], comments: [], timestamp: new Date().toISOString() };
                             const id = await addData('posts', post);
                             post.id = id;
                             posts.push(post);
@@ -15286,17 +15357,6 @@ const myTile = selfCamStream
                 <div class="flex mb-3">
                   <button id="add-group-btn-top" class="flex-1 py-2 border border-dashed border-[var(--border-color)] rounded-xl text-sm">+ 添加分组</button>
                 </div>
-                <div class="sticky top-0 z-20 mb-2 p-2 border border-[var(--border-color)] rounded-xl bg-[var(--card-bg)] shadow-sm">
-                  <div class="flex space-x-1 mb-1">
-                    <input type="text" id="wc-quick-add" placeholder="快速添加：输入后回车" class="flex-1 px-2 py-1 border border-[var(--border-color)] rounded text-xs">
-                    <button id="wc-quick-add-btn" class="px-2 py-1 bg-[var(--theme-light)] rounded text-xs whitespace-nowrap">添加</button>
-                  </div>
-                  <div class="flex space-x-1">
-                    <textarea id="wc-quick-batch" placeholder="批量导入：每行一张，自动去重" rows="2" class="flex-1 px-2 py-1 border border-[var(--border-color)] rounded text-xs resize-none"></textarea>
-                    <button id="wc-quick-batch-btn" class="px-2 py-1 text-white rounded text-xs self-end whitespace-nowrap" style="background:var(--theme)">批量导入</button>
-                  </div>
-                  <div class="text-[10px] text-[var(--text-secondary)] mt-1">快速添加/批量导入：写入第一个分组，始终置顶不被滚动遮挡</div>
-                </div>
                 <div id="word-card-groups" class="space-y-2 mb-20"></div>
                 <button id="add-group-btn" class="w-full py-2 border border-dashed border-[var(--border-color)] rounded-xl text-sm">+ 添加分组</button>
                 <div id="wc-batch-bar" class="hidden fixed bottom-0 left-0 right-0 p-3 bg-[var(--card-bg)] border-t border-[var(--border-color)] z-50 shadow-lg" style="max-width:480px;margin:0 auto">
@@ -15313,22 +15373,6 @@ const myTile = selfCamStream
                 </div>
               `;
                     renderWordCardGroups();
-                    function wcQuickAdd(isBatch) {
-                        var g = wordCardGroups[0];
-                        if (!g) { showToast('请先添加分组'); return; }
-                        var allCards = []; wordCardGroups.forEach(function(x) { (x.cards || []).forEach(function(c) { if (allCards.indexOf(c) === -1) allCards.push(c); }); });
-                        var txt = isBatch ? (document.getElementById('wc-quick-batch').value || '') : (document.getElementById('wc-quick-add').value || '');
-                        if (!txt.trim()) return;
-                        var lines = txt.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-                        var added = 0;
-                        lines.forEach(function(l) { if (allCards.indexOf(l) === -1) { g.cards.push(l); allCards.push(l); added++; } });
-                        if (added) { updateData('wordCards', g); renderWordCardGroups(document.getElementById('wordcard-search').value); showToast('导入 ' + added + ' 条 ✅'); } else { showToast('全部已存在，已去重'); }
-                        document.getElementById('wc-quick-add').value = '';
-                        document.getElementById('wc-quick-batch').value = '';
-                    }
-                    document.getElementById('wc-quick-add-btn').onclick = function() { wcQuickAdd(false); };
-                    document.getElementById('wc-quick-add').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); wcQuickAdd(false); } });
-                    document.getElementById('wc-quick-batch-btn').onclick = function() { wcQuickAdd(true); };
                     window._wcSelectMode = false;
                     window._wcSelectedCards = [];
                     window._wcExpandedGroups = {};
@@ -17008,7 +17052,7 @@ const myTile = selfCamStream
                     }
                     switch (action) {
                         case 'video-call': if (currentChatType === 'group') startGroupCall(); else startCall(); break;
-                        case 'album': (function() { showAlbumActionSheet(); })(); break;
+                        case 'album': pickFromGallery(); break;
                         case 'mood': var mp = document.getElementById('mood-calendar-panel'); if (mp) mp.classList.add('open'); switchModule('mood'); break;
                         case 'period': var mp2 = document.getElementById('mood-calendar-panel'); if (mp2) mp2.classList.add('open'); switchModule('period'); markPeriodRecordsViewed(); break;
                         case 'moments': var momP = document.getElementById('moments-panel'); if (momP) { momP.classList.add('open'); initMomentsCoverEvents(); renderMoments(); } break;
@@ -17367,7 +17411,7 @@ const myTile = selfCamStream
                         .classList.add('open');
                     initMomentsCoverEvents();
                     renderMoments(); }; } catch(e) {}
-                try { document.getElementById('close-moments').onclick = () => { document.getElementById('moments-panel').classList.remove('open'); window._momentContactFilter = null; }; } catch(e) {}
+                try { document.getElementById('close-moments').onclick = () => { document.getElementById('moments-panel').classList.remove('open'); window._momentContactFilter = null; window._momentMeOnly = false; }; } catch(e) {}
 
                 try { document.getElementById('post-moment-btn').onclick = () => { resetComposeForm(); document.getElementById('moment-compose').classList.add('open'); }; } catch(e) {}
                 try { document.getElementById('close-moment-compose').onclick = () => document.getElementById(
@@ -17409,57 +17453,221 @@ const myTile = selfCamStream
                 }; } catch(e) {}
 
                 // media uploads
-                try { document.getElementById('moment-image-upload').onchange = function(e) {
-                    var f = e.target.files[0];
-                    if (!f) return;
-                    document.getElementById('moment-file-name').textContent = f.name;
-                    document.getElementById('clear-moment-file').classList.remove('hidden');
-                    compressImage(f, 1920, 0.88).then(function(src) {
-                        if (!src) return;
-                        document.getElementById('moment-preview-img').src = src;
-                        document.getElementById('moment-preview-img').classList.remove('hidden');
-                        document.getElementById('moment-preview-video').classList.add('hidden');
-                        document.getElementById('moment-media-preview').classList.remove('hidden');
+                window.__momentImageList = window.__momentImageList || [];
+                window.renderMomentGridPreview = function() {
+                    var grid = document.getElementById('moment-preview-grid');
+                    if (!grid) return;
+                    var arr = window.__momentImgs || [];
+                    if (!arr.length) {
+                        grid.classList.add('hidden');
+                        grid.innerHTML = '';
+                        grid.className = 'moment-images-grid hidden';
+                        var nameEl = document.getElementById('moment-file-name');
+                        if (nameEl) nameEl.textContent = '';
+                        var clearEl = document.getElementById('clear-moment-file');
+                        if (clearEl) clearEl.classList.add('hidden');
+                        return;
+                    }
+                    var n = arr.length;
+                    grid.className = 'moment-images-grid ' + (n === 1 ? 'one' : (n === 2 ? 'two' : (n === 3 ? 'three' : (n === 4 ? 'four' : 'many')))) + ' mt-1 rounded-xl';
+                    grid.style.maxWidth = (n === 1 ? '120px' : '100%');
+                    grid.innerHTML = '';
+                    arr.forEach(function(src, i) {
+                        var cell = document.createElement('div');
+                        cell.className = 'moment-preview-cell relative';
+                        cell.draggable = true;
+                        cell.style.cssText = 'position:relative;border-radius:6px;overflow:hidden;cursor:grab;';
+                        cell.innerHTML = '<img src="' + src + '" class="w-full h-full object-cover" style="aspect-ratio:1/1" draggable="false" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="moment-grid-del" title="移除">✕</span>';
+                        cell.querySelector('.moment-grid-del').onclick = function(ev) {
+                            ev.stopPropagation();
+                            arr.splice(i, 1);
+                            renderMomentGridPreview();
+                        };
+                        cell.addEventListener('dragstart', function(e) { window.__momentDragFrom = i; e.dataTransfer.effectAllowed = 'move'; });
+                        cell.addEventListener('dragover', function(e) { e.preventDefault(); });
+                        cell.addEventListener('drop', function(e) {
+                            e.preventDefault();
+                            var from = window.__momentDragFrom;
+                            window.__momentDragFrom = null;
+                            if (from === null || from === undefined || from === i || !window.__momentImgs || !window.__momentImgs.length) return;
+                            var it = window.__momentImgs.splice(from, 1)[0];
+                            window.__momentImgs.splice(i, 0, it);
+                            renderMomentGridPreview();
+                        });
+                        grid.appendChild(cell);
                     });
+                    grid.classList.remove('hidden');
+                    var clearEl2 = document.getElementById('clear-moment-file');
+                    if (clearEl2) clearEl2.classList.remove('hidden');
+                };
+                try { document.getElementById('moment-image-upload').onchange = function(e) {
+                    var files = Array.from(e.target.files || []);
+                    if (!files.length) return;
+                    window.__momentImgs = window.__momentImgs || [];
+                    for (var fi = 0; fi < files.length; fi++) {
+                        if (window.__momentImgs.length >= 9) break;
+                        (function(f) {
+                            compressImage(f, 1920, 0.88).then(function(src) {
+                                if (!src) return;
+                                window.__momentImgs.push(src);
+                                document.getElementById('moment-preview-video').classList.add('hidden');
+                                renderMomentGridPreview();
+                            });
+                        })(files[fi]);
+                    }
+                    e.target.value = '';
                 }; } catch(e) {}
                 try { document.getElementById('moment-video-upload').onchange = function(e) {
                     var f = e.target.files[0];
                     if (!f) return;
-                    document.getElementById('moment-file-name').textContent = f.name;
-                    document.getElementById('clear-moment-file').classList.remove('hidden');
+                    if (window.__momentImgs) window.__momentImgs = [];
+                    if (window.renderMomentGridPreview) renderMomentGridPreview();
+                    document.getElementById('moment-file-name').textContent = '';
                     var url = URL.createObjectURL(f);
                     document.getElementById('moment-preview-video').src = url;
                     document.getElementById('moment-preview-video').classList.remove('hidden');
-                    document.getElementById('moment-preview-img').classList.add('hidden');
-                    document.getElementById('moment-media-preview').classList.remove('hidden');
+                    document.getElementById('moment-preview-grid').classList.add('hidden');
                 }; } catch(e) {}
-                try { document.getElementById('clear-moment-file').onclick = function() {
-                    document.getElementById('moment-image-upload').value = '';
-                    document.getElementById('moment-video-upload').value = '';
-                    document.getElementById('moment-file-name').textContent = '';
-                    document.getElementById('moment-media-preview').classList.add('hidden');
-                    document.getElementById('moment-preview-img').classList.add('hidden');
-                    document.getElementById('moment-preview-video').classList.add('hidden');
-                    document.getElementById('clear-moment-file').classList.add('hidden');
-                }; } catch(e) {}
-                try { document.getElementById('moment-add-link-btn').onclick = function() {
-                    var area = document.getElementById('moment-link-input-area');
-                    if (area) area.classList.toggle('hidden');
-                }; } catch(e) {}
-
-                // privacy radio change
-                document.querySelectorAll('input[name="moment-privacy"]').forEach(function(r) {
-                    r.onchange = function() {
-                        var selArea = document.getElementById('moment-privacy-select-area');
-                        if (!selArea) return;
-                        if (this.value === 'select' || this.value === 'exclude') {
-                            selArea.classList.remove('hidden');
-                            renderMomentPrivacyContacts();
+                try {
+                    var tbImg = document.getElementById('moment-tool-img');
+                    if (tbImg) tbImg.onclick = function() { document.getElementById('moment-image-upload').click(); };
+                    var tbVid = document.getElementById('moment-tool-video');
+                    if (tbVid) tbVid.onclick = function() { document.getElementById('moment-video-upload').click(); };
+                    var tbLink = document.getElementById('moment-tool-link');
+                    if (tbLink) tbLink.onclick = function() { var area = document.getElementById('moment-link-input-area'); if (area) area.classList.toggle('hidden'); };
+                    var tbAt = document.getElementById('moment-tool-at');
+                    if (tbAt) tbAt.onclick = function() { window.openMomentAtSheet && openMomentAtSheet(); };
+                    var linkAddBtn = document.getElementById('moment-link-add-btn');
+                    if (linkAddBtn) linkAddBtn.onclick = function() {
+                        var inp = document.getElementById('moment-link-input');
+                        var v = inp && inp.value.trim();
+                        if (!v) { showToast('请输入链接地址'); return; }
+                        window.__momentLink = v;
+                        inp.value = '';
+                        document.getElementById('moment-link-input-area').classList.add('hidden');
+                        var fn = document.getElementById('moment-file-name');
+                        if (fn) fn.textContent = '已添加链接：' + v.slice(0, 30);
+                    };
+                    var visRow = document.getElementById('moment-row-visibility');
+                    if (visRow) visRow.onclick = function() { openMomentSheet('visibility'); };
+                    var locRow = document.getElementById('moment-row-location');
+                    if (locRow) locRow.onclick = function() { openMomentSheet('location'); };
+                } catch(e) {}
+                function openMomentSheet(name) {
+                    ['visibility', 'location', 'at'].forEach(function(n) {
+                        var el = document.getElementById('moment-' + n + '-sheet');
+                        if (el) el.classList.toggle('hidden', n !== name);
+                    });
+                }
+                window.openMomentAtSheet = function() {
+                    var list = document.getElementById('moment-at-contact-list');
+                    if (list) {
+                        list.innerHTML = '';
+                        contacts.forEach(function(c) {
+                            if (typeof c.id !== 'number') return;
+                            var row = document.createElement('div');
+                            row.className = 'moment-at-row';
+                            row.innerHTML = '<img src="' + escapeHtml(c.avatar) + '" class="w-7 h-7 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="text-sm text-[var(--text-primary)]">' + escapeHtml(c.name) + '</span>';
+                            row.onclick = function() {
+                                var ta = document.getElementById('moment-text');
+                                if (ta) ta.value += (ta.value && !ta.value.endsWith(' ') ? ' ' : '') + '@' + c.name + ' ';
+                                ta.focus();
+                                openMomentSheet('');
+                            };
+                            list.appendChild(row);
+                        });
+                    }
+                    openMomentSheet('at');
+                };
+                window.renderMomentVisibilityContacts = function(wrap) {
+                    if (!wrap) return;
+                    wrap.innerHTML = '';
+                    var cur = window.__momentVis || {};
+                    var curIds = (cur.privacy === 'exclude' ? (cur.excludeIds || []) : (cur.visibleTo || []));
+                    contacts.forEach(function(c) {
+                        if (typeof c.id !== 'number') return;
+                        var lab = document.createElement('label');
+                        lab.className = 'flex items-center px-3 py-2 cursor-pointer text-xs gap-1.5';
+                        lab.innerHTML = '<input type="checkbox" class="mv-cb accent-[var(--theme)]" value="' + c.id + '"' + (curIds.indexOf(c.id) >= 0 ? ' checked' : '') + '><img src="' + escapeHtml(c.avatar) + '" class="w-5 h-5 rounded-full" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="text-[var(--text-primary)]">' + escapeHtml(c.name) + '</span>';
+                        wrap.appendChild(lab);
+                    });
+                    var doneBtn = document.createElement('button');
+                    doneBtn.type = 'button';
+                    doneBtn.className = 'moment-sheet-cancel';
+                    doneBtn.textContent = '完 成';
+                    doneBtn.onclick = function() {
+                        var vis = window.__momentVis || {};
+                        if (vis.privacy === 'exclude') {
+                            vis.excludeIds = [];
+                            wrap.querySelectorAll('.mv-cb:checked').forEach(function(cb) { vis.excludeIds.push(parseInt(cb.value)); });
                         } else {
-                            selArea.classList.add('hidden');
+                            vis.visibleTo = [];
+                            wrap.querySelectorAll('.mv-cb:checked').forEach(function(cb) { vis.visibleTo.push(parseInt(cb.value)); });
                         }
+                        openMomentSheet('');
+                    };
+                    wrap.appendChild(doneBtn);
+                };
+                document.querySelectorAll('#moment-visibility-sheet .moment-cell[data-vis]').forEach(function(cell) {
+                    cell.onclick = function() {
+                        var vis = cell.dataset.vis;
+                        window.__momentVis = window.__momentVis || {};
+                        window.__momentVis.privacy = vis;
+                        if (vis !== 'select') window.__momentVis.visibleTo = [];
+                        if (vis !== 'exclude') window.__momentVis.excludeIds = [];
+                        var labelMap = { public: '公开', private: '私密', select: '选择可见', exclude: '不给谁看' };
+                        var label = document.getElementById('moment-visibility-label');
+                        if (label) label.innerHTML = (labelMap[vis] || vis) + '<i class="fa fa-chevron-right ml-1 text-[10px]"></i>';
+                        var wrap = document.getElementById('moment-visibility-contact-wrap');
+                        if (wrap) {
+                            if (vis === 'select' || vis === 'exclude') {
+                                wrap.classList.remove('hidden');
+                                renderMomentVisibilityContacts(wrap);
+                            } else {
+                                wrap.classList.add('hidden');
+                                openMomentSheet('');
+                            }
+                        } else { openMomentSheet(''); }
                     };
                 });
+                document.querySelectorAll('#moment-visibility-sheet .moment-cell[data-vis]').forEach(function(cell) {
+                    var vis = cell.dataset.vis;
+                    var labelMap = { public: '公开', private: '私密', select: '选择可见', exclude: '不给谁看' };
+                    cell.innerHTML = '<span>' + labelMap[vis] + '</span>' + (vis === 'public' ? '<span class="moment-cell-desc">所有人可见，可点赞可评论</span>' : (vis === 'private' ? '<span class="moment-cell-desc">仅自己可见</span>' : (vis === 'select' ? '<span class="moment-cell-desc">只有选择的人可见</span>' : '<span class="moment-cell-desc">选择的人不可见</span>')));
+                });
+                try {
+                    document.getElementById('moment-loc-none').onclick = function() { window.__momentLocation = ''; setMomentLocationLabel('不显示位置'); openMomentSheet(''); };
+                    document.getElementById('moment-loc-auto').onclick = function() {
+                        if (!navigator.geolocation) { showToast('当前环境不支持定位，请手动输入'); var li = document.getElementById('moment-location-input'); if (li) li.focus(); return; }
+                        navigator.geolocation.getCurrentPosition(function(pos) {
+                            var lat = pos.coords.latitude.toFixed(4);
+                            var lng = pos.coords.longitude.toFixed(4);
+                            window.__momentLocation = '定位：' + lat + ', ' + lng;
+                            setMomentLocationLabel(window.__momentLocation);
+                            openMomentSheet('');
+                        }, function(err) {
+                            var msg = err && err.code === 1 ? '定位权限被拒绝，请允许位置权限或手动输入地点' : (err && err.code === 2 ? '定位失败（位置不可用），请手动输入地点' : '定位超时，请手动输入地点');
+                            showToast(msg);
+                            var li2 = document.getElementById('moment-location-input');
+                            if (li2) li2.focus();
+                        }, { timeout: 8000, enableHighAccuracy: false, maximumAge: 30000 });
+                    };
+                    document.getElementById('moment-location-confirm').onclick = function() {
+                        var v = document.getElementById('moment-location-input').value.trim();
+                        if (!v) { showToast('请输入位置名称'); return; }
+                        window.__momentLocation = v;
+                        setMomentLocationLabel(v);
+                        document.getElementById('moment-location-input').value = '';
+                        openMomentSheet('');
+                    };
+                    document.getElementById('moment-loc-close').onclick = function() { openMomentSheet(''); };
+                } catch(e) {}
+                function setMomentLocationLabel(t) {
+                    var l = document.getElementById('moment-location-label');
+                    if (l) l.innerHTML = t + '<i class="fa fa-chevron-right ml-1 text-[10px]"></i>';
+                }
+                document.querySelectorAll('.moment-sheet-mask').forEach(function(m) { m.onclick = function() { openMomentSheet(''); }; });
+                document.querySelectorAll('.moment-sheet-cancel').forEach(function(b) { b.onclick = function() { openMomentSheet(''); }; });
                 document.getElementById('settings-btn').onclick = () => { document.getElementById('settings-slide')
                         .classList.add('open'); };
                 document.getElementById('close-settings-top').onclick = () => { document.getElementById(
@@ -18282,6 +18490,14 @@ const myTile = selfCamStream
                     window.__appReady = true;
                     var ld2 = document.getElementById('app-loading');
                     if (ld2) ld2.style.display = 'none';
+                    var _avObserverTimer = null;
+                    var _avObserver = new MutationObserver(function() {
+                        if (_avObserverTimer) clearTimeout(_avObserverTimer);
+                        _avObserverTimer = setTimeout(function() {
+                            try { applyAvatarEffects(); } catch (e) {}
+                        }, 300);
+                    });
+                    _avObserver.observe(document.body, { childList: true, subtree: true });
                 } catch (err) {
                     console.error('初始化失败:', err);
                     var ld3 = document.getElementById('app-loading');
@@ -18716,7 +18932,7 @@ const myTile = selfCamStream
                             _qcLocation = { location: l, action: '' };
                         }
                         var ld = document.getElementById('qc-location-display');
-                        if (ld) ld.textContent = _qcLocation ? '📍 ' + _qcLocation.location : '📍 未选定位';
+                        if (ld) ld.innerHTML = _qcLocation ? '<i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>' + escapeHtml(_qcLocation.location) : '<i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>未选定位';
                     };
                 });
             }
@@ -18732,7 +18948,7 @@ const myTile = selfCamStream
                 var li = document.getElementById('qc-loc-input');
                 if (li) li.value = '';
                 var ld = document.getElementById('qc-location-display');
-                if (ld) ld.textContent = '📍 未选定位';
+                if (ld) ld.innerHTML = '<i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>未选定位';
                 var pv = document.getElementById('qc-photo-preview');
                 if (pv) { pv.textContent = '点击拍照 / 上传图片'; pv.style.backgroundImage = ''; }
                 renderQuickWords();
@@ -18764,7 +18980,7 @@ const myTile = selfCamStream
                         if (Math.random() < (settings.partnerCheckinImgChance !== undefined ? settings.partnerCheckinImgChance : 0.35)) img = window.pickStickerImage(contact.id);
                         var content = { text: lib.text, location: lib.location || '', photo: img };
                         var rec = await savePatrolRecord({ type: 'quick_checkin', contactId: contact.id, initiator: 'contact', content: content, created_at: new Date().toISOString() });
-                        await pushReportChatMsg(contact, { text: '⚡ 打卡：' + lib.text + (lib.location && lib.text.indexOf(lib.location) < 0 ? '（📍 ' + lib.location + '）' : ''), photo: img, recordId: rec && rec.id, isMe: false });
+                        await pushReportChatMsg(contact, { text: '⚡ 打卡：' + lib.text + (lib.location && lib.text.indexOf(lib.location) < 0 ? '（' + lib.location + '）' : ''), photo: img, recordId: rec && rec.id, isMe: false });
                         patrolNotify(contact, '打卡了：' + lib.text);
                         var tlp = document.getElementById('timeline-panel');
                         if (tlp && tlp.classList.contains('open') && _tlMode === 'today') refreshTimelineToday();
@@ -18786,7 +19002,7 @@ const myTile = selfCamStream
                 var content = { text: text, location: locText, photo: _qcPhoto };
                 var rec = await savePatrolRecord({ type: 'quick_checkin', contactId: contact ? contact.id : null, initiator: 'me', content: content, created_at: new Date().toISOString() });
                 if (contact) {
-                    await pushReportChatMsg(contact, { text: '⚡ 打卡：' + text + (locText ? '（📍 ' + locText + '）' : ''), photo: _qcPhoto, recordId: rec && rec.id, isMe: true });
+                    await pushReportChatMsg(contact, { text: '⚡ 打卡：' + text + (locText ? '（' + locText + '）' : ''), photo: _qcPhoto, recordId: rec && rec.id, isMe: true });
                     maybePartnerCheckin(contact);
                 }
                 showToast('打卡已同步到时间轴 ✅');
@@ -18981,7 +19197,7 @@ const myTile = selfCamStream
                 var name = timelineContactName(it.contactId, it.initiator);
                 var meta = timelineTimeStr(it.ts) + ' · ' + name;
                 var body = escapeHtml(it.text || '');
-                if (it.location) body += '<div class="text-xs text-[var(--text-secondary)] mt-1">📍 ' + escapeHtml(it.location) + '</div>';
+                if (it.location) body += '<div class="text-xs text-[var(--text-secondary)] mt-1"><i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>' + escapeHtml(it.location) + '</div>';
                 if (it.note) body += '<div class="text-xs text-[var(--text-secondary)] mt-1">备注：' + escapeHtml(it.note) + '</div>';
                 if (it.photo) body += '<img src="' + escapeHtml(it.photo) + '" class="w-full max-h-44 object-cover rounded-xl mt-2">';
                 var extra = '';
@@ -19001,7 +19217,7 @@ const myTile = selfCamStream
                 var title = timelineDateLabel(it.ts);
                 var meta = timelineTimeStr(it.ts) + ' · ' + name;
                 var parts = [];
-                if (it.location) parts.push('📍 ' + escapeHtml(it.location));
+                if (it.location) parts.push(escapeHtml(it.location));
                 if (it.text) parts.push(escapeHtml(it.text));
                 var body = parts.length ? parts.join(' · ') : '';
                 var html = '';
@@ -19425,7 +19641,7 @@ const myTile = selfCamStream
                         return;
                     }
                     box.innerHTML = locs.map(function(l, i) {
-                        return '<div class="flex items-center justify-between bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2"><span class="text-xs flex-1 truncate">📍 ' + escapeHtml(l) + '</span><button onclick="window.deletePatrolLocation(' + i + ')" class="text-red-400 px-1"><i class="fa fa-trash"></i></button></div>';
+                        return '<div class="flex items-center justify-between bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2"><span class="text-xs flex-1 truncate"><i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>' + escapeHtml(l) + '</span><button onclick="window.deletePatrolLocation(' + i + ')" class="text-red-400 px-1"><i class="fa fa-trash"></i></button></div>';
                     }).join('');
                 } else {
                     var acts = settings.patrolActions || [];
@@ -19444,7 +19660,7 @@ const myTile = selfCamStream
                 var btns = document.querySelectorAll('#qwm-tabs .tl-tab-btn');
                 btns.forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tab); });
                 var titleEl = document.getElementById('qwm-title');
-                if (titleEl) titleEl.textContent = tab === 'word' ? '⚡ 打卡词' : (tab === 'loc' ? '📍 地点库' : '✍️ 动作库');
+                if (titleEl) titleEl.innerHTML = tab === 'word' ? '⚡ 打卡词' : (tab === 'loc' ? '<i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>地点库' : '✍️ 动作库');
                 var input = document.getElementById('qwm-input');
                 if (input) {
                     input.placeholder = tab === 'word' ? '新增打卡词，如：想你' : (tab === 'loc' ? '新增地点，如：公司' : '新增动作，如：加班');
@@ -19901,28 +20117,8 @@ const myTile = selfCamStream
             _api.renderEmojiDrawer = renderEmojiDrawer;
             _api.switchEmojiTab = switchEmojiTab;
             _api.compressImage = compressImage;
-            // ===== 相册操作（拍照/选择） =====
-            window.showAlbumActionSheet = function() {
-                document.getElementById('album-action-sheet').classList.remove('hidden');
-            };
-            window.pickFromCamera = function() {
-                document.getElementById('album-action-sheet').classList.add('hidden');
-                var fi = document.createElement('input');
-                fi.type = 'file';
-                fi.accept = 'image/*';
-                fi.capture = 'environment';
-                fi.onchange = function(ev) {
-                    var f = ev.target.files[0];
-                    if (!f) return;
-                    compressImage(f, 1920, 0.92).then(function(src) {
-                        if (src) sendStickerMsg(src, 'shared');
-                    });
-                };
-                fi.click();
-            };
+            // ===== 相册操作（直接选图） =====
             window.pickFromGallery = function() {
-                document.getElementById('album-action-sheet').classList.add('hidden');
-                var fi = document.createElement('input');
                 fi.type = 'file';
                 fi.accept = 'image/*,video/*';
                 fi.multiple = false;
@@ -20045,7 +20241,8 @@ const myTile = selfCamStream
                     var momentsPanel = document.getElementById('moments-panel');
                     if (momentsPanel) {
                         momentsPanel.classList.add('open');
-                        document.getElementById('moments-filter').value = 'me';
+                        window._momentContactFilter = null;
+                        window._momentMeOnly = true;
                         initMomentsCoverEvents();
                         renderMoments();
                     }
@@ -20062,6 +20259,12 @@ const myTile = selfCamStream
                 document.getElementById('sidebar-avatar').src = settings.myAvatar;
                 document.getElementById('sidebar-name').textContent = settings.myName;
                 document.getElementById('sidebar-status-text').textContent = settings.myStatus || '在线';
+                var moodPct = settings.myMoodIndex !== undefined ? settings.myMoodIndex : 50;
+                var moodEl = document.getElementById('sidebar-mood-val');
+                if (moodEl) moodEl.innerHTML = '<i class="fa fa-heart" style="color:var(--theme)"></i> <span>' + moodPct + '%</span>';
+                var bEl = document.getElementById('my-battery');
+                var bEl2 = document.getElementById('sidebar-battery-val');
+                if (bEl2) bEl2.innerHTML = bEl ? bEl.innerHTML : '🔋 --';
                 var dot = document.getElementById('sidebar-online-dot');
                 if (dot) {
                     dot.className = 'absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white bg-green-400';
@@ -20069,9 +20272,36 @@ const myTile = selfCamStream
                 document.getElementById('my-sidebar').classList.remove('hidden');
             };
             window.closeMySidebar = function() { document.getElementById('my-sidebar').classList.add('hidden'); };
+            window.editMyMoodFromSidebar = function() {
+                var n = prompt('输入你的心情百分比（0-100）', settings.myMoodIndex !== undefined ? settings.myMoodIndex : 50);
+                if (n !== null) {
+                    var v = parseInt(n);
+                    if (!isNaN(v)) {
+                        settings.myMoodIndex = Math.max(0, Math.min(100, v));
+                        saveSettings();
+                        if (typeof updateMyMoodDisplay === 'function') updateMyMoodDisplay();
+                        var pct = settings.myMoodIndex;
+                        var sEl = document.getElementById('sidebar-mood-val');
+                        if (sEl) sEl.innerHTML = '<i class="fa fa-heart" style="color:var(--theme)"></i> <span>' + pct + '%</span>';
+                        showToast('心情已更新 ✅');
+                    }
+                }
+            };
             window.openSidebarMoments = function() {
                 closeMySidebar();
                 window._momentContactFilter = null;
+                window._momentMeOnly = false;
+                var p = document.getElementById('moments-panel');
+                if (p) {
+                    p.classList.add('open');
+                    initMomentsCoverEvents();
+                    renderMoments();
+                }
+            };
+            window.openSidebarMyMoments = function() {
+                closeMySidebar();
+                window._momentContactFilter = null;
+                window._momentMeOnly = true;
                 var p = document.getElementById('moments-panel');
                 if (p) {
                     p.classList.add('open');
@@ -20102,14 +20332,23 @@ const myTile = selfCamStream
                 closeMySidebar();
                 document.getElementById('mp-avatar').src = settings.myAvatar;
                 document.getElementById('mp-name').textContent = settings.myName;
+                var mpStatusEl = document.getElementById('mp-status');
+                if (mpStatusEl) mpStatusEl.textContent = settings.myStatus || '在线';
                 document.getElementById('mp-name-input').value = settings.myName;
-                document.getElementById('mp-status-input').value = settings.myStatus || '';
                 document.getElementById('mp-region-input').value = settings.region || '';
                 document.getElementById('mp-phone-input').value = settings.phone || '';
                 document.getElementById('mp-heartkey').textContent = settings.heartKey || ('LX_' + Math.random().toString(36).substr(2,6).toUpperCase());
                 document.getElementById('mp-ringtone-text').textContent = settings.ringtone ? (settings.ringtone === 'call1' ? '柔和铃声' : settings.ringtone === 'call2' ? '轻快铃声' : settings.ringtone === 'call3' ? '经典铃声' : '默认') : '默认';
                 var bal = settings.walletBalance || 0;
                 document.getElementById('mp-balance-text').textContent = '¥' + bal.toFixed(2);
+                var mmp = document.getElementById('mp-my-moments-btn');
+                if (mmp) mmp.onclick = function() {
+                    closeMyProfilePage();
+                    window._momentContactFilter = null;
+                    window._momentMeOnly = true;
+                    var p = document.getElementById('moments-panel');
+                    if (p) { p.classList.add('open'); initMomentsCoverEvents(); renderMoments(); }
+                };
                 document.getElementById('my-profile-page').classList.add('open');
             };
             window.editMyStatusFromSidebar = function() {
@@ -20128,9 +20367,10 @@ const myTile = selfCamStream
             window.closeMyProfilePage = function() {
                 settings.myName = document.getElementById('mp-name-input').value || settings.myName;
                 settings.region = document.getElementById('mp-region-input').value;
-                settings.myStatus = document.getElementById('mp-status-input').value.trim() || settings.myStatus;
                 settings.phone = document.getElementById('mp-phone-input').value;
                 document.getElementById('mp-name').textContent = settings.myName;
+                var mpStatusEl2 = document.getElementById('mp-status');
+                if (mpStatusEl2) mpStatusEl2.textContent = settings.myStatus || '在线';
                 document.getElementById('sidebar-name').textContent = settings.myName;
                 var hmAv = document.getElementById('home-my-avatar');
                 if (hmAv) hmAv.src = settings.myAvatar;
@@ -21593,6 +21833,7 @@ const myTile = selfCamStream
             var _decideOptionCount = 0;
             var _decideView = 'form';
             var _decideHistOpen = false;
+            var _decideHistContact = null;
             var _decidePending = null;
             function renderDecidePage() {
                 var el = document.getElementById('dpage-decide');
@@ -21628,7 +21869,7 @@ const myTile = selfCamStream
                 renderDecideContacts();
                 renderDecideHistory();
             }
-            function toggleDecideHistory() { _decideHistOpen = !_decideHistOpen; renderDecidePage(); }
+            function toggleDecideHistory() { _decideHistOpen = !_decideHistOpen; if (!_decideHistOpen) _decideHistContact = null; renderDecidePage(); }
             function renderDecideContacts() {
                 var el = document.getElementById('decide-contacts');
                 if (!el) return;
@@ -21706,11 +21947,20 @@ const myTile = selfCamStream
                     if (!items || !items.length) { list.innerHTML = '<span class="text-xs text-[var(--text-secondary)]">还没有记录，去试试吧～</span>'; return; }
                     var today = new Date(); today.setHours(0, 0, 0, 0);
                     var filtered = _decideHistOpen ? items : items.filter(function(it) { return new Date(it.createdAt).getTime() >= today.getTime(); });
-                    if (!filtered.length) { list.innerHTML = '<span class="text-xs text-[var(--text-secondary)]">今天还没有记录～</span>'; return; }
+                    if (_decideHistContact !== null) filtered = filtered.filter(function(it) { return it.contactIds && it.contactIds.indexOf(_decideHistContact) !== -1; });
+                    var chipBar = '';
+                    if (_decideHistOpen) {
+                        chipBar = '<div class="flex flex-wrap gap-1 mb-2">' +
+                            '<span class="text-xs px-2 py-0.5 rounded-full cursor-pointer" style="' + (_decideHistContact === null ? 'background:var(--theme);color:#fff' : 'background:var(--theme-light);color:var(--text-secondary)') + '" onclick="setDecideHistContact(null)">全部</span>' +
+                            contacts.map(function(c) {
+                                return '<span class="text-xs px-2 py-0.5 rounded-full cursor-pointer" style="' + (_decideHistContact === c.id ? 'background:var(--theme);color:#fff' : 'background:var(--theme-light);color:var(--text-secondary)') + '" onclick="setDecideHistContact(' + c.id + ')">' + escapeHtml(c.remark || c.name) + '</span>';
+                            }).join('') + '</div>';
+                    }
+                    if (!filtered.length) { list.innerHTML = chipBar + '<span class="text-xs text-[var(--text-secondary)]">没有相关记录～</span>'; return; }
                     var stats = {};
-                    items.forEach(function(it) { if (it.status === 'decided' && it.result) stats[it.result] = (stats[it.result] || 0) + 1; });
+                    filtered.forEach(function(it) { if (it.status === 'decided' && it.result) stats[it.result] = (stats[it.result] || 0) + 1; });
                     var total = Object.keys(stats).reduce(function(a, b) { return a + stats[b]; }, 0);
-                    var html = '';
+                    var html = chipBar;
                     if (total && _decideHistOpen) {
                         html += '<div class="flex flex-wrap gap-1 mb-2">' + Object.keys(stats).map(function(k) {
                             var pct = Math.round(stats[k] / total * 100);
@@ -21718,17 +21968,20 @@ const myTile = selfCamStream
                         }).join('') + '</div>';
                     }
                     filtered.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
-                    filtered.slice(0, 10).forEach(function(it) {
+                    filtered.slice(0, 20).forEach(function(it) {
+                        var who = (it.contactIds || []).map(function(cid) { var c = contacts.find(function(x) { return x.id === cid; }); return c ? (c.remark || c.name) : ''; }).filter(Boolean).join('、');
                         html += '<div class="p-2 rounded-lg" style="background:var(--card-bg);border:1px solid var(--border-color)"><span class="font-medium">' + escapeHtml(it.question) + '</span><br><span class="opacity-70">' +
                             (it.status === 'decided' ? '结果：<b style="color:var(--theme)">' + escapeHtml(it.result || '') + '</b>' : '🧠 思考中...' + it.timerMin + '分钟') +
-                            '</span><span class="ml-2 opacity-40">' + formatTime(it.createdAt) + '</span></div>';
+                            '</span>' + (who ? '<span class="ml-2 text-[10px] opacity-40">问：' + escapeHtml(who) + '</span>' : '') + '<span class="ml-2 opacity-40">' + formatTime(it.createdAt) + '</span></div>';
                     });
                     list.innerHTML = html;
                 });
             }
+            window.setDecideHistContact = function(cid) { _decideHistContact = cid; renderDecideHistory(); };
 
             // ===== 寻求对方意见 =====
             var _opinionHistOpen = false;
+            var _opinionHistContact = null;
             function renderOpinionPage() {
                 var el = document.getElementById('dpage-opinion');
                 if (!el) return;
@@ -21745,7 +21998,7 @@ const myTile = selfCamStream
                 renderOpinionContacts();
                 renderOpinionHistory();
             }
-            function toggleOpinionHistory() { _opinionHistOpen = !_opinionHistOpen; renderOpinionPage(); }
+            function toggleOpinionHistory() { _opinionHistOpen = !_opinionHistOpen; if (!_opinionHistOpen) _opinionHistContact = null; renderOpinionPage(); }
             async function submitOpinion() {
                 var q = document.getElementById('opinion-question').value.trim();
                 if (!q) { showToast('请输入问题'); return; }
@@ -21775,10 +22028,19 @@ const myTile = selfCamStream
                     if (!items || !items.length) { list.innerHTML = '<span class="text-xs text-[var(--text-secondary)]">还没有记录～</span>'; return; }
                     var today = new Date(); today.setHours(0, 0, 0, 0);
                     var filtered = _opinionHistOpen ? items : items.filter(function(it) { return new Date(it.createdAt).getTime() >= today.getTime(); });
-                    if (!filtered.length) { list.innerHTML = '<span class="text-xs text-[var(--text-secondary)]">今天还没有记录～</span>'; return; }
-                    var html = '';
+                    if (_opinionHistContact !== null) filtered = filtered.filter(function(it) { return it.contactIds && it.contactIds.indexOf(_opinionHistContact) !== -1; });
+                    var chipBar = '';
+                    if (_opinionHistOpen) {
+                        chipBar = '<div class="flex flex-wrap gap-1 mb-2">' +
+                            '<span class="text-xs px-2 py-0.5 rounded-full cursor-pointer" style="' + (_opinionHistContact === null ? 'background:var(--theme);color:#fff' : 'background:var(--theme-light);color:var(--text-secondary)') + '" onclick="setOpinionHistContact(null)">全部</span>' +
+                            contacts.map(function(c) {
+                                return '<span class="text-xs px-2 py-0.5 rounded-full cursor-pointer" style="' + (_opinionHistContact === c.id ? 'background:var(--theme);color:#fff' : 'background:var(--theme-light);color:var(--text-secondary)') + '" onclick="setOpinionHistContact(' + c.id + ')">' + escapeHtml(c.remark || c.name) + '</span>';
+                            }).join('') + '</div>';
+                    }
+                    if (!filtered.length) { list.innerHTML = chipBar + '<span class="text-xs text-[var(--text-secondary)]">没有相关记录～</span>'; return; }
+                    var html = chipBar;
                     filtered.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
-                    filtered.slice(0, 10).forEach(function(it) {
+                    filtered.slice(0, 20).forEach(function(it) {
                         var ansText = Object.keys(it.answers || {}).map(function(cid) {
                             var c = contacts.find(function(x) { return x.id === parseInt(cid); });
                             return (c ? escapeHtml(c.remark || c.name) : 'TA') + '：' + escapeHtml(it.answers[cid] || '');
@@ -21788,6 +22050,7 @@ const myTile = selfCamStream
                     list.innerHTML = html;
                 });
             }
+            window.setOpinionHistContact = function(cid) { _opinionHistContact = cid; renderOpinionHistory(); };
 
             // ===== 塔罗占卜 =====
             var TAROT_MAJOR = [

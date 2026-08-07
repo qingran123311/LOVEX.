@@ -1932,6 +1932,32 @@
         .avatar-flowing.avatar-frame-double::after {
             top: -7px; left: -7px; right: -7px; bottom: -7px;
         }
+        /* 全局头像框（朋友圈/首页/历史档案等所有头像） */
+        img.rounded-full.avatar-frame-glow,
+        .contact-avatar.avatar-frame-glow {
+            box-shadow: 0 0 12px 3px var(--theme);
+            border-color: var(--theme);
+        }
+        img.rounded-full.avatar-frame-thin,
+        .contact-avatar.avatar-frame-thin {
+            border-width: 3px;
+            border-color: var(--theme);
+            box-shadow: 0 0 4px var(--theme);
+        }
+        img.rounded-full.avatar-frame-double,
+        .contact-avatar.avatar-frame-double {
+            border: 3px double var(--theme);
+            box-shadow: 0 0 0 2px var(--theme-light);
+            padding: 2px;
+            background-clip: content-box;
+        }
+        img.rounded-full.avatar-frame-rainbow,
+        .contact-avatar.avatar-frame-rainbow {
+            border: 3px solid transparent;
+            background-clip: padding-box;
+            box-shadow: 0 0 0 3px #ff6b9d, 0 0 0 6px #ffd54f, 0 0 0 9px #a5d6a7;
+            margin: 3px;
+        }
 
         /* ===== 经期日历图标优化 ===== */
         .period-icon-dot {

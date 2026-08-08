@@ -7198,8 +7198,8 @@ async function createGroup(name, memberIds) {
                     const img = document.createElement('img');
                     img.src = msg.src;
                     img.className = 'image-no-bubble';
-                    img.style.maxWidth = '88px';
-                    img.style.maxHeight = '88px';
+                    img.style.maxWidth = msg.sticker ? '60px' : '88px';
+                    img.style.maxHeight = msg.sticker ? '60px' : '88px';
                     img.style.borderRadius = '12px';
                     img.style.objectFit = 'contain';
                     img.style.cursor = 'zoom-in';
@@ -7453,8 +7453,8 @@ async function createGroup(name, memberIds) {
                     const img = document.createElement('img');
                     img.src = msg.src;
                     img.className = 'image-no-bubble';
-                    img.style.maxWidth = '88px';
-                    img.style.maxHeight = '88px';
+                    img.style.maxWidth = msg.sticker ? '60px' : '88px';
+                    img.style.maxHeight = msg.sticker ? '60px' : '88px';
                     img.style.borderRadius = '12px';
                     img.style.objectFit = 'contain';
                     img.style.cursor = 'zoom-in';
@@ -7796,12 +7796,12 @@ async function createGroup(name, memberIds) {
                 }
             }
 
-            async function sendGroupMessage(text, type = 'text', src = null, quote = null) {
+            async function sendGroupMessage(text, type = 'text', src = null, quote = null, isSticker = false) {
                 const group = getCurrentGroup();
                 if (!group || (!text && type !== 'image' && type !== 'voice')) return;
                 const finalQuote = (type === 'pat' || type === 'voice') ? null : quote;
                 const msg = { type, text: (text || '').trim(), src, senderId: 'me', timestamp: new Date().toISOString(), read: true,
-                    groupId: currentGroupId, quote: finalQuote, duration: 0 };
+                    groupId: currentGroupId, quote: finalQuote, duration: 0, sticker: !!isSticker };
                 const id = await qAddData('groupMessages', msg);
                 msg.id = id;
                 groupMessages.push(msg);
@@ -8030,13 +8030,13 @@ async function createGroup(name, memberIds) {
                         // ===== 字卡附带图片（直接跟随，不累加延迟） =====
                         if (stickerPool.length > 0 && Math.random() < 0.2) {
                             const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
-                            plan.messages.push({ type: 'image', src: sticker.src });
+                            plan.messages.push({ type: 'image', src: sticker.src, sticker: true });
                         }
                     }
 
                     if (stickerPool.length > 0 && Math.random() < 0.15 && !mainText) {
                         const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
-                        plan.messages.push({ type: 'image', src: sticker.src });
+                        plan.messages.push({ type: 'image', src: sticker.src, sticker: true });
                     }
 
                     const voiceChance = rc('voiceReplyChance') || 0.06;
@@ -8571,7 +8571,7 @@ async function createGroup(name, memberIds) {
                                 ov.textContent = '✕';
                                 ov.onclick = function(ev) { ev.stopPropagation(); if (confirm('删除？')) { var esrc = e.src; var beforeLen = emojis.length; emojis = emojis.filter(function(x) { return x.src !== esrc; }); var afterLen = emojis.length; deleteData('emojis', e.id); contacts.forEach(function(ct) { if (ct.uniqueEmojis && ct.uniqueEmojis.length) { ct.uniqueEmojis = ct.uniqueEmojis.filter(function(ue) { return ue.src !== esrc; }); } }); Object.keys(replyQueues).forEach(function(k) { replyQueues[k].forEach(function(item) { clearTimeout(item.timerId); }); delete replyQueues[k]; }); renderSharedEmojiUI(); showToast('已删除（emojis: ' + beforeLen + '→' + afterLen + '）'); } };
                                 d.appendChild(ov);
-                                d.onclick = function() { sendStickerMsg(e.src, 'shared'); };
+                                d.onclick = function() { sendStickerMsg(e.src, 'shared', true); };
                             }
                             grid.appendChild(d);
                         });
@@ -8895,12 +8895,12 @@ async function createGroup(name, memberIds) {
                 triggerUnifiedReply();
             }
 
-            async function sendStickerMsg(src, category) {
-                if (currentChatType === 'group') { await sendGroupMessage('[图片]', 'image', src);
+            async function sendStickerMsg(src, category, isSticker) {
+                if (currentChatType === 'group') { await sendGroupMessage('[图片]', 'image', src, null, !!isSticker);
                     document.getElementById('emoji-drawer').classList.remove('show'); return; }
                 const c = getCurrentContact(); if (!c) return;
                 const msg = { type: 'image', src, isMe: true, timestamp: new Date().toISOString(), read: false,
-                    contactId: currentContactId };
+                    contactId: currentContactId, sticker: !!isSticker };
                 const id = await addData('messages', msg);
                 msg.id = id;
                 messages.push(msg);
@@ -10038,7 +10038,7 @@ async function createGroup(name, memberIds) {
                     var d = document.createElement('div');
                     d.className = 'cursor-pointer rounded p-1';
                     d.innerHTML = '<img src="' + e.src + '" class="w-12 h-12 object-contain rounded">';
-                    d.onclick = function() { sendStickerMsg(e.src, 'shared'); };
+                    d.onclick = function() { sendStickerMsg(e.src, 'shared', true); };
                     d.oncontextmenu = function(ev) { ev.preventDefault(); var esrc = e.src; if (confirm('删除这个专属表情？')) { contact.uniqueEmojis = contact.uniqueEmojis.filter(function(ue) { return ue.src !== esrc; }); updateContact(contact); renderContactEmojiContent(); } };
                     lib.appendChild(d);
                 });
@@ -10060,7 +10060,7 @@ async function createGroup(name, memberIds) {
                     var d = document.createElement('div');
                     d.className = 'cursor-pointer rounded p-1';
                     d.innerHTML = '<img src="' + e.src + '" class="w-12 h-12 object-contain rounded">';
-                    d.onclick = function() { sendStickerMsg(e.src, 'shared'); };
+                    d.onclick = function() { sendStickerMsg(e.src, 'shared', true); };
                     d.oncontextmenu = function(ev) { ev.preventDefault(); if (confirm('删除？')) { var esrc = e.src; emojis = emojis.filter(function(x) { return x.src !== esrc; }); deleteData('emojis', e.id); contacts.forEach(function(ct) { if (ct.uniqueEmojis && ct.uniqueEmojis.length) { ct.uniqueEmojis = ct.uniqueEmojis.filter(function(ue) { return ue.src !== esrc; }); } }); Object.keys(replyQueues).forEach(function(k) { replyQueues[k].forEach(function(item) { clearTimeout(item.timerId); }); delete replyQueues[k]; }); renderEmojiDrawer(); } };
                     grid.appendChild(d);
                 });
@@ -20037,11 +20037,11 @@ const myTile = selfCamStream
                     hasMain = true;
                 }
                 if (!hasMain && stickerPool.length) {
-                    plan.push({ type: 'image', src: stickerPool[Math.floor(Math.random() * stickerPool.length)].src });
+                    plan.push({ type: 'image', src: stickerPool[Math.floor(Math.random() * stickerPool.length)].src, sticker: true });
                     hasMain = true;
                 }
                 if (stickerPool.length && Math.random() < 0.3) {
-                    plan.push({ type: 'image', src: stickerPool[Math.floor(Math.random() * stickerPool.length)].src });
+                    plan.push({ type: 'image', src: stickerPool[Math.floor(Math.random() * stickerPool.length)].src, sticker: true });
                 }
                 return plan;
             }

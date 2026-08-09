@@ -5488,6 +5488,12 @@ async function createGroup(name, memberIds) {
                     img.src = item.avatar;
                     img.onerror = function() { img.src = 'https://picsum.photos/200/200?random=1'; };
                     avWrap.appendChild(img);
+                    if (item.unread > 0) {
+                        var badge = document.createElement('span');
+                        badge.className = 'absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1 rounded-full min-w-[16px] h-4 flex items-center justify-center border-2 border-[var(--card-bg)]';
+                        badge.textContent = item.unread > 99 ? '99+' : item.unread;
+                        avWrap.appendChild(badge);
+                    }
                     card.appendChild(avWrap);
                     var info = document.createElement('div');
                     info.className = 'flex-1 min-w-0 ml-3';
@@ -5502,12 +5508,6 @@ async function createGroup(name, memberIds) {
                     tSpan.className = 'text-[10px] text-[var(--text-secondary)] flex-shrink-0 ml-2';
                     tSpan.textContent = fmtListTime(item.lastTime);
                     topRow.appendChild(tSpan);
-                    if (item.unread > 0) {
-                        var badge = document.createElement('span');
-                        badge.className = 'bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 min-w-[18px] text-center';
-                        badge.textContent = item.unread > 99 ? '99+' : item.unread;
-                        topRow.appendChild(badge);
-                    }
                     info.appendChild(topRow);
                     var bottomRow = document.createElement('div');
                     bottomRow.className = 'flex items-center justify-between mt-0.5';
@@ -7198,8 +7198,8 @@ async function createGroup(name, memberIds) {
                     const img = document.createElement('img');
                     img.src = msg.src;
                     img.className = 'image-no-bubble';
-                    img.style.maxWidth = msg.sticker ? '60px' : '88px';
-                    img.style.maxHeight = msg.sticker ? '60px' : '88px';
+                    img.style.maxWidth = msg.sticker ? '44px' : '88px';
+                    img.style.maxHeight = msg.sticker ? '44px' : '88px';
                     img.style.borderRadius = '12px';
                     img.style.objectFit = 'contain';
                     img.style.cursor = 'zoom-in';
@@ -7453,8 +7453,8 @@ async function createGroup(name, memberIds) {
                     const img = document.createElement('img');
                     img.src = msg.src;
                     img.className = 'image-no-bubble';
-                    img.style.maxWidth = msg.sticker ? '60px' : '88px';
-                    img.style.maxHeight = msg.sticker ? '60px' : '88px';
+                    img.style.maxWidth = msg.sticker ? '44px' : '88px';
+                    img.style.maxHeight = msg.sticker ? '44px' : '88px';
                     img.style.borderRadius = '12px';
                     img.style.objectFit = 'contain';
                     img.style.cursor = 'zoom-in';
@@ -7783,8 +7783,11 @@ async function createGroup(name, memberIds) {
                     const id = await qAddData('messages', msg);
                     msg.id = id;
                     messages.push(msg);
-                    if (!cachedContactMessages[currentContactId]) cachedContactMessages[currentContactId] = messages;
-                    else cachedContactMessages[currentContactId].push(msg);
+                    if (!cachedContactMessages[currentContactId] || cachedContactMessages[currentContactId] === messages) {
+                        cachedContactMessages[currentContactId] = messages;
+                    } else {
+                        cachedContactMessages[currentContactId].push(msg);
+                    }
                     renderContactList();
                     appendMessageToChat(msg);
                     messageInput.value = '';
@@ -10110,6 +10113,13 @@ async function createGroup(name, memberIds) {
             }
             window.deleteLetter = async function(id) {
                 if (!confirm('确定删除这封信吗？')) return;
+                if (settings.pendingLetterReplies) {
+                    const beforeLen = settings.pendingLetterReplies.length;
+                    settings.pendingLetterReplies = settings.pendingLetterReplies.filter(function(p) {
+                        return !(p.contactId === currentContactId && p.replyToId === id);
+                    });
+                    if (settings.pendingLetterReplies.length !== beforeLen) saveSettings();
+                }
                 await deleteData('letters', id);
                 letters = letters.filter(l => l.id !== id);
                 renderLetterList();
@@ -10235,6 +10245,16 @@ async function createGroup(name, memberIds) {
             async function executeLetterReply(contactId, replyToId, dueTime) {
                 const contact = contacts.find(c => c.id === contactId);
                 if (!contact) return;
+                if (replyToId != null && !letters.some(l => l.id === replyToId)) {
+                    if (settings.pendingLetterReplies) {
+                        const bl = settings.pendingLetterReplies.length;
+                        settings.pendingLetterReplies = settings.pendingLetterReplies.filter(function(p) {
+                            return !(p.contactId === contactId && p.replyToId === replyToId);
+                        });
+                        if (settings.pendingLetterReplies.length !== bl) saveSettings();
+                    }
+                    return;
+                }
                 const allCards = buildWordCardPool(contactId);
                 if (!allCards.length) return;
                 const cardMin = getContactReplySetting(contact, 'letterCardCountMin');
@@ -10276,6 +10296,7 @@ async function createGroup(name, memberIds) {
                 }
                 const remaining = [];
                 for (const p of deduped) {
+                    if (p.replyToId != null && !letters.some(l => l.id === p.replyToId)) continue;
                     if (p.dueTime <= now) await executeLetterReply(p.contactId, p.replyToId, p.dueTime);
                     else { remaining.push(p);
                         setTimeout(() => executeLetterReply(p.contactId, p.replyToId, p.dueTime), p.dueTime - now); }
@@ -13553,10 +13574,10 @@ const myTile = selfCamStream
                 document.getElementById('call-active').classList.add('hidden');
                 document.getElementById('call-result').classList.remove('hidden');
                 let txt = '';
-                if (reason === 'reject') txt = `$${dispName(contact)}拒绝了${settings.myName}的视频通话`;
-                else if (reason === 'partner-hangup') txt = `$${dispName(contact)}挂断了通话，通话时长 ${formatCallDuration(dur)}`;
+                if (reason === 'reject') txt = `${dispName(contact)}拒绝了${settings.myName}的视频通话`;
+                else if (reason === 'partner-hangup') txt = `${dispName(contact)}挂断了通话，通话时长 ${formatCallDuration(dur)}`;
                 else if (reason === 'cancel') txt = `${settings.myName}挂断了通话，通话时长 ${formatCallDuration(dur)}`;
-                else if (reason === 'missed') txt = `$${dispName(contact)}未接听${settings.myName}的来电`;
+                else if (reason === 'missed') txt = `${dispName(contact)}未接听${settings.myName}的来电`;
                 document.getElementById('call-result-text').textContent = txt;
                 document.getElementById('call-duration-result').textContent = (reason === 'reject' || reason === 'missed') ?
                     '' : `时长${formatCallDuration(dur)}`;
@@ -13716,7 +13737,7 @@ const myTile = selfCamStream
                 document.getElementById('incoming-group-call-avatar').src = initiator?.avatar ||
                     'https://picsum.photos/200/200?random=1';
                 document.getElementById('incoming-group-call-title').textContent =
-                `$${(initiator?.remark || initiator?.name || '成员')} 邀请你群视频通话`;
+                `${(initiator?.remark || initiator?.name || '成员')} 邀请你群视频通话`;
                 document.getElementById('incoming-group-call-panel').classList.remove('hidden');
                 groupCallState.status = 'incoming';
                 groupCallState.groupId = groupId;
@@ -13947,7 +13968,7 @@ const myTile = selfCamStream
                 letter.id = id;
                 letters.push(letter);
                 if (currentContactId === contactId) renderLetterList();
-                showLetterNotification(`$${dispName(contact)} 给你写信啦 `);
+                showLetterNotification(`${dispName(contact)} 给你写信啦 `);
             }
 
             function setupFloatWindowDrag() {
@@ -15200,7 +15221,7 @@ const myTile = selfCamStream
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `专属字卡_$${dispName(contact)}_${group.name}_${new Date().toISOString().slice(0, 10)}.json`;
+                    a.download = `专属字卡_${dispName(contact)}_${group.name}_${new Date().toISOString().slice(0, 10)}.json`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();

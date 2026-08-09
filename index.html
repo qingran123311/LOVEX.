@@ -5304,9 +5304,10 @@
                     commentReplyMax: 120,
                     commentReplyUnit: '秒',
                     commentReplyChance: 1.0,
-                    statusMin: 60,
+                    statusMin: 120,
                     statusMax: 180,
-                    statusUnit: '时',
+                    statusUnit: '分',
+                    statusChance: 0.6,
                     groupCallAcceptChance: 0.6,
                     groupCallRejectChance: 0.1,
                     maxCardsPerReplyUser: 2,
@@ -6205,7 +6206,8 @@ async function createGroup(name, memberIds) {
                         + '<div class="flex justify-between text-[var(--text-secondary)] text-xs"><span>发帖语音/拼字卡概率已对标「回复设置」</span></div>'
                         + '</div>'
                         + '<hr>'
-                        + '<div class="flex justify-between"><span>状态更新间隔</span><input type="number" id="ch-status-min" value="' + _du(rs.statusMin, '分', rs.statusUnit || '分') + '" class="w-12 px-1 border rounded text-center">~<input type="number" id="ch-status-max" value="' + _du(rs.statusMax, '分', rs.statusUnit || '分') + '" class="w-12 px-1 border rounded text-center"><select id="ch-status-unit" class="border rounded text-xs px-1"><option value="秒" ' + ((rs.statusUnit||'分')==='秒'?'selected':'') + '>秒</option><option value="分" ' + ((rs.statusUnit||'分')==='分'?'selected':'') + '>分</option><option value="时" ' + ((rs.statusUnit||'分')==='时'?'selected':'') + '>时</option></select></div>'
+                        + '<div class="flex justify-between"><span>状态更新间隔</span><input type="number" id="ch-status-min" value="' + _du(rs.statusMin || 120, '分', rs.statusUnit || '分') + '" class="w-12 px-1 border rounded text-center">~<input type="number" id="ch-status-max" value="' + _du(rs.statusMax || 180, '分', rs.statusUnit || '分') + '" class="w-12 px-1 border rounded text-center"><select id="ch-status-unit" class="border rounded text-xs px-1"><option value="秒" ' + ((rs.statusUnit||'分')==='秒'?'selected':'') + '>秒</option><option value="分" ' + ((rs.statusUnit||'分')==='分'?'selected':'') + '>分</option><option value="时" ' + ((rs.statusUnit||'分')==='时'?'selected':'') + '>时</option></select></div>'
+                        + '<div class="flex justify-between"><span>更换状态概率</span><input type="range" id="ch-status-chance" min="0" max="100" value="' + Math.round((typeof rs.statusChance === 'number' ? rs.statusChance : 0.6) * 100) + '" class="w-24"><span id="ch-status-chance-label">' + Math.round((typeof rs.statusChance === 'number' ? rs.statusChance : 0.6) * 100) + '%</span></div>'
                         + '<hr>'
                         + '<div class="flex justify-between"><span>对方主动发红包</span><div class="glass-toggle' + (rs.partnerRedpacketEnabled ? ' active' : '') + '" id="ch-rp-enabled"><div class="knob"></div></div></div>'
                         + '<div id="ch-rp-row" class="flex justify-between"' + (rs.partnerRedpacketEnabled ? '' : ' style="display:none"') + '><span>发红包概率</span><input type="range" id="ch-rp-chance" min="0" max="20" value="' + Math.round((rs.partnerRedpacketChance || 0.02) * 100) + '" class="w-24"><span id="ch-rp-chance-label">' + Math.round((rs.partnerRedpacketChance || 0.02) * 100) + '%</span></div>'
@@ -6371,6 +6373,11 @@ async function createGroup(name, memberIds) {
                     };
                     document.getElementById('ch-status-min').onchange = function() { rs.statusMin = _su(parseFloat(this.value) || 0, '分', rs.statusUnit || '分'); startStatusTimersForAll(); };
                     document.getElementById('ch-status-max').onchange = function() { rs.statusMax = _su(parseFloat(this.value) || 0, '分', rs.statusUnit || '分'); startStatusTimersForAll(); };
+                    document.getElementById('ch-status-chance').oninput = function() {
+                        rs.statusChance = (parseInt(this.value) || 0) / 100;
+                        document.getElementById('ch-status-chance-label').textContent = this.value + '%';
+                        startStatusTimersForAll();
+                    };
                     document.getElementById('ch-status-unit').onchange = function() {
                         rs.statusUnit = this.value;
                         document.getElementById('ch-status-min').value = _du(rs.statusMin, '分', rs.statusUnit);
@@ -9903,6 +9910,21 @@ async function createGroup(name, memberIds) {
                 }
                 return settings.statusLibrary;
             }
+            function ensureStatusDefaults() {
+                if (typeof settings === 'undefined' || !settings) return;
+                var dirty = false;
+                if (typeof settings.statusChance !== 'number') { settings.statusChance = 0.6; dirty = true; }
+                if (typeof contacts === 'undefined' || !contacts) { if (dirty) saveSettings(); return; }
+                contacts.forEach(function(c) {
+                    var rs = c.replySettings;
+                    if (!rs || typeof rs !== 'object') return;
+                    if (typeof rs.statusChance !== 'number') { rs.statusChance = 0.6; dirty = true; }
+                    if (rs.statusMin === 60 && rs.statusMax === 180 && (rs.statusUnit === undefined || rs.statusUnit === '时')) {
+                        rs.statusMin = 120; rs.statusMax = 180; rs.statusUnit = '分'; dirty = true;
+                    }
+                });
+                if (dirty) saveSettings();
+            }
             function saveStatusGroups() { saveSettings(); }
             function getFlatStatusItems(lib) {
                 var items = [];
@@ -10796,6 +10818,48 @@ async function createGroup(name, memberIds) {
                         if (lt) ch.textContent = lt.getHours().toString().padStart(2,'0') + ':' + lt.getMinutes().toString().padStart(2,'0') + ' ' + getTimePeriod(lt.getHours());
                     }
                 }
+            }
+            function refreshPartnerTime(contact) {
+                if (!contact) return;
+                var now = new Date();
+                var target = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                target.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60), Math.floor(Math.random() * 60), 0);
+                var offset = contact.timezoneManual ? (contact.timezoneOffset ?? 0) : contact.timezoneOffset;
+                var minuteShift = contact.timezoneManual ? 0 : (contact.tzMinuteOffset || 0);
+                var offMs = (offset || 0) * 3600000 + (minuteShift || 0) * 60000;
+                contact._timeBase = { realStart: Date.now(), virtStart: new Date(target.getTime() - offMs - target.getTimezoneOffset() * 60000) };
+                if (typeof updateHomePageTimes === 'function') updateHomePageTimes();
+                if (typeof updateHeaderClock === 'function') updateHeaderClock();
+                if (typeof showToast === 'function') showToast('已刷新对方的时间 ');
+            }
+            function showCustomConfirm(msg, onOk) {
+                var ov = document.createElement('div');
+                ov.className = 'fixed inset-0 z-[100] bg-black/40 flex items-center justify-center p-6';
+                ov.style.opacity = '0';
+                ov.style.transition = 'opacity .2s';
+                var bx = document.createElement('div');
+                bx.className = 'w-full max-w-[300px] bg-[var(--card-bg)] rounded-2xl p-5 shadow-xl';
+                var tx = document.createElement('p');
+                tx.className = 'text-sm text-[var(--text-primary)] leading-relaxed';
+                tx.textContent = msg;
+                var btns = document.createElement('div');
+                btns.className = 'flex space-x-2 mt-4';
+                var ok = document.createElement('button');
+                ok.className = 'flex-1 py-2 rounded-lg text-white text-sm';
+                ok.style.background = 'var(--theme)';
+                ok.textContent = '确定';
+                var cancel = document.createElement('button');
+                cancel.className = 'flex-1 py-2 rounded-lg text-sm border border-[var(--border-color)] text-[var(--text-secondary)]';
+                cancel.textContent = '取消';
+                btns.appendChild(ok); btns.appendChild(cancel);
+                bx.appendChild(tx); bx.appendChild(btns);
+                ov.appendChild(bx);
+                document.body.appendChild(ov);
+                requestAnimationFrame(function() { ov.style.opacity = '1'; });
+                var close = function() { ov.remove(); };
+                ok.onclick = function() { close(); if (typeof onOk === 'function') onOk(); };
+                cancel.onclick = close;
+                ov.onclick = function(e) { if (e.target === ov) close(); };
             }
             function updateHeaderTimezone() {
                 updateHeaderClock();
@@ -13912,16 +13976,22 @@ const myTile = selfCamStream
             function applyStatusCatchUp() {
                 if (typeof contacts === 'undefined' || !contacts || !contacts.length) return;
                 try {
+                    ensureStatusDefaults();
                     var lib = getFlatStatusItems(settings.statusLibrary || []);
                     if (!lib.length) return;
                     var changed = [];
                     contacts.forEach(function(c) {
-                        var min = (getContactReplySetting(c, 'statusMin') || 5) * 60000;
+                        var min = (getContactReplySetting(c, 'statusMin') || 120) * 60000;
                         if (!c._lastStatusAt) { c._lastStatusAt = Date.now(); queuedUpdateContact(c); return; }
                         if (Date.now() - c._lastStatusAt >= min) {
-                            c.status = lib[Math.floor(Math.random() * lib.length)];
+                            var chance = getContactReplySetting(c, 'statusChance');
+                            if (typeof chance !== 'number') chance = 0.6;
+                            if (Math.random() < chance) {
+                                c.status = lib[Math.floor(Math.random() * lib.length)];
+                                changed.push(c);
+                            }
                             c._lastStatusAt = Date.now();
-                            changed.push(c);
+                            queuedUpdateContact(c);
                         }
                     });
                     if (changed.length) {
@@ -13938,17 +14008,23 @@ const myTile = selfCamStream
             function startStatusTimersForAll() {
                 Object.values(allStatusTimers).forEach(t => clearTimeout(t));
                 allStatusTimers = {};
+                ensureStatusDefaults();
                 contacts.forEach(contact => {
                     var sLib = getFlatStatusItems(settings.statusLibrary || []);
                     if (!sLib.length) return;
-                    const schedule = () => { const min = (getContactReplySetting(contact, 'statusMin') || 5) * 60000; const max = Math.max((
-                            (getContactReplySetting(contact, 'statusMax') || 60) * 60000), min); const timerId = setTimeout(async () => { if (!
-                                sLib.length) { schedule(); return; } const s = sLib[Math.floor(Math.random() * sLib.length)];
-                            contact.status = s;
+                    const schedule = () => { const min = (getContactReplySetting(contact, 'statusMin') || 120) * 60000; const max = Math.max((
+                            (getContactReplySetting(contact, 'statusMax') || 180) * 60000), min); const timerId = setTimeout(async () => { if (!
+                                sLib.length) { schedule(); return; }
+                            var chance = getContactReplySetting(contact, 'statusChance');
+                            if (typeof chance !== 'number') chance = 0.6;
+                            if (Math.random() < chance) {
+                                const s = sLib[Math.floor(Math.random() * sLib.length)];
+                                contact.status = s;
+                                await queuedUpdateContact(contact); if (currentChatType === 'private' && contact.id ===
+                                    currentContactId) document.getElementById('partner-status').textContent = s;
+                                renderContactList();
+                            }
                             contact._lastStatusAt = Date.now();
-                            await queuedUpdateContact(contact); if (currentChatType === 'private' && contact.id ===
-                                currentContactId) document.getElementById('partner-status').textContent = s;
-                            renderContactList();
                             schedule(); }, min + Math.random() * (max - min));
                         allStatusTimers[contact.id] = timerId; };
                     schedule();
@@ -17194,7 +17270,7 @@ const myTile = selfCamStream
                     activeMsgEnabled: false, activeMsgMin: 10, activeMsgMax: 60, activeMsgChance: 0.3,
                     partnerCallChance: 0.05, partnerLetterEnabled: false, partnerLetterMin: 10, partnerLetterMax: 24, partnerLetterChance: 0.3, callAcceptChance: 0.6, callRejectChance: 0.4, callHangupMin: 2,
                     callHangupMax: 15, patCooldown: 5, patLibrary: [...DEFAULT_PAT_LIBRARY], partnerPatGroups: [],
-                    statusLibrary: [...DEFAULT_STATUS_LIBRARY], customWeatherOptions: [],
+                    statusLibrary: [...DEFAULT_STATUS_LIBRARY], statusChance: 0.6, statusMin: 120, statusMax: 180, statusUnit: '分', customWeatherOptions: [],
                     separateEmojiEnabled: true, quoteEnabled: true, quoteChance: 0.3, combineCardsEnabled: false, combineCardsChance: 0.3, combineCardsMin: 2, combineCardsMax: 4, recallEnabled: false, recallChance: 0.1, moodSymbols: DEFAULT_MOOD_SYMBOLS, myMoodHistory: [],
                     letterReplyMin: 3600, letterReplyMax: 86400, letterCardCountMin: 5, letterCardCountMax: 15, moodRefreshHour: 6, pendingLetterReplies: [], lastPartnerLetterTimes: {},
                     groupCallAcceptChance: 0.7, groupCallRejectChance: 0.2, groupCallTimeoutChance: 0.1,
@@ -17240,6 +17316,17 @@ const myTile = selfCamStream
                 if (letter) letter.onclick = function() { document.getElementById('contact-home-panel').classList.remove('open'); updateWechatHeader(); if (LOVE.openLetter) LOVE.openLetter(); };
                 var chAvatar = document.getElementById('ch-avatar');
                 if (chAvatar) { chAvatar.onclick = function() { var c = getCurrentContact(); if (!c) return; var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = async function(e) { var f = e.target.files[0]; if (!f) return; var src = await compressImage(f, 512, 0.9); c.avatar = src; await updateContact(c); document.getElementById('ch-avatar').src = src; document.getElementById('partner-avatar').src = src; applyAvatarEffects(); showToast('头像已更新 '); }; input.click(); }; chAvatar.style.cursor = 'pointer'; }
+                var chPt = document.getElementById('ch-partner-time');
+                if (chPt) {
+                    chPt.style.cursor = 'pointer';
+                    chPt.title = '点击随机刷新对方的时间';
+                    chPt.onclick = function(e) {
+                        e.stopPropagation();
+                        var c = getCurrentContact();
+                        if (!c) return;
+                        showCustomConfirm('确定要为对方随机刷新一次当地时间吗？刷新后将按新时间继续走。', function() { refreshPartnerTime(c); });
+                    };
+                }
                 var remarkRow = document.getElementById('ch-remark-row');
                 if (remarkRow) remarkRow.onclick = function() {
                     var c = getCurrentContact(); if (!c) return;

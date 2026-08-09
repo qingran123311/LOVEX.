@@ -257,7 +257,9 @@
         img.rounded-full.avatar-square {
             border-radius: 6px !important;
         }
-        .moment-notif-toast { position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--card-bg);padding:14px 16px;display:flex;align-items:center;font-size:14px;color:var(--text-primary);box-shadow:0 2px 16px rgba(0,0,0,0.12);transform:translateY(-100%);transition:transform 0.3s ease;border-bottom:1px solid var(--border-color); }
+        .moment-notif-toast { position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--card-bg);padding:14px 16px;display:flex;align-items:center;font-size:14px;color:var(--text-primary);box-shadow:0 2px 16px rgba(0,0,0,0.12);transform:translateY(-100%);transition:transform 0.3s ease;border-bottom:1px solid var(--border-color);cursor:pointer; }
+        .moment-notif-toast:hover { background:var(--theme-light); }
+        .moment-notif-toast .notif-jump-hint { margin-left:auto;font-size:11px;color:var(--theme);flex-shrink:0; }
         .moment-notif-toast.show { transform:translateY(0); }
         .moment-delete-btn { transition:opacity 0.15s ease; }
         .moment-del-hid { opacity:0; pointer-events:none; }
@@ -4808,27 +4810,85 @@
                     if (icon) notifOpts.badge = icon;
                     var n = new Notification(title, notifOpts);
                     n.onclick = function() {
-                        this.close();
-                        window.focus();
                         try {
-                            if (groupId) { window.jumpToChatFromNotif && window.jumpToChatFromNotif(null, groupId); }
-                            else { window.jumpToChatFromNotif && window.jumpToChatFromNotif(contactId, null); }
+                            this.close();
+                            var mid = opts && opts.msgId != null ? opts.msgId : null;
+                            var targetKey = groupId ? ('g' + groupId) : ('c' + contactId);
+                            try { window.location.hash = 'jump-' + targetKey + (mid != null ? '-' + mid : ''); } catch (e2) {}
+                            try { window.focus(); } catch (e2) {}
+                            try {
+                                if (groupId) { window.jumpToChatFromNotif && window.jumpToChatFromNotif(null, groupId, mid); }
+                                else { window.jumpToChatFromNotif && window.jumpToChatFromNotif(contactId, null, mid); }
+                            } catch (e3) {}
                         } catch (e) {}
                     };
                 } catch (e) {}
             }
-            // 点击系统通知 → 切到对应聊天
-            window.jumpToChatFromNotif = function(contactId, groupId) {
+            // 引用消息点击跳转：滚动定位到被引用消息并高亮
+            window.jumpQuote = function(targetId) {
+                try {
+                    if (targetId == null) return;
+                    var targetEl = (typeof chatContainer !== 'undefined' && chatContainer) ? chatContainer.querySelector('[data-id="' + targetId + '"]') : null;
+                    if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetEl.classList.add('highlight-flash');
+                        setTimeout(function() { targetEl.classList.remove('highlight-flash'); }, 1500);
+                    } else {
+                        if (typeof showToast === 'function') showToast('原消息已被删除');
+                    }
+                } catch (e) {}
+            };
+            window.jumpToChatFromNotif = function(contactId, groupId, msgId) {
                 try {
                     if (groupId) {
                         if (typeof switchGroup === 'function') switchGroup(groupId);
                     } else if (contactId) {
                         if (typeof switchContact === 'function') switchContact(contactId);
                     }
+                    if (msgId != null && typeof chatContainer !== 'undefined' && chatContainer) {
+                        setTimeout(function() {
+                            var targetEl = chatContainer.querySelector('[data-id="' + msgId + '"]');
+                            if (targetEl) {
+                                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                targetEl.classList.add('highlight-flash');
+                                setTimeout(function() { targetEl.classList.remove('highlight-flash'); }, 1500);
+                            }
+                        }, 600);
+                    }
                 } catch (e) {}
             };
             window.sendSystemNotification = sendSystemNotification;
             window.initSystemNotifications = initSystemNotifications;
+
+            // 通知点击跳转兜底：处理 location.hash（jump-c<contactId>-<msgId> / jump-g<groupId>-<msgId>）
+            function handleNotifHash() {
+                try {
+                    var h = window.location.hash || '';
+                    var m = h.match(/^#jump-(c|g)(\d+)(?:-(\d+))?/);
+                    if (!m) return;
+                    var isGroup = m[1] === 'g';
+                    var id = parseInt(m[2]);
+                    var mid = m[3] != null ? parseInt(m[3]) : null;
+                    window.location.hash = '';
+                    if (isGroup) {
+                        if (typeof switchGroup === 'function') switchGroup(id);
+                    } else {
+                        if (typeof switchContact === 'function') switchContact(id);
+                    }
+                    if (mid != null && typeof chatContainer !== 'undefined' && chatContainer) {
+                        setTimeout(function() {
+                            var tEl = chatContainer.querySelector('[data-id="' + mid + '"]');
+                            if (tEl) {
+                                tEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                tEl.classList.add('highlight-flash');
+                                setTimeout(function() { tEl.classList.remove('highlight-flash'); }, 1500);
+                            }
+                        }, 700);
+                    }
+                } catch (e) {}
+            }
+            window.addEventListener('hashchange', handleNotifHash);
+            window.addEventListener('load', function() { setTimeout(handleNotifHash, 800); });
 
             function scrollToBottom() {
                 if (!chatContainer) return;
@@ -4911,11 +4971,11 @@
             var notifQueue = [];
             var notifBusy = false;
 
-            function showNotification(name, text, avatar, contactId, groupId) {
+            function showNotification(name, text, avatar, contactId, groupId, msgId) {
                 var popup = document.getElementById('notification-popup');
                 var inner = document.getElementById('notif-inner');
                 if (!popup || !inner) return;
-                notifQueue.push({ name: name, text: text, avatar: avatar, contactId: contactId, groupId: groupId });
+                notifQueue.push({ name: name, text: text, avatar: avatar, contactId: contactId, groupId: groupId, msgId: msgId });
                 if (notifQueue.length > 6) notifQueue.splice(0, notifQueue.length - 6);
                 if (notifBusy) return;
                 notifBusy = true;
@@ -4927,11 +4987,11 @@
                 var inner = document.getElementById('notif-inner');
                 var item = notifQueue.shift();
                 if (!popup || !inner || !item) { notifBusy = false; return; }
-                var contactId = item.contactId, groupId = item.groupId;
+                var contactId = item.contactId, groupId = item.groupId, msgId = item.msgId;
                 // 后台时同时发系统通知（挂后台也能看到）
                 try {
                     if (document.hidden || !document.hasFocus || !document.hasFocus()) {
-                        sendSystemNotification(item.name, item.text, item.avatar || undefined, contactId || null, groupId || null);
+                        sendSystemNotification(item.name, item.text, item.avatar || undefined, contactId || null, groupId || null, { msgId: msgId });
                     }
                 } catch (e) {}
                 document.getElementById('notif-avatar').src = item.avatar || 'https://picsum.photos/200/200?random=1';
@@ -4953,6 +5013,16 @@
                     if (notifTimer) clearTimeout(notifTimer);
                     if (contactId) switchContact(contactId);
                     else if (groupId) switchGroup(groupId);
+                    if (msgId != null && typeof chatContainer !== 'undefined' && chatContainer) {
+                        setTimeout(function() {
+                            var tEl = chatContainer.querySelector('[data-id="' + msgId + '"]');
+                            if (tEl) {
+                                tEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                tEl.classList.add('highlight-flash');
+                                setTimeout(function() { tEl.classList.remove('highlight-flash'); }, 1500);
+                            }
+                        }, 600);
+                    }
                     showNextNotif();
                 };
                 var startX = 0, startY = 0, startTime = 0;
@@ -5442,7 +5512,14 @@ async function createGroup(name, memberIds) {
                 if (d.getFullYear() === now.getFullYear()) return (d.getMonth() + 1) + '/' + d.getDate();
                 return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
             }
+            var _clThrottleTimer = null;
+            var _clPending = false;
             function renderContactList() {
+                if (_clThrottleTimer) { _clPending = true; return; }
+                _clThrottleTimer = setTimeout(function() {
+                    _clThrottleTimer = null;
+                    if (_clPending) { _clPending = false; renderContactList(); }
+                }, 120);
                 var listEl = document.getElementById('conversation-list');
                 if (!listEl) return;
                 listEl.innerHTML = '';
@@ -7235,7 +7312,7 @@ async function createGroup(name, memberIds) {
                 if (msg.quote) {
                     var qJumpId = msg.quote.id || '';
                     qHtml =
-                        `<div class="border-l-2 opacity-60 pl-2 mb-1 text-xs cursor-pointer hover:opacity-90 quote-jump min-w-0" style="border-color:var(--theme);max-width:260px;overflow:hidden;" data-jump="${qJumpId}"><p class="font-medium truncate">${escapeHtml(msg.quote.author)}</p><p class="truncate">${escapeHtml(msg.quote.text)}</p></div>`;
+                        `<div class="border-l-2 opacity-60 pl-2 mb-1 text-xs cursor-pointer hover:opacity-90 quote-jump min-w-0" style="border-color:var(--theme);max-width:260px;overflow:hidden;" data-jump="${qJumpId}" onclick="event.stopPropagation();jumpQuote(${qJumpId})"><p class="font-medium truncate">${escapeHtml(msg.quote.author)}</p><p class="truncate">${escapeHtml(msg.quote.text)}</p></div>`;
                 }
                 let cHtml = '';
                 if (msg.type === 'text') cHtml = `<p class="break-words text-sm">${escapeHtml(msg.text)}</p>`;
@@ -7492,7 +7569,7 @@ async function createGroup(name, memberIds) {
                     const qText = msg.quote.type === 'text' ? msg.quote.text : (msg.quote.type === 'image' ? '[图片]' : (msg.quote.type === 'voice' ? '[语音]' : (msg.quote.type === 'redpacket' ? '[红包]' : (msg.quote.type === 'rp-claim' ? msg.quote.text : '[消息]'))));
                     const qJumpId = msg.quote.id || '';
                     quoteHtml =
-                        `<div class="group-quote cursor-pointer hover:opacity-80 quote-jump" style="max-width:260px;overflow:hidden;" data-jump="${qJumpId}"><p class="font-medium truncate">${escapeHtml(qAuthor)}</p><p class="truncate">${escapeHtml(qText)}</p></div>`;
+                        `<div class="group-quote cursor-pointer hover:opacity-80 quote-jump" style="max-width:260px;overflow:hidden;" data-jump="${qJumpId}" onclick="event.stopPropagation();jumpQuote(${qJumpId})"><p class="font-medium truncate">${escapeHtml(qAuthor)}</p><p class="truncate">${escapeHtml(qText)}</p></div>`;
                 }
                 let contentHtml = '';
                 if (msg.type === 'text') contentHtml = `<p class="break-words text-sm">${escapeHtml(msg.text)}</p>`;
@@ -7531,7 +7608,7 @@ async function createGroup(name, memberIds) {
                     try {
                         var nTitle = (currentChatType === 'group' ? (getCurrentGroup() ? getCurrentGroup().name : '群聊') : (getCurrentContact() ? (getCurrentContact().remark || getCurrentContact().name) : 'TA'));
                         var nBody = msg.type === 'image' ? '[图片]' : (msg.type === 'voice' ? '[语音]' : (msg.type === 'pat' ? msg.text : (msg.text || '[新消息]')));
-                        sendSystemNotification(nTitle, nBody, (getCurrentContact() && getCurrentContact().avatar) || undefined, currentChatType === 'group' ? null : currentContactId, currentChatType === 'group' ? currentGroupId : null);
+                        sendSystemNotification(nTitle, nBody, (getCurrentContact() && getCurrentContact().avatar) || undefined, currentChatType === 'group' ? null : currentContactId, currentChatType === 'group' ? currentGroupId : null, { msgId: msg.id });
                     } catch (e) {}
                 }
                 scrollToBottom();
@@ -8306,7 +8383,7 @@ async function createGroup(name, memberIds) {
                         var notifTitle = chatType === 'group' ? (groups.find(function(gr) { return gr.id === groupId; }) || {}).name || '群聊' : ((contacts.find(function(ct) { return ct.id === contactId; }) || {}).remark || (contacts.find(function(ct) { return ct.id === contactId; }) || {}).name || 'TA');
                         var notifBody = msg.type === 'image' ? '[图片]' : (msg.type === 'voice' ? '[语音]' : (msg.type === 'pat' ? (msg.text || '拍了拍你') : (msg.text || '[新消息]')));
                         var notifIcon = chatType === 'group' ? undefined : ((contacts.find(function(ct) { return ct.id === contactId; }) || {}).avatar || undefined);
-                        sendSystemNotification(notifTitle, notifBody, notifIcon, chatType === 'group' ? null : contactId, chatType === 'group' ? groupId : null);
+                        sendSystemNotification(notifTitle, notifBody, notifIcon, chatType === 'group' ? null : contactId, chatType === 'group' ? groupId : null, { msgId: msg.id });
                     } catch (e) {}
                 }
                 if (msg.type !== 'pat' && msg.type !== 'call') {
@@ -8314,7 +8391,7 @@ async function createGroup(name, memberIds) {
                         var c = contacts.find(function(ct) { return ct.id === contactId; });
                         if (c) {
                             var preview = msg.type === 'text' ? msg.text : (msg.type === 'image' ? '[图片]' : (msg.type === 'redpacket' ? '[红包]' : (msg.type === 'rp-claim' ? msg.text : '[消息]')));
-                            showNotification(dispName(c), preview, c.avatar, c.id, null);
+                            showNotification(dispName(c), preview, c.avatar, c.id, null, msg.id);
                         }
                     } else if (chatType === 'group') {
                         var g = groups.find(function(gr) { return gr.id === groupId; });
@@ -8325,7 +8402,7 @@ async function createGroup(name, memberIds) {
                                 if (m) senderName = dispName(m);
                             }
                             var preview = msg.type === 'text' ? senderName + ': ' + msg.text : (msg.type === 'image' ? senderName + ': [图片]' : (msg.type === 'redpacket' ? senderName + ': [红包]' : senderName + ': [消息]'));
-                            showNotification(g.name, preview, g.avatar || '', null, groupId);
+                            showNotification(g.name, preview, g.avatar || '', null, groupId, msg.id);
                         }
                     }
                 }
@@ -11850,7 +11927,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                 var avatarClick = isMe ? 'openMySidebar()' : 'window.momentGoProfile(' + p.authorId + ')';
                 var locHtml = '';
                 if (p.location) locHtml = '<div class="moment-loc mt-1.5 flex items-center" style="font-size:0.72rem;color:var(--text-secondary);"><i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>' + escapeHtml(p.location) + '</div>';
-                return '<div class="moment-feed-card" ondblclick="event.stopPropagation();window.toggleMomentDelete(' + p.id + ')"' + (p._actReveal ? ' style="outline:1px dashed rgba(239,68,68,0.35);outline-offset:2px;"' : '') + '><div class="flex items-start">'
+                return '<div class="moment-feed-card" data-post-id="' + p.id + '" ondblclick="event.stopPropagation();window.toggleMomentDelete(' + p.id + ')"' + (p._actReveal ? ' style="outline:1px dashed rgba(239,68,68,0.35);outline-offset:2px;"' : '') + '><div class="flex items-start">'
                     + '<img src="' + escapeHtml(author.avatar) + '" class="w-9 h-9 rounded-full mr-2.5 flex-shrink-0 cursor-pointer" onclick="event.stopPropagation();' + avatarClick + '" onerror="this.src=\'https://picsum.photos/200/200?random=1\'">'
                     + '<div class="flex-1 min-w-0"><div class="flex items-center"><span class="font-medium text-sm text-[var(--text-primary)]">' + escapeHtml(p.authorId === 'me' ? settings.myName : dispNameById(p.authorId)) + '</span>' + privacyBadge + '</div>'
                     + '<p class="moment-text mt-1" style="font-size:0.8rem;line-height:1.5;">' + typeIcon + displayText + '</p>'
@@ -12233,7 +12310,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                     currentPost.comments.push(newComment);
                     await updateData('posts', currentPost);
                     if (document.getElementById('moments-panel') && document.getElementById('moments-panel').classList.contains('open')) renderMoments();
-                    showMomentToast(dispNameById(authorId) + ' 回复了你', 'fa fa-commenting-o');
+                    showMomentToast(dispNameById(authorId) + ' 回复了你', 'fa fa-commenting-o', post.id);
                 }, delay);
             }
 
@@ -12263,7 +12340,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                     currentPost.comments.push(newComment);
                     await updateData('posts', currentPost);
                     if (document.getElementById('moments-panel') && document.getElementById('moments-panel').classList.contains('open')) renderMoments();
-                    showMomentToast(dispNameById(targetAuthorId) + ' 回复了你的评论', 'fa fa-commenting-o');
+                    showMomentToast(dispNameById(targetAuthorId) + ' 回复了你的评论', 'fa fa-commenting-o', post.id);
                 }, delay);
             }
 
@@ -12492,7 +12569,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                 if (!otherContacts.length) return;
                 for (const liker of otherContacts) {
                     if (!momentPostVisibleToContact(post, liker)) continue;
-                    const chance = getContactReplySetting(liker, 'postReplyChance') ?? 0.3;
+                    const chance = getContactReplySetting(liker, 'postReplyChance') ?? 0.8;
                     if (Math.random() > chance) continue;
                     const minDelay = (getContactReplySetting(liker, 'postReplyMin') || 300) * 1000;
                     const maxDelay = Math.max((getContactReplySetting(liker, 'postReplyMax') || 3600) * 1000, minDelay);
@@ -12505,23 +12582,43 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                         p.likes.push(liker.id);
                         await updateData('posts', p);
                         if (document.getElementById('moments-panel')?.classList.contains('open')) renderMoments();
-                        showMomentLikeNotif(dispName(liker) || 'TA');
+                        showMomentLikeNotif(dispName(liker) || 'TA', p.id);
                     }, delay);
                 }
             }
-            function showMomentToast(text, iconClass) {
+            function showMomentToast(text, iconClass, postId) {
                 showMomentsNotification(text);
                 var existing = document.querySelector('.moment-notif-toast');
                 if (existing) existing.remove();
                 var toast = document.createElement('div');
                 toast.className = 'moment-notif-toast';
-                toast.innerHTML = '<i class="' + (iconClass || 'fa fa-heart text-red-400') + ' mr-2"></i><span>' + escapeHtml(text) + '</span>';
+                toast.innerHTML = '<i class="' + (iconClass || 'fa fa-heart text-red-400') + ' mr-2"></i><span>' + escapeHtml(text) + '</span>' + (postId != null ? '<span class="notif-jump-hint">点击查看 <i class="fa fa-chevron-right"></i></span>' : '');
+                if (postId != null) {
+                    toast.onclick = function() { openMomentsToPost(postId); };
+                }
                 document.body.appendChild(toast);
                 setTimeout(function() { toast.classList.add('show'); }, 10);
                 setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 300); }, 3000);
             }
-            function showMomentLikeNotif(likerName) {
-                showMomentToast(likerName + ' 赞了你的动态', 'fa fa-heart text-red-400');
+            function showMomentLikeNotif(likerName, postId) {
+                showMomentToast(likerName + ' 赞了你的动态', 'fa fa-heart text-red-400', postId);
+            }
+            function openMomentsToPost(postId) {
+                var panel = document.getElementById('moments-panel');
+                if (panel) {
+                    panel.classList.add('open');
+                    if (typeof initMomentsCoverEvents === 'function') initMomentsCoverEvents();
+                    if (typeof renderMoments === 'function') renderMoments();
+                }
+                setTimeout(function() {
+                    var card = document.querySelector('.moment-feed-card[data-post-id="' + postId + '"]');
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        card.style.boxShadow = '0 0 0 2px var(--theme)';
+                        card.style.transition = 'box-shadow 0.3s';
+                        setTimeout(function() { card.style.boxShadow = ''; }, 2500);
+                    }
+                }, 350);
             }
             async function schedulePostCommentsFromContacts(post) {
                 const otherContacts = contacts.filter(c => c.id !== 'me' && typeof c.id === 'number');
@@ -12544,7 +12641,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                                 .toISOString() });
                         await updateData('posts', p);
                         if (document.getElementById('moments-panel').classList.contains('open')) renderMoments();
-                        showMomentToast((commenter.remark || commenter.name) + ' 评论了你的动态', 'fa fa-comment-o');
+                        showMomentToast((commenter.remark || commenter.name) + ' 评论了你的动态', 'fa fa-comment-o', post.id);
                     }, delay);
                 }
             }

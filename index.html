@@ -1340,8 +1340,6 @@
             background: #f59e0b !important;
         }
         .image-no-bubble {
-            max-width: 120px !important;
-            max-height: 120px !important;
             border-radius: 12px;
             object-fit: contain;
             cursor: pointer;
@@ -3312,10 +3310,15 @@
                 <button id="stats-type-income" class="px-3 py-1 rounded-lg text-xs bg-[var(--theme-light)] text-[var(--text-primary)]" onclick="switchStatsType('income')">收入</button>
                 <button id="stats-type-expense" class="px-3 py-1 rounded-lg text-xs bg-[var(--theme-light)] text-[var(--text-primary)]" onclick="switchStatsType('expense')">支出</button>
             </div>
-            <div id="stats-summary" class="px-4 py-3 text-center border-b border-[var(--border-color)]">
-                <p class="text-xs text-[var(--text-secondary)]">合计</p>
-                <p id="stats-total-amount" class="text-2xl font-bold" style="color:var(--theme)">¥0.00</p>
-                <p id="stats-total-count" class="text-xs text-[var(--text-secondary)] mt-1">共 0 笔</p>
+            <div id="stats-summary" class="px-4 py-3 border-b border-[var(--border-color)]">
+                <div class="flex items-center justify-around">
+                    <div class="text-center"><p class="text-xs text-[var(--text-secondary)]">收入</p><p id="stats-income-amount" class="text-lg font-bold mt-0.5" style="color:var(--theme)">¥0.00</p></div>
+                    <div class="w-px h-10 bg-[var(--border-color)]"></div>
+                    <div class="text-center"><p class="text-xs text-[var(--text-secondary)]">支出</p><p id="stats-expense-amount" class="text-lg font-bold mt-0.5" style="color:#e57373">¥0.00</p></div>
+                    <div class="w-px h-10 bg-[var(--border-color)]"></div>
+                    <div class="text-center"><p class="text-xs text-[var(--text-secondary)]">结余</p><p id="stats-net-amount" class="text-lg font-bold mt-0.5">¥0.00</p></div>
+                </div>
+                <p id="stats-total-count" class="text-center text-xs text-[var(--text-secondary)] mt-2">共 0 笔</p>
             </div>
             <div id="stats-chart" class="px-4 py-4 border-b border-[var(--border-color)]">
                 <div id="stats-bars" class="flex items-end space-x-2 h-32"></div>
@@ -8571,7 +8574,7 @@ async function createGroup(name, memberIds) {
                     const d = document.createElement('div');
                     d.className = 'cursor-pointer rounded p-1';
                     d.innerHTML = `<img src="${e.src}" class="w-12 h-12 object-contain rounded">`;
-                    d.onclick = () => sendStickerMsg(e.src, 'mine');
+                    d.onclick = () => sendStickerMsg(e.src, 'mine', true);
                     d.oncontextmenu = ev => { ev.preventDefault(); if (confirm('删除？')) { var esrc = e.src; emojis = emojis.filter(x => x.src !== esrc); deleteData('emojis', e.id); contacts.forEach(function(ct) { if (ct.uniqueEmojis && ct.uniqueEmojis.length) { ct.uniqueEmojis = ct.uniqueEmojis.filter(function(ue) { return ue.src !== esrc; }); } }); Object.keys(replyQueues).forEach(function(k) { replyQueues[k].forEach(function(item) { clearTimeout(item.timerId); }); delete replyQueues[k]; }); renderEmojiDrawer(); } };
                     mine.appendChild(d);
                 });
@@ -15613,7 +15616,7 @@ const myTile = selfCamStream
                     const d = document.createElement('div');
                     d.className = 'cursor-pointer rounded p-1';
                     d.innerHTML = `<img src="${e.src}" class="w-12 h-12 object-contain rounded">`;
-                    d.onclick = () => sendStickerMsg(e.src, 'exclusive');
+                    d.onclick = () => sendStickerMsg(e.src, 'exclusive', true);
                     d.oncontextmenu = ev => {
                         ev.preventDefault();
                         if (confirm('删除此表情包？')) {
@@ -21240,21 +21243,48 @@ const myTile = selfCamStream
                     txns = txns.filter(function(t) { var d = new Date(t.timestamp); return d.getFullYear() === statsYear; });
                     document.getElementById('stats-year-label').textContent = statsYear + '\u5e74';
                 }
-                var total = 0, count = txns.length;
-                txns.forEach(function(t) { total += t.amount; });
-                document.getElementById('stats-total-amount').textContent = '¥' + total.toFixed(2);
+                var income = 0, expense = 0, count = txns.length;
+                txns.forEach(function(t) { if (t.type === 'expense') expense += t.amount; else income += t.amount; });
+                var net = income - expense;
+                document.getElementById('stats-income-amount').textContent = '¥' + income.toFixed(2);
+                document.getElementById('stats-expense-amount').textContent = '¥' + expense.toFixed(2);
+                document.getElementById('stats-net-amount').textContent = '¥' + (net >= 0 ? '' : '-') + Math.abs(net).toFixed(2);
+                document.getElementById('stats-net-amount').style.color = net >= 0 ? 'var(--theme)' : '#e57373';
                 document.getElementById('stats-total-count').textContent = '共 ' + count + ' 笔';
                 // bar chart
                 var barsContainer = document.getElementById('stats-bars');
                 var barData = statsView === 'month' ? getMonthBarData(txns) : getYearBarData(txns);
-                var maxVal = barData.reduce(function(m, b) { return Math.max(m, b.value); }, 0);
+                var maxVal = barData.reduce(function(m, b) { return Math.max(m, Math.abs(b.value)); }, 0);
                 barsContainer.innerHTML = '';
                 if (!maxVal) { barsContainer.innerHTML = '<div class="w-full text-center text-xs text-[var(--text-secondary)] pt-10">暂无数据</div>'; return; }
                 barData.forEach(function(b) {
-                    var pct = (b.value / maxVal) * 100;
+                    var abs = Math.abs(b.value);
+                    var px = Math.max((abs / maxVal) * 60, 2);
+                    var isPos = b.value >= 0;
                     var bar = document.createElement('div');
-                    bar.className = 'flex flex-col items-center flex-1 cursor-pointer';
-                    bar.innerHTML = '<span class="text-[10px] text-[var(--text-secondary)] mb-1">¥' + b.value.toFixed(0) + '</span><div class="w-full rounded-lg" style="height:' + Math.max(pct, 4) + 'px;background:var(--theme);opacity:0.8"></div><span class="text-[10px] text-[var(--text-secondary)] mt-1">' + b.label + '</span>';
+                    bar.className = 'relative flex-1 h-32';
+                    bar.innerHTML = '<div class="absolute left-0 right-0 top-1/2 border-t border-[var(--border-color)] opacity-50"></div>';
+                    var body = document.createElement('div');
+                    body.style.background = isPos ? 'var(--theme)' : '#e57373';
+                    body.style.opacity = '0.85';
+                    body.style.width = '70%';
+                    body.style.borderRadius = '4px';
+                    body.style.height = px + 'px';
+                    var valEl = document.createElement('span');
+                    valEl.className = 'absolute left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap';
+                    valEl.style.color = isPos ? 'var(--theme)' : '#e57373';
+                    valEl.textContent = (isPos ? '+' : '-') + '¥' + abs.toFixed(0);
+                    if (isPos) {
+                        body.classList.add('absolute', 'left-1/2', '-translate-x-1/2', 'bottom-1/2');
+                        valEl.style.bottom = 'calc(50% + ' + (px + 3) + 'px)';
+                    } else {
+                        body.classList.add('absolute', 'left-1/2', '-translate-x-1/2', 'top-1/2');
+                        valEl.style.top = 'calc(50% + ' + (px + 3) + 'px)';
+                    }
+                    var dayEl = document.createElement('span');
+                    dayEl.className = 'absolute left-1/2 -translate-x-1/2 bottom-0 text-[10px] text-[var(--text-secondary)]';
+                    dayEl.textContent = b.label;
+                    bar.appendChild(body); bar.appendChild(valEl); bar.appendChild(dayEl);
                     bar.onclick = function() { showMonthComposition(b.month, b.year); };
                     barsContainer.appendChild(bar);
                 });
@@ -21263,22 +21293,30 @@ const myTile = selfCamStream
             }
             function getMonthBarData(txns) {
                 var days = {};
-                for (var d = 1; d <= 31; d++) days[d] = 0;
-                txns.forEach(function(t) { var day = new Date(t.timestamp).getDate(); days[day] = (days[day] || 0) + t.amount; });
+                for (var d = 1; d <= 31; d++) days[d] = { inc: 0, exp: 0 };
+                txns.forEach(function(t) {
+                    var day = new Date(t.timestamp).getDate();
+                    if (t.type === 'expense') days[day].exp += t.amount;
+                    else days[day].inc += t.amount;
+                });
                 var result = [];
                 for (var d = 1; d <= 31; d++) {
                     var key = d;
-                    if (days[key] !== undefined) result.push({ label: d + '\u65e5', value: days[key], month: statsMonth, year: statsYear, day: d });
+                    if (days[key] !== undefined) result.push({ label: d + '\u65e5', value: days[key].inc - days[key].exp, month: statsMonth, year: statsYear, day: d });
                 }
                 return result.length ? result : [{ label: '', value: 0, month: statsMonth, year: statsYear }];
             }
             function getYearBarData(txns) {
                 var months = {};
-                for (var m = 1; m <= 12; m++) months[m] = 0;
-                txns.forEach(function(t) { var m = new Date(t.timestamp).getMonth() + 1; months[m] = (months[m] || 0) + t.amount; });
+                for (var m = 1; m <= 12; m++) months[m] = { inc: 0, exp: 0 };
+                txns.forEach(function(t) {
+                    var m = new Date(t.timestamp).getMonth() + 1;
+                    if (t.type === 'expense') months[m].exp += t.amount;
+                    else months[m].inc += t.amount;
+                });
                 var result = [];
                 for (var m = 1; m <= 12; m++) {
-                    if (months[m] !== undefined) result.push({ label: m + '\u6708', value: months[m], month: m, year: statsYear });
+                    if (months[m] !== undefined) result.push({ label: m + '\u6708', value: months[m].inc - months[m].exp, month: m, year: statsYear });
                 }
                 return result.length ? result : [{ label: '', value: 0, month: 1, year: statsYear }];
             }

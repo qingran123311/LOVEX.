@@ -4309,9 +4309,8 @@
                 partnerPatGroups: [],
                 statusLibrary: [...DEFAULT_STATUS_LIBRARY],
                 customWeatherOptions: [],
-                separateEmojiEnabled: true,
                 quoteEnabled: true,
-                quoteChance: 0.3,
+                quoteChance: 0.2,
                 combineCardsEnabled: false,
                 combineCardsChance: 0.3,
                 combineCardsMin: 2,
@@ -5271,9 +5270,12 @@
                 return {
                     minReplyTime: 1,
                     maxReplyTime: 90,
-                    separateEmojiEnabled: true,
+                    attachStickerEnabled: true,
+                    attachStickerChance: 0.2,
+                    separateStickerEnabled: true,
+                    separateStickerChance: 0.3,
                     quoteEnabled: true,
-                    quoteChance: 0.3,
+                    quoteChance: 0.2,
                 combineCardsEnabled: false,
                 combineCardsChance: 0.3,
                 combineCardsMin: 2,
@@ -5300,6 +5302,8 @@
                     replyPatChance: 0.07,
                     replyCallChance: 0.03,
                     voiceReplyChance: 0.06,
+                    patrolHeartChance: 0.6,
+                    decideHeartChance: 0.6,
                     postReplyMin: 30,
                     postReplyMax: 120,
                     postReplyUnit: '秒',
@@ -5339,9 +5343,9 @@
                     autoReportChatEnabled: true
                 };
             }
-            function getContactReplySetting(contact, key) {
-                if (!contact || !contact.replySettings) return settings[key];
-                return contact.replySettings[key] !== undefined ? contact.replySettings[key] : settings[key];
+            function getContactReplySetting(contact, key, def) {
+                if (!contact || !contact.replySettings) return settings[key] !== undefined ? settings[key] : def;
+                return contact.replySettings[key] !== undefined ? contact.replySettings[key] : (settings[key] !== undefined ? settings[key] : def);
             }
             function dispName(c) { return c ? (c.remark || c.name) : 'TA'; }
             function dispNameById(id) {
@@ -6176,7 +6180,14 @@ async function createGroup(name, memberIds) {
                         + '<div class="flex justify-between"><span>主动来信概率</span><input type="range" id="ch-partner-letter-chance" min="0" max="100" value="' + Math.round((rs.partnerLetterChance || 0.3) * 100) + '" class="w-24"><span id="ch-partner-letter-label">' + Math.round((rs.partnerLetterChance || 0.3) * 100) + '%</span></div>'
                         + '</div>'
                         + '<hr>'
-                        + '<div class="flex justify-between"><span>单独发送表情/颜文字</span><div class="glass-toggle' + (rs.separateEmojiEnabled ? ' active' : '') + '" id="ch-separate-emoji-enabled"><div class="knob"></div></div></div>'
+                        + '<div class="flex justify-between"><span>字卡附带表情包</span><div class="glass-toggle' + (rs.attachStickerEnabled !== false ? ' active' : '') + '" id="ch-attach-sticker-enabled"><div class="knob"></div></div></div>'
+                        + '<div id="ch-attach-sticker-row"' + (rs.attachStickerEnabled !== false ? '' : ' style="display:none"') + '>'
+                        + '<div class="flex justify-between"><span>附带表情包概率</span><input type="range" id="ch-attach-sticker-chance" min="0" max="100" value="' + Math.round((rs.attachStickerChance !== undefined ? rs.attachStickerChance : 0.2) * 100) + '" class="w-24"><span id="ch-attach-sticker-label">' + Math.round((rs.attachStickerChance !== undefined ? rs.attachStickerChance : 0.2) * 100) + '%</span></div>'
+                        + '</div>'
+                        + '<div class="flex justify-between"><span>单独发送表情包</span><div class="glass-toggle' + (rs.separateStickerEnabled !== false ? ' active' : '') + '" id="ch-sep-sticker-enabled"><div class="knob"></div></div></div>'
+                        + '<div id="ch-sep-sticker-row"' + (rs.separateStickerEnabled !== false ? '' : ' style="display:none"') + '>'
+                        + '<div class="flex justify-between"><span>单独表情包概率</span><input type="range" id="ch-sep-sticker-chance" min="0" max="100" value="' + Math.round((rs.separateStickerChance !== undefined ? rs.separateStickerChance : 0.3) * 100) + '" class="w-24"><span id="ch-sep-sticker-label">' + Math.round((rs.separateStickerChance !== undefined ? rs.separateStickerChance : 0.3) * 100) + '%</span></div>'
+                        + '</div>'
                         + '<div class="flex justify-between"><span>引用消息</span><div class="glass-toggle' + (rs.quoteEnabled ? ' active' : '') + '" id="ch-quote-enabled"><div class="knob"></div></div></div>'
                         + '<div id="ch-quote-row"' + (rs.quoteEnabled ? '' : ' style="display:none"') + '>'
                         + '<div class="flex justify-between"><span>引用概率</span><input type="range" id="ch-quote-chance" min="0" max="100" value="' + Math.round((rs.quoteChance || 0.3) * 100) + '" class="w-24"><span id="ch-quote-label">' + Math.round((rs.quoteChance || 0.3) * 100) + '%</span></div>'
@@ -6197,7 +6208,9 @@ async function createGroup(name, memberIds) {
                         + '<div id="ch-timezone-manual-row" class="flex justify-between"' + (contact.timezoneManual ? '' : ' style="display:none"') + '><span>时区<br><span style="font-size:9px;opacity:0.6">+8=北京 +0=伦敦 -5=纽约</span></span><input type="number" id="ch-timezone-offset-input" value="' + (contact.timezoneOffset ?? 0) + '" min="-12" max="12" step="0.5" class="w-16 px-1 border rounded text-center"></div>'
                         + '<div class="flex justify-between"><span>回复中拍一拍概率</span><input type="range" id="ch-reply-pat-chance" min="0" max="100" value="' + Math.round(rs.replyPatChance * 100) + '" class="w-24"><span id="ch-reply-pat-label">' + Math.round(rs.replyPatChance * 100) + '%</span></div>'
                         + '<div class="flex justify-between"><span>回复中通话概率</span><input type="range" id="ch-reply-call-chance" min="0" max="100" value="' + Math.round(rs.replyCallChance * 100) + '" class="w-24"><span id="ch-reply-call-label">' + Math.round(rs.replyCallChance * 100) + '%</span></div>'
-                        + '<div class="flex justify-between"><span>回复中语音概率</span><input type="range" id="ch-voice-reply-chance" min="0" max="30" value="' + Math.round((rs.voiceReplyChance || 0.06) * 100) + '" class="w-24"><span id="ch-voice-reply-label">' + Math.round((rs.voiceReplyChance || 0.06) * 100) + '%</span></div>'
+                        + '<div class="flex justify-between"><span>回复中语音概率</span><input type="range" id="ch-voice-reply-chance" min="0" max="30" value="' + Math.round((rs.voiceReplyChance !== undefined ? rs.voiceReplyChance : 0.06) * 100) + '" class="w-24"><span id="ch-voice-reply-label">' + Math.round((rs.voiceReplyChance !== undefined ? rs.voiceReplyChance : 0.06) * 100) + '%</span></div>'
+                        + '<div class="flex justify-between"><span>查岗心里话概率</span><input type="range" id="ch-patrol-heart-chance" min="0" max="100" value="' + Math.round((rs.patrolHeartChance !== undefined ? rs.patrolHeartChance : 0.6) * 100) + '" class="w-24"><span id="ch-patrol-heart-label">' + Math.round((rs.patrolHeartChance !== undefined ? rs.patrolHeartChance : 0.6) * 100) + '%</span></div>'
+                        + '<div class="flex justify-between"><span>抉择心里话概率</span><input type="range" id="ch-decide-heart-chance" min="0" max="100" value="' + Math.round((rs.decideHeartChance !== undefined ? rs.decideHeartChance : 0.6) * 100) + '" class="w-24"><span id="ch-decide-heart-label">' + Math.round((rs.decideHeartChance !== undefined ? rs.decideHeartChance : 0.6) * 100) + '%</span></div>'
                         + '<hr>'
                         + '<div class="flex justify-between"><span>朋友圈评论延迟</span><input type="number" id="ch-post-reply-min" value="' + _du(rs.postReplyMin, '秒', rs.postReplyUnit || '分') + '" class="w-14 px-1 border rounded text-center">~<input type="number" id="ch-post-reply-max" value="' + _du(rs.postReplyMax, '秒', rs.postReplyUnit || '分') + '" class="w-14 px-1 border rounded text-center"><select id="ch-post-reply-unit" class="border rounded text-xs px-1"><option value="秒" ' + ((rs.postReplyUnit||'分')==='秒'?'selected':'') + '>秒</option><option value="分" ' + ((rs.postReplyUnit||'分')==='分'?'selected':'') + '>分</option><option value="时" ' + ((rs.postReplyUnit||'分')==='时'?'selected':'') + '>时</option></select></div>'
                         + '<div class="flex justify-between"><span>对方回复我的评论延迟</span><input type="number" id="ch-comment-reply-min" value="' + _du(rs.commentReplyMin, '秒', rs.commentReplyUnit || '分') + '" class="w-14 px-1 border rounded text-center">~<input type="number" id="ch-comment-reply-max" value="' + _du(rs.commentReplyMax, '秒', rs.commentReplyUnit || '分') + '" class="w-14 px-1 border rounded text-center"><select id="ch-comment-reply-unit" class="border rounded text-xs px-1"><option value="秒" ' + ((rs.commentReplyUnit||'分')==='秒'?'selected':'') + '>秒</option><option value="分" ' + ((rs.commentReplyUnit||'分')==='分'?'selected':'') + '>分</option><option value="时" ' + ((rs.commentReplyUnit||'分')==='时'?'selected':'') + '>时</option></select></div>'
@@ -6297,10 +6310,26 @@ async function createGroup(name, memberIds) {
                         if (row) row.style.display = rs.partnerLetterEnabled ? '' : 'none';
                         startPartnerLetterTimer();
                     };
-                    document.getElementById('ch-separate-emoji-enabled').onclick = function() {
-                        rs.separateEmojiEnabled = !rs.separateEmojiEnabled;
-                        this.classList.toggle('active', rs.separateEmojiEnabled);
+                    document.getElementById('ch-attach-sticker-enabled').onclick = function() {
+                        var cur = rs.attachStickerEnabled !== false;
+                        rs.attachStickerEnabled = !cur;
+                        this.classList.toggle('active', rs.attachStickerEnabled);
+                        var row = document.getElementById('ch-attach-sticker-row');
+                        if (row) row.style.display = rs.attachStickerEnabled ? '' : 'none';
                     };
+                    document.getElementById('ch-attach-sticker-chance').oninput = function() {
+                        rsv('attachStickerChance', parseInt(this.value) / 100);
+                        document.getElementById('ch-attach-sticker-label').textContent = this.value + '%'; };
+                    document.getElementById('ch-sep-sticker-enabled').onclick = function() {
+                        var cur = rs.separateStickerEnabled !== false;
+                        rs.separateStickerEnabled = !cur;
+                        this.classList.toggle('active', rs.separateStickerEnabled);
+                        var row = document.getElementById('ch-sep-sticker-row');
+                        if (row) row.style.display = rs.separateStickerEnabled ? '' : 'none';
+                    };
+                    document.getElementById('ch-sep-sticker-chance').oninput = function() {
+                        rsv('separateStickerChance', parseInt(this.value) / 100);
+                        document.getElementById('ch-sep-sticker-label').textContent = this.value + '%'; };
                     document.getElementById('ch-quote-enabled').onclick = function() {
                         rs.quoteEnabled = !rs.quoteEnabled;
                         this.classList.toggle('active', rs.quoteEnabled);
@@ -6340,6 +6369,12 @@ async function createGroup(name, memberIds) {
                     document.getElementById('ch-voice-reply-chance').oninput = function() {
                         rsv('voiceReplyChance', parseInt(this.value) / 100);
                         document.getElementById('ch-voice-reply-label').textContent = this.value + '%'; };
+                    document.getElementById('ch-patrol-heart-chance').oninput = function() {
+                        rsv('patrolHeartChance', parseInt(this.value) / 100);
+                        document.getElementById('ch-patrol-heart-label').textContent = this.value + '%'; };
+                    document.getElementById('ch-decide-heart-chance').oninput = function() {
+                        rsv('decideHeartChance', parseInt(this.value) / 100);
+                        document.getElementById('ch-decide-heart-label').textContent = this.value + '%'; };
                     document.getElementById('ch-post-reply-min').onchange = function() { rs.postReplyMin = _su(parseFloat(this.value) || 0, '秒', rs.postReplyUnit || '分'); };
                     document.getElementById('ch-post-reply-max').onchange = function() { rs.postReplyMax = _su(parseFloat(this.value) || 0, '秒', rs.postReplyUnit || '分'); };
                     document.getElementById('ch-post-reply-unit').onchange = function() {
@@ -7285,8 +7320,9 @@ async function createGroup(name, memberIds) {
                     const img = document.createElement('img');
                     img.src = msg.src;
                     img.className = 'image-no-bubble';
-                    img.style.maxWidth = msg.sticker ? '44px' : '88px';
-                    img.style.maxHeight = msg.sticker ? '44px' : '88px';
+                    const szP = msg.sticker ? 72 : 88;
+                    img.style.width = szP + 'px';
+                    img.style.height = 'auto';
                     img.style.borderRadius = '12px';
                     img.style.objectFit = 'contain';
                     img.style.cursor = 'zoom-in';
@@ -7540,8 +7576,9 @@ async function createGroup(name, memberIds) {
                     const img = document.createElement('img');
                     img.src = msg.src;
                     img.className = 'image-no-bubble';
-                    img.style.maxWidth = msg.sticker ? '44px' : '88px';
-                    img.style.maxHeight = msg.sticker ? '44px' : '88px';
+                    const szG = msg.sticker ? 72 : 88;
+                    img.style.width = szG + 'px';
+                    img.style.height = 'auto';
                     img.style.borderRadius = '12px';
                     img.style.objectFit = 'contain';
                     img.style.cursor = 'zoom-in';
@@ -7654,7 +7691,7 @@ async function createGroup(name, memberIds) {
                 var msgs = messages;
                 var last10 = msgs.slice(-10);
                 if (last10.indexOf(msg) === -1) return;
-                var delay = 15000 + Math.random() * 30000;
+                var delay = 5000 + Math.random() * 55000;
                 setTimeout(function() {
                     if (msg.recalled) return;
                     if (Math.random() < 0.02) {
@@ -8024,11 +8061,10 @@ async function createGroup(name, memberIds) {
                 var typingKey = contactId ? 'p_' + contactId : (groupId ? 'g_' + groupId : null);
                 // only clear reply queue for this specific contact, not all contacts
                 clearReplyQueue(contactId, groupId);
-                var replyContact = chatType === 'private' ? (contacts.find(function(c) { return c.id === contactId; }) || null) : null;
-                var rc = function(key) { return getContactReplySetting(replyContact, key); };
 
-                // ===== 已读不回逻辑 =====
-                if (rc('readReceiptEnabled') && Math.random() < rc('readReceiptChance')) {
+                // ===== 已读不回逻辑（节奏类，按全局默认设置） =====
+                var rcGlobal = function(key) { return getContactReplySetting(null, key); };
+                if (rcGlobal('readReceiptEnabled') && Math.random() < rcGlobal('readReceiptChance')) {
                     const readDelay = 2000 + Math.random() * 5000;
                     setTimeout(() => {
                         if ((chatType === 'private' && currentContactId === contactId) || (chatType === 'group' && currentGroupId === groupId)) {
@@ -8039,172 +8075,163 @@ async function createGroup(name, memberIds) {
                     return;
                 }
 
-                const wordCardPool = buildWordCardPool(contactId);
-                const emojiKaomojiPool = [...getAllEmojiChars(), ...getAllKaomoji()];
-                const stickerPool = buildStickerPool(contactId);
-                const voicePool = chatType === 'group' ? [] : buildVoicePool(contactId);
-                const patPool = chatType === 'group' ? [] : getPartnerPatPool();
-                const patAvailable = patPool.length > 0 && rc('replyPatChance') > 0;
-                if (!wordCardPool.length && !emojiKaomojiPool.length && !stickerPool.length && !voicePool.length && !patAvailable) {
-                    showToast('当前无可回复内容，请先添加字卡或表情');
-                    return;
+                // ===== 回复单元：私聊 = 该联系人；群聊 = 每个非我成员（各自独立的回复设置与专属池） =====
+                var units = [];
+                if (chatType === 'group') {
+                    var grp = groups.find(function(g) { return g.id === groupId; });
+                    var gMembers = (grp && grp.members) ? grp.members.filter(function(mid) { return mid !== 'me'; }) : [];
+                    units = gMembers.slice();
+                } else {
+                    units = [contactId];
                 }
 
-                // ===== 使用用户设置的最大字卡条数，随机生成回复条数 =====
-                const maxCards = rc('maxCardsPerReplyUser') || 2;
-                const minCards = 1;
-                const replyCount = Math.floor(Math.random() * (maxCards - minCards + 1)) + minCards;
+                var hasContent = false;
+                var unitPlans = [];   // { messages:[...], senderId } 群聊 senderId=成员id
+                var rpPlans = [];     // 红包计划（独立 2-8s 发送）
+
+                units.forEach(function(uid) {
+                    var replyContact = (chatType === 'group' || !contactId) ? (contacts.find(function(c) { return c.id === uid; }) || null) : (contacts.find(function(c) { return c.id === contactId; }) || null);
+                    var rc = function(key, def) { return getContactReplySetting(replyContact, key, def); };
+                    var poolCid = chatType === 'group' ? uid : contactId;
+
+                    const wordCardPool = buildWordCardPool(poolCid);
+                    const emojiKaomojiPool = [...getAllEmojiChars(), ...getAllKaomoji()];
+                    const stickerPool = buildStickerPool(poolCid);
+                    const voicePool = chatType === 'group' ? buildVoicePool(uid) : buildVoicePool(contactId);
+                    const patPool = chatType === 'group' ? [] : getPartnerPatPool();
+                    const patAvailable = patPool.length > 0 && rc('replyPatChance') > 0;
+
+                    if (!wordCardPool.length && !emojiKaomojiPool.length && !stickerPool.length && !voicePool.length && !patAvailable) return;
+
+                    hasContent = true;
+
+                    // ===== 该单元自己的回复条数（自己的 maxCardsPerReplyUser） =====
+                    const maxCards = rc('maxCardsPerReplyUser') || 2;
+                    const minCards = 1;
+                    const replyCount = Math.floor(Math.random() * (maxCards - minCards + 1)) + minCards;
+
+                    for (let i = 0; i < replyCount; i++) {
+                        let mainText = null;
+                        if (wordCardPool.length > 0) {
+                            if (rc('combineCardsEnabled') && Math.random() < (rc('combineCardsChance') || 0.3) && wordCardPool.length >= 2) {
+                                const min = rc('combineCardsMin') || 2;
+                                const max = Math.min(rc('combineCardsMax') || 4, wordCardPool.length);
+                                const count = Math.max(min, Math.floor(Math.random() * (max - min + 1)) + min);
+                                const cards = [];
+                                for (let j = 0; j < count; j++) {
+                                    cards.push(wordCardPool[Math.floor(Math.random() * wordCardPool.length)]);
+                                }
+                                mainText = cards.join(Math.random() < 0.95 ? '，' : '');
+                            } else {
+                                mainText = wordCardPool[Math.floor(Math.random() * wordCardPool.length)];
+                            }
+                            if (emojiKaomojiPool.length > 0 && Math.random() < 0.2) {
+                                const extra = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
+                                mainText = Math.random() < 0.5 ? extra + ' ' + mainText : mainText + ' ' + extra;
+                            }
+                        } else if (emojiKaomojiPool.length > 0) {
+                            mainText = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
+                            if (mainText && Math.random() < 0.2) {
+                                const extra = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
+                                mainText = Math.random() < 0.5 ? extra + ' ' + mainText : mainText + ' ' + extra;
+                            }
+                        }
+
+                        const plan = { messages: [], senderId: chatType === 'group' ? uid : null };
+
+                        if (mainText) {
+                            let quote = null;
+                            if (rc('quoteEnabled') && Math.random() < (rc('quoteChance') || 0.3)) {
+                                const currentMsgs = (chatType === 'group' ? groupMessages : messages);
+                                const recentMsgs = currentMsgs.filter(m => m.type !== 'pat' && m.type !== 'call').slice(-10);
+                                if (recentMsgs.length > 0) {
+                                    const refMsg = recentMsgs[Math.floor(Math.random() * recentMsgs.length)];
+                                    if (chatType === 'group') {
+                                        const refAuthor = refMsg.senderId === 'me' ? settings.myName : dispNameById(refMsg.senderId);
+                                        quote = { id: refMsg.id, senderId: refMsg.senderId, type: refMsg.type, text: refMsg.type === 'text' ? refMsg
+                                                .text : (refMsg.type === 'image' ? '[图片]' : (refMsg.type === 'voice' ? '[语音]' :
+                                                '[消息]')), author: refAuthor };
+                                    } else {
+                                        quote = { id: refMsg.id, author: refMsg.isMe ? settings.myName : dispName(getCurrentContact()),
+                                            text: refMsg.type === 'text' ? refMsg.text : (refMsg.type === 'image' ? '[图片]' : (refMsg
+                                                .type === 'voice' ? '[语音]' : '[消息]')) };
+                                    }
+                                }
+                            }
+                            plan.messages.push({ type: 'text', text: mainText, quote: quote });
+
+                            // ===== 附带表情包：独立概率 roll（开关+概率，默认开/20%） =====
+                            if (stickerPool.length > 0 && rc('attachStickerEnabled') !== false && Math.random() < rc('attachStickerChance', 0.2)) {
+                                const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
+                                plan.messages.push({ type: 'image', src: sticker.src, sticker: true });
+                            }
+                        }
+
+                        // ===== 单独表情包：独立概率 roll（开关+概率，默认开/30%，不限字卡） =====
+                        if (stickerPool.length > 0 && rc('separateStickerEnabled') !== false && Math.random() < rc('separateStickerChance', 0.3)) {
+                            const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
+                            plan.messages.push({ type: 'image', src: sticker.src, sticker: true });
+                        }
+
+                        const voiceChance = rc('voiceReplyChance', 0.06);
+                        if (voicePool.length > 0 && Math.random() < voiceChance) {
+                            const voice = voicePool[Math.floor(Math.random() * voicePool.length)];
+                            plan.messages.push({ type: 'voice', src: voice.src, duration: voice.duration || 3, senderId: chatType === 'group' ? uid : null, senderName: chatType === 'group' ? ((replyContact && (replyContact.remark || replyContact.name)) || '未知') : null });
+                        }
+
+                        if (rc('replyPatChance') > 0 && Math.random() < rc('replyPatChance') && patPool.length) {
+                            const patText = patPool[Math.floor(Math.random() * patPool.length)];
+                            plan.messages.push({ type: 'pat', text: patText });
+                        }
+
+                        if (rc('replyCallChance') > 0 && Math.random() < rc('replyCallChance')) {
+                            if (chatType === 'group') {
+                                if (uid) { plan.messages.push({ type: 'groupCall', initiatorId: uid, groupId }); }
+                            } else { plan.messages.push({ type: 'privateCall', contactId }); }
+                        }
+
+                        if (plan.messages.length > 0) {
+                            unitPlans.push(plan);
+                        }
+                    }
+
+                    // ===== 该单元自己发红包（私聊按联系人；群聊按成员自己的概率设置） =====
+                    if (chatType === 'private') {
+                        if (rc('partnerRedpacketEnabled') && Math.random() < rc('partnerRedpacketChance')) {
+                            var rpBalP = getBalance(contactId);
+                            if (replyContact && rpBalP >= 1) {
+                                rpPlans.push({ messages: [{ type: 'redpacket' }] });
+                            }
+                        }
+                    } else {
+                        if (replyContact && getContactReplySetting(replyContact, 'partnerRedpacketEnabled') && Math.random() < (getContactReplySetting(replyContact, 'partnerRedpacketChance') || 0.02)) {
+                            if (getBalance(uid) >= 1) {
+                                rpPlans.push({ messages: [{ type: 'redpacket', senderId: uid }] });
+                            }
+                        }
+                    }
+
+                    // ===== 单独 emoji/颜文字字符：固定 20% 概率，有字卡时也可单独发（组合拼字卡见上方 20%） =====
+                    if (emojiKaomojiPool.length > 0 && Math.random() < 0.2) {
+                        const single = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
+                        unitPlans.push({ messages: [{ type: 'text', text: single }], senderId: chatType === 'group' ? uid : null });
+                    }
+                });
+
+                if (!hasContent) {
+                    showToast('当前无可回复内容，请先添加字卡或表情');
+                    removeTyping(typingKey);
+                    return;
+                }
 
                 showTyping(typingKey);
                 let allSent = false;
                 const checkAllSent = () => { if (allSent) removeTyping(typingKey); };
-                let accumulatedDelay = 0;
-                const minDelay = rc('minReplyTime') * 1000;
-                const maxDelay = Math.max(rc('maxReplyTime') * 1000, minDelay);
-
-                // ===== 消息计划数组，每个计划可以包含多个消息（主消息 + 附件） =====
-                const messagePlan = [];
-                var partnerRpPlans = [];
-                var groupRpPlans = [];
-
-                for (let i = 0; i < replyCount; i++) {
-                    let mainText = null;
-                    if (wordCardPool.length > 0) {
-                        if (rc('combineCardsEnabled') && Math.random() < (rc('combineCardsChance') || 0.3) && wordCardPool.length >= 2) {
-                            const min = rc('combineCardsMin') || 2;
-                            const max = Math.min(rc('combineCardsMax') || 4, wordCardPool.length);
-                            const count = Math.max(min, Math.floor(Math.random() * (max - min + 1)) + min);
-                            const cards = [];
-                            for (let j = 0; j < count; j++) {
-                                cards.push(wordCardPool[Math.floor(Math.random() * wordCardPool.length)]);
-                            }
-                            mainText = cards.join(Math.random() < 0.95 ? '，' : '');
-                        } else {
-                            mainText = wordCardPool[Math.floor(Math.random() * wordCardPool.length)];
-                        }
-                        if (emojiKaomojiPool.length > 0 && Math.random() < 0.2) {
-                            const extra = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
-                            mainText = Math.random() < 0.5 ? extra + ' ' + mainText : mainText + ' ' + extra;
-                        }
-                    } else if (emojiKaomojiPool.length > 0) {
-                        mainText = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
-                        if (mainText && Math.random() < 0.2) {
-                            const extra = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
-                            mainText = Math.random() < 0.5 ? extra + ' ' + mainText : mainText + ' ' + extra;
-                        }
-                    }
-
-                    const plan = { messages: [] };
-
-                    if (mainText) {
-                        let quote = null;
-                        if (rc('quoteEnabled') && Math.random() < (rc('quoteChance') || 0.3)) {
-                            const currentMsgs = (chatType === 'group' ? groupMessages : messages);
-                            const recentMsgs = currentMsgs.filter(m => m.type !== 'pat' && m.type !== 'call').slice(-10);
-                            if (recentMsgs.length > 0) {
-                                const refMsg = recentMsgs[Math.floor(Math.random() * recentMsgs.length)];
-                                if (chatType === 'group') {
-                                    const refAuthor = refMsg.senderId === 'me' ? settings.myName : dispNameById(refMsg.senderId);
-                                    quote = { senderId: refMsg.senderId, type: refMsg.type, text: refMsg.type === 'text' ? refMsg
-                                            .text : (refMsg.type === 'image' ? '[图片]' : (refMsg.type === 'voice' ? '[语音]' :
-                                            '[消息]')), author: refAuthor };
-                                } else {
-                                    quote = { author: refMsg.isMe ? settings.myName : dispName(getCurrentContact()),
-                                        text: refMsg.type === 'text' ? refMsg.text : (refMsg.type === 'image' ? '[图片]' : (refMsg
-                                            .type === 'voice' ? '[语音]' : '[消息]')) };
-                                }
-                            }
-                        }
-                        plan.messages.push({ type: 'text', text: mainText, quote: quote });
-
-                        // ===== 字卡附带图片（直接跟随，不累加延迟） =====
-                        if (stickerPool.length > 0 && Math.random() < 0.2) {
-                            const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
-                            plan.messages.push({ type: 'image', src: sticker.src, sticker: true });
-                        }
-                    }
-
-                    if (stickerPool.length > 0 && Math.random() < 0.15 && !mainText) {
-                        const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
-                        plan.messages.push({ type: 'image', src: sticker.src, sticker: true });
-                    }
-
-                    const voiceChance = rc('voiceReplyChance') || 0.06;
-                    if (voicePool.length > 0 && Math.random() < voiceChance && chatType !== 'group') {
-                        const voice = voicePool[Math.floor(Math.random() * voicePool.length)];
-                        plan.messages.push({ type: 'voice', src: voice.src, duration: voice.duration || 3 });
-                    }
-
-                    if (rc('replyPatChance') > 0 && Math.random() < rc('replyPatChance') && patPool.length) {
-                        const patText = patPool[Math.floor(Math.random() * patPool.length)];
-                        plan.messages.push({ type: 'pat', text: patText });
-                    }
-
-                    if (rc('replyCallChance') > 0 && Math.random() < rc('replyCallChance')) {
-                        if (chatType === 'group') {
-                            const initiatorId = getRandomGroupMember(groupId);
-                            if (initiatorId) { plan.messages.push({ type: 'groupCall', initiatorId, groupId }); }
-                        } else { plan.messages.push({ type: 'privateCall', contactId }); }
-                    }
-
-                    if (plan.messages.length > 0) {
-                        messagePlan.push(plan);
-                    }
-                }
-
-                // ===== 对方主动发红包（2% 概率，需开启开关） =====
-                if (chatType === 'private' && rc('partnerRedpacketEnabled') && Math.random() < rc('partnerRedpacketChance')) {
-                    var rpContact = contacts.find(function(c) { return c.id === contactId; });
-                    var rpBal = rpContact ? getBalance(contactId) : 0;
-                    if (rpContact && rpBal >= 1) {
-                        partnerRpPlans.push({ messages: [{ type: 'redpacket' }] });
-                    }
-                }
-
-                // ===== 群聊成员发红包（按各成员自己的概率设置） =====
-                if (chatType === 'group') {
-                    var grpR = groups.find(function(gr) { return gr.id === groupId; });
-                    if (grpR && grpR.members) {
-                        var rpCands = grpR.members.filter(function(mid) { return mid !== 'me'; });
-                        for (var ri = 0; ri < rpCands.length; ri++) {
-                            var rcMember = contacts.find(function(c) { return c.id === rpCands[ri]; });
-                            if (!rcMember) continue;
-                            if (getContactReplySetting(rcMember, 'partnerRedpacketEnabled') && Math.random() < (getContactReplySetting(rcMember, 'partnerRedpacketChance') || 0.02)) {
-                                if (getBalance(rpCands[ri]) >= 1) {
-                                    groupRpPlans.push({ messages: [{ type: 'redpacket', senderId: rpCands[ri] }] });
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (chatType === 'group' && voicePool.length === 0) {
-                    const groupMembers = (getCurrentGroup()?.members || []).filter(mid => mid !== 'me');
-                    const membersWithVoice = groupMembers.filter(mid => buildVoicePool(mid).length > 0);
-                    const gVoiceChance = rc('voiceReplyChance') || 0.06;
-                    if (membersWithVoice.length > 0 && Math.random() < gVoiceChance) {
-                        const randomMemberId = membersWithVoice[Math.floor(Math.random() * membersWithVoice.length)];
-                        const memberVoicePool = buildVoicePool(randomMemberId);
-                        if (memberVoicePool.length > 0) {
-                            const voice = memberVoicePool[Math.floor(Math.random() * memberVoicePool.length)];
-                            const member = contacts.find(c => c.id === randomMemberId);
-                            const plan = { messages: [{ type: 'voice', src: voice.src, duration: voice.duration || 3,
-                                    senderId: randomMemberId, senderName: (member ? (member.remark || member.name) : '未知') }] };
-                            messagePlan.push(plan);
-                        }
-                    }
-                }
-
-                if (rc('separateEmojiEnabled') && emojiKaomojiPool.length > 0 && Math.random() < 0.2) {
-                    const single = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
-                    messagePlan.push({ messages: [{ type: 'text', text: single }] });
-                }
 
                 // ===== 红包计划：独立短延迟发送（2-8s 级联，不等长回复延迟） =====
-                var allRpPlans = partnerRpPlans.concat(groupRpPlans);
-                if (allRpPlans.length) {
+                if (rpPlans.length) {
                     var rpAccDelay = 0;
-                    allRpPlans.forEach(function(rpPlan) {
+                    rpPlans.forEach(function(rpPlan) {
                         rpAccDelay += 2000 + Math.random() * 6000;
                         setTimeout(async function() {
                             for (var rpmi = 0; rpmi < rpPlan.messages.length; rpmi++) {
@@ -8214,21 +8241,34 @@ async function createGroup(name, memberIds) {
                     });
                 }
 
-                let plansToSend = messagePlan.length;
+                let plansToSend = unitPlans.length;
                 if (plansToSend === 0) { allSent = true;
                     checkAllSent();
                     markMessagesAsRead(chatType, contactId, groupId); return; }
 
-                for (let index = 0; index < messagePlan.length; index++) {
-                    const plan = messagePlan[index];
+                let accumulatedDelay = 0;
+                for (let index = 0; index < unitPlans.length; index++) {
+                    const plan = unitPlans[index];
+                    // ===== 每条计划的延迟用所属单元自己的回复设置（群聊按成员） =====
+                    const ownerId = chatType === 'group' ? plan.senderId : contactId;
+                    const owner = ownerId ? (contacts.find(function(c) { return c.id === ownerId; }) || null) : null;
+                    const rcPlan = function(key) { return getContactReplySetting(owner, key); };
+                    const minDelay = rcPlan('minReplyTime') * 1000;
+                    const maxDelay = Math.max(rcPlan('maxReplyTime') * 1000, minDelay);
                     const currentDelay = minDelay + Math.random() * (maxDelay - minDelay);
                     accumulatedDelay += currentDelay;
-                    const timerId = setTimeout(async () => {
+                    if (accumulatedDelay > 90000) accumulatedDelay = 90000;
+                    let timerId = null;
+                    try {
+                        timerId = setTimeout(async () => {
+                        try {
                         // send messages regardless of which contact is currently active
                         for (const msg of plan.messages) {
+                            if (chatType === 'group' && plan.senderId && !msg.senderId) msg.senderId = plan.senderId;
                             if (msg.type === 'image' && msg.src) {
-                                var stillExists = emojis.filter(function(e) { return e.category === 'shared'; }).some(function(e) { return e.src === msg.src; });
-                                if (!stillExists) continue;
+                                var stickerOwnerId = plan.senderId || contactId || null;
+                                var isKnownSticker = emojis.some(function(e) { return e.src === msg.src; }) || (stickerOwnerId ? (function() { var cc = contacts.find(function(x) { return x.id === stickerOwnerId; }); return !!(cc && cc.uniqueEmojis && cc.uniqueEmojis.some(function(e) { return e.src === msg.src; })); })() : false);
+                                if (!isKnownSticker) continue;
                             }
                             if (msg.type === 'privateCall') {
                                 incomingCallFromContact(msg.contactId);
@@ -8237,17 +8277,22 @@ async function createGroup(name, memberIds) {
                             } else if (msg.type === 'voice' && msg.senderId && chatType === 'group') {
                                 await sendGroupVoiceFromMember(msg, groupId);
                             } else {
-                                await sendPlannedMessage(chatType, contactId, groupId, msg, index === messagePlan
+                                await sendPlannedMessage(chatType, contactId, groupId, msg, index === unitPlans
                                     .length - 1 && msg === plan.messages[plan.messages.length - 1]);
                             }
                         }
+                        } catch (e) {
+                        } finally {
                         plansToSend--;
-                        if (plansToSend === 0) { allSent = true;
+                        if (plansToSend <= 0) { allSent = true;
                             checkAllSent();
                             if ((chatType === 'private' && currentContactId === contactId) || (chatType === 'group' && currentGroupId === groupId)) {
                                 markMessagesAsRead(chatType, contactId, groupId);
                             } }
-                    }, accumulatedDelay);
+                        }
+                        }, accumulatedDelay);
+                    } catch (e) {
+                    }
                     var qKey = contactId ? 'p_' + contactId : (groupId ? 'g_' + groupId : 'unknown');
                     if (!replyQueues[qKey]) replyQueues[qKey] = [];
                     replyQueues[qKey].push({ timerId, context: { contactId, groupId } });
@@ -8296,11 +8341,12 @@ async function createGroup(name, memberIds) {
 
             async function sendPlannedMessage(chatType, contactId, groupId, plan, isLast) {
                 if (plan.type === 'image' && plan.src) {
-                    var exists = emojis.some(function(e) { return e.category === 'shared' && e.src === plan.src; });
+                    var ownerId = plan.senderId || contactId || null;
+                    var exists = emojis.some(function(e) { return e.category === 'shared' && e.src === plan.src; }) || (ownerId ? (function() { var cc = contacts.find(function(x) { return x.id === ownerId; }); return !!(cc && cc.uniqueEmojis && cc.uniqueEmojis.some(function(e) { return e.src === plan.src; })); })() : false);
                     if (!exists) return;
                 }
                 const msg = { type: plan.type, text: plan.text || '', src: plan.src || null, timestamp: new Date().toISOString(),
-                    read: false, duration: plan.duration || 0 };
+                    read: false, duration: plan.duration || 0, sticker: !!plan.sticker };
                 var isActiveChat = false;
                 if (chatType === 'group') {
                     if (msg.type === 'redpacket') {
@@ -8311,12 +8357,13 @@ async function createGroup(name, memberIds) {
                         var rpBal = getBalance(plan.senderId);
                         if (rpBal < 1) return;
                         var rpMemberIds = (grpRp.members || []).filter(function(mid) { return mid !== 'me'; });
+                        var rpTotalMembers = (grpRp.members || []).length || 1;
                         msg.senderId = plan.senderId;
                         msg.groupId = groupId;
                         var kr = Math.random();
                         msg.rpKind = kr < 0.4 ? 'lucky' : kr < 0.7 ? 'normal' : 'single';
                         msg.amount = randomRedpacketAmount(rpBal);
-                        msg.count = msg.rpKind === 'lucky' ? (2 + Math.floor(Math.random() * Math.min(4, rpMemberIds.length || 1))) : (msg.rpKind === 'normal' ? (1 + Math.floor(Math.random() * Math.max(1, rpMemberIds.length || 1))) : null);
+                        msg.count = msg.rpKind === 'lucky' ? (2 + Math.floor(Math.random() * Math.min(4, rpTotalMembers))) : (msg.rpKind === 'normal' ? (1 + Math.floor(Math.random() * Math.max(1, rpMemberIds.length || 1))) : null);
                         if (msg.rpKind === 'lucky') msg.amount = Math.max(Math.round(msg.amount * 100) / 100, msg.count * 0.01);
                         if (msg.rpKind === 'lucky') msg.luckyAmounts = splitLuckyAmount(msg.amount, msg.count);
                         if (msg.rpKind === 'normal') msg.perAmount = Math.round((msg.amount / msg.count) * 100) / 100;
@@ -8334,7 +8381,7 @@ async function createGroup(name, memberIds) {
                         msg.senderId = plan.senderId || getRandomGroupMember(groupId);
                         if (!msg.senderId) return;
                         msg.groupId = groupId;
-                        if (plan.quote && msg.type !== 'pat' && msg.type !== 'voice') { msg.quote = { senderId: plan.quote
+                        if (plan.quote && msg.type !== 'pat' && msg.type !== 'voice') { msg.quote = { id: plan.quote.id, senderId: plan.quote
                                     .senderId, type: plan.quote.type, text: plan.quote.text }; }
                     }
                     const id = await qAddData('groupMessages', msg);
@@ -11966,14 +12013,14 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                         var ca = c.authorId === 'me' ? settings.myName : dispNameById(c.authorId);
                         var text = c.text || '';
                         var cm = '';
-                        if (c.type === 'image' && c.media) cm = '<span class="inline-block mt-1" title="点击放大，双击删除表情评论"><img src="' + c.media + '" class="w-8 h-8 object-cover rounded-md cursor-pointer" style="image-rendering:auto" onclick="event.stopPropagation();window.cmOpenImage(this.src)" ondblclick="event.stopPropagation();window.cmDeleteComment(' + p.id + ',' + idx + ')"></span>';
+                        if (c.type === 'image' && c.media) cm = '<span class="inline-block align-middle ml-0.5" title="点击放大，双击删除表情评论"><img src="' + c.media + '" class="w-8 h-8 object-cover rounded-md cursor-pointer align-middle" style="image-rendering:auto" onclick="event.stopPropagation();window.cmOpenImage(this.src)" ondblclick="event.stopPropagation();window.cmDeleteComment(' + p.id + ',' + idx + ')"></span>';
                         else if (c.type === 'voice' && c.media) cm = '<div class="mt-1"><audio src="' + c.media + '" controls preload="metadata" style="width:180px;height:34px;"></audio></div>';
                         var displayComment = '<span class="font-medium text-xs">' + escapeHtml(ca) + '</span>';
                         if (c.replyToIndex !== undefined && p.comments[c.replyToIndex]) {
                             var targetName = p.comments[c.replyToIndex].authorId === 'me' ? settings.myName : dispNameById(p.comments[c.replyToIndex].authorId);
                             displayComment += '<span class="text-xs text-[var(--text-secondary)]"> 回复 </span><span class="font-medium text-xs">' + escapeHtml(targetName) + '</span>';
                         }
-                        if (text && !((c.type === 'image' || c.type === 'voice') && c.media)) displayComment += '<span class="text-xs">：' + escapeHtml(text) + '</span>';
+                        if (text && !(text === '[图片]' && cm)) displayComment += '<span class="text-xs">：' + escapeHtml(text) + '</span>';
                         displayComment += cm;
                         commentsHtml += '<div class="moment-comment-item" ondblclick="event.stopPropagation();window.cmDeleteComment(' + p.id + ',' + idx + ')" onclick="event.stopPropagation();window.prepareReply(' + p.id + ',' + idx + ')">';
                         commentsHtml += '<div class="flex-1">' + displayComment + ' <span class="text-[10px] text-[var(--text-secondary)]">' + formatRelativeTime(c.timestamp) + '</span></div>';
@@ -12208,8 +12255,9 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                 if (!input) return;
                 var shared = (typeof emojis !== 'undefined' ? emojis.filter(function(e) { return e.category === 'shared' && e.src; }) : []);
                 var mine = (typeof emojis !== 'undefined' ? emojis.filter(function(e) { return e.category === 'mine' && e.src; }) : []);
-                var contact = (typeof getCurrentContact === 'function' ? getCurrentContact() : null);
-                var exclusive = (contact && contact.uniqueEmojis) ? contact.uniqueEmojis.filter(function(e) { return e && e.src; }) : [];
+                var post = posts.find(function(p) { return p.id === postId; });
+                var cc = (post && post.authorId && post.authorId !== 'me') ? contacts.find(function(x) { return x.id === post.authorId; }) : null;
+                var exclusive = (cc && cc.uniqueEmojis) ? cc.uniqueEmojis.filter(function(e) { return e && e.src; }) : [];
                 var tabs = [
                     { id: 'shared', label: '共用', list: shared },
                     { id: 'exclusive', label: '专属', list: exclusive },
@@ -12298,7 +12346,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
 
             function buildRandomCommentReply(authorId) {
                 var contact = contacts.find(function(c) { return c.id === authorId; }) || null;
-                var rc = function(key) { return getContactReplySetting(contact, key); };
+                var rc = function(key, def) { return getContactReplySetting(contact, key, def); };
                 var textPool = buildWordCardPool(authorId);
                 var stickerPool = buildStickerPool(authorId).filter(function(e) { return e && e.src; });
                 var voicePool = buildVoicePool(authorId).filter(function(v) { return v && v.src; });
@@ -12306,20 +12354,13 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                 var kao = (typeof kaomojiChars !== 'undefined' && kaomojiChars.length) ? kaomojiChars : [...DEFAULT_KAOMOJI_CHARS];
                 var emojiKaomojiPool = [...emo, ...kao];
                 if (!textPool.length && !stickerPool.length && !voicePool.length && !emojiKaomojiPool.length) return null;
-                var comment = { authorId: authorId, text: '' };
-                // 语音：对标回复设置 voiceReplyChance
-                if (voicePool.length && Math.random() < (rc('voiceReplyChance') || 0.06)) {
-                    comment.type = 'voice'; comment.media = voicePool[Math.floor(Math.random() * voicePool.length)].src; comment.text = '';
-                    return comment;
+                var out = [];
+                // 语音：独立概率 roll，与字卡/表情互不影响，无优先级
+                if (voicePool.length && Math.random() < rc('voiceReplyChance', 0.06)) {
+                    out.push({ type: 'voice', text: '', media: voicePool[Math.floor(Math.random() * voicePool.length)].src });
                 }
-                // 单独表情包（固定 15% 概率，与字卡池是否为空无关）
-                if (stickerPool.length && Math.random() < 0.15) {
-                    comment.type = 'image'; comment.media = stickerPool[Math.floor(Math.random() * stickerPool.length)].src; comment.text = '';
-                    return comment;
-                }
-                // 字卡主文本（对标拼字卡设置）
-                var mainText = null;
                 if (textPool.length) {
+                    var mainText = null;
                     if (rc('combineCardsEnabled') !== false && Math.random() < (rc('combineCardsChance') || 0.3) && textPool.length >= 2) {
                         var min = rc('combineCardsMin') || 2;
                         var max = Math.min(rc('combineCardsMax') || 4, textPool.length);
@@ -12334,81 +12375,91 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                         var extra = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
                         mainText = Math.random() < 0.5 ? extra + ' ' + mainText : mainText + ' ' + extra;
                     }
+                    out.push({ type: null, text: mainText, media: null });
+                    // 附带表情：独立概率 roll，跟字卡
+                    if (stickerPool.length && Math.random() < 0.2) {
+                        out.push({ type: 'image', text: '', media: stickerPool[Math.floor(Math.random() * stickerPool.length)].src });
+                    }
                 } else if (emojiKaomojiPool.length) {
-                    mainText = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
+                    var e = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
                     if (Math.random() < 0.2 && emojiKaomojiPool.length > 1) {
                         var extra2 = emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)];
-                        mainText = Math.random() < 0.5 ? extra2 + ' ' + mainText : mainText + ' ' + extra2;
+                        e = Math.random() < 0.5 ? extra2 + ' ' + e : e + ' ' + extra2;
                     }
+                    out.push({ type: null, text: e, media: null });
                 }
-                // 文字附带表情包图片
-                if (mainText && stickerPool.length && Math.random() < 0.2) {
-                    comment.text = mainText; comment.type = 'image'; comment.media = stickerPool[Math.floor(Math.random() * stickerPool.length)].src;
-                    return comment;
+                // 单独表情包：独立概率 roll，不限字卡，15%
+                if (stickerPool.length && Math.random() < 0.15) {
+                    out.push({ type: 'image', text: '', media: stickerPool[Math.floor(Math.random() * stickerPool.length)].src });
                 }
-                comment.text = mainText || (emojiKaomojiPool.length ? emojiKaomojiPool[Math.floor(Math.random() * emojiKaomojiPool.length)] : '');
-                return comment;
+                return out.length ? out : null;
             }
 
             async function scheduleAuthorReply(post) {
                 var authorId = post.authorId;
-                var reply = buildRandomCommentReply(authorId);
-                if (!reply) return;
+                var replies = buildRandomCommentReply(authorId);
+                if (!replies) return;
                 var author = contacts.find(function(c) { return c.id === authorId; });
                 var minDelay = (author ? getContactReplySetting(author, 'commentReplyMin') : (settings.commentReplyMin || 180)) * 1000;
                 var maxDelay = Math.max((author ? getContactReplySetting(author, 'commentReplyMax') : (settings.commentReplyMax || 1800)) * 1000, minDelay);
-                var delay = minDelay + Math.random() * (maxDelay - minDelay);
-                setTimeout(async function() {
-                    var currentPost = posts.find(function(p) { return p.id === post.id; });
-                    if (!currentPost) return;
-                    if (!currentPost.comments) currentPost.comments = [];
-                    var myCommentsIndices = currentPost.comments.map(function(c, i) { return c.authorId === 'me' ? i : -1; }).filter(function(i) { return i !== -1; });
-                    var replyToIndex2 = null;
-                    if (myCommentsIndices.length > 0) {
-                        replyToIndex2 = myCommentsIndices[myCommentsIndices.length - 1];
-                    }
-                    var newComment = { authorId: authorId, text: reply.text, timestamp: new Date().toISOString() };
-                    if (reply.type) newComment.type = reply.type;
-                    if (reply.media) newComment.media = reply.media;
-                    if (replyToIndex2 !== null) {
-                        newComment.replyToIndex = replyToIndex2;
-                        newComment.replyToName = settings.myName;
-                    }
-                    currentPost.comments.push(newComment);
-                    await updateData('posts', currentPost);
-                    if (document.getElementById('moments-panel') && document.getElementById('moments-panel').classList.contains('open')) renderMoments();
-                    showMomentToast(dispNameById(authorId) + ' 回复了你', 'fa fa-commenting-o', post.id);
-                }, delay);
+                var accDelay = 0;
+                replies.forEach(function(reply, rIdx) {
+                    accDelay += minDelay + Math.random() * (maxDelay - minDelay);
+                    setTimeout(async function() {
+                        var currentPost = posts.find(function(p) { return p.id === post.id; });
+                        if (!currentPost) return;
+                        if (!currentPost.comments) currentPost.comments = [];
+                        var myCommentsIndices = currentPost.comments.map(function(c, i) { return c.authorId === 'me' ? i : -1; }).filter(function(i) { return i !== -1; });
+                        var replyToIndex2 = null;
+                        if (myCommentsIndices.length > 0) {
+                            replyToIndex2 = myCommentsIndices[myCommentsIndices.length - 1];
+                        }
+                        var newComment = { authorId: authorId, text: reply.text, timestamp: new Date().toISOString() };
+                        if (reply.type) newComment.type = reply.type;
+                        if (reply.media) newComment.media = reply.media;
+                        if (replyToIndex2 !== null) {
+                            newComment.replyToIndex = replyToIndex2;
+                            newComment.replyToName = settings.myName;
+                        }
+                        currentPost.comments.push(newComment);
+                        await updateData('posts', currentPost);
+                        if (document.getElementById('moments-panel') && document.getElementById('moments-panel').classList.contains('open')) renderMoments();
+                        showMomentToast(dispNameById(authorId) + ' 回复了你', 'fa fa-commenting-o', post.id);
+                    }, accDelay);
+                });
             }
 
             async function scheduleCommentReplyFromAuthor(post, targetAuthorId) {
-                var reply = buildRandomCommentReply(targetAuthorId);
-                if (!reply) return;
+                var replies = buildRandomCommentReply(targetAuthorId);
+                if (!replies) return;
                 var commentAuthor = contacts.find(function(c) { return c.id === targetAuthorId; });
                 var minDelay = (commentAuthor ? getContactReplySetting(commentAuthor, 'commentReplyMin') : (settings.commentReplyMin || 180)) * 1000;
                 var maxDelay = Math.max((commentAuthor ? getContactReplySetting(commentAuthor, 'commentReplyMax') : (settings.commentReplyMax || 1800)) * 1000, minDelay);
-                var delay = minDelay + Math.random() * (maxDelay - minDelay);
-                setTimeout(async function() {
-                    var currentPost = posts.find(function(p) { return p.id === post.id; });
-                    if (!currentPost) return;
-                    if (!currentPost.comments) currentPost.comments = [];
-                    var myCommentsIndices = currentPost.comments.map(function(c, i) { return c.authorId === 'me' ? i : -1; }).filter(function(i) { return i !== -1; });
-                    var replyToIndex3 = null;
-                    if (myCommentsIndices.length > 0) {
-                        replyToIndex3 = myCommentsIndices[myCommentsIndices.length - 1];
-                    }
-                    var newComment = { authorId: targetAuthorId, text: reply.text, timestamp: new Date().toISOString() };
-                    if (reply.type) newComment.type = reply.type;
-                    if (reply.media) newComment.media = reply.media;
-                    if (replyToIndex3 !== null) {
-                        newComment.replyToIndex = replyToIndex3;
-                        newComment.replyToName = settings.myName;
-                    }
-                    currentPost.comments.push(newComment);
-                    await updateData('posts', currentPost);
-                    if (document.getElementById('moments-panel') && document.getElementById('moments-panel').classList.contains('open')) renderMoments();
-                    showMomentToast(dispNameById(targetAuthorId) + ' 回复了你的评论', 'fa fa-commenting-o', post.id);
-                }, delay);
+                var accDelay = 0;
+                replies.forEach(function(reply, rIdx) {
+                    accDelay += minDelay + Math.random() * (maxDelay - minDelay);
+                    setTimeout(async function() {
+                        var currentPost = posts.find(function(p) { return p.id === post.id; });
+                        if (!currentPost) return;
+                        if (!currentPost.comments) currentPost.comments = [];
+                        var myCommentsIndices = currentPost.comments.map(function(c, i) { return c.authorId === 'me' ? i : -1; }).filter(function(i) { return i !== -1; });
+                        var replyToIndex3 = null;
+                        if (myCommentsIndices.length > 0) {
+                            replyToIndex3 = myCommentsIndices[myCommentsIndices.length - 1];
+                        }
+                        var newComment = { authorId: targetAuthorId, text: reply.text, timestamp: new Date().toISOString() };
+                        if (reply.type) newComment.type = reply.type;
+                        if (reply.media) newComment.media = reply.media;
+                        if (replyToIndex3 !== null) {
+                            newComment.replyToIndex = replyToIndex3;
+                            newComment.replyToName = settings.myName;
+                        }
+                        currentPost.comments.push(newComment);
+                        await updateData('posts', currentPost);
+                        if (document.getElementById('moments-panel') && document.getElementById('moments-panel').classList.contains('open')) renderMoments();
+                        showMomentToast(dispNameById(targetAuthorId) + ' 回复了你的评论', 'fa fa-commenting-o', post.id);
+                    }, accDelay);
+                });
             }
 
             window.deletePost = async function(postId) {
@@ -13051,26 +13102,14 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                     if (momentEnabled && Math.random() < (getContactReplySetting(contact, 'momentPostProb') / 100)) {
                         const pool = buildWordCardPool(contactId);
                         const stickerPool = buildStickerPool(contactId);
-                        // 单独表情包帖：固定 15% 概率，与字卡池是否为空无关
-                        if (stickerPool.length && Math.random() < 0.15) {
-                            const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
-                            let post = { authorId: contactId, text: '', image: sticker.src, type: 'image', likes: [], comments: [], timestamp: new Date().toISOString() };
-                            const id = await addData('posts', post);
-                            post.id = id;
-                            posts.push(post);
-                            if (document.getElementById('moments-panel').classList.contains('open')) renderMoments();
-                        } else if (pool.length) {
-                            const emojiPool = [...getAllEmojiChars(), ...getAllKaomoji()];
-                            let text, postType = 'text';
-                            const voiceRoll = Math.random() < (getContactReplySetting(contact, 'voiceReplyChance') || 0.06);
+                        const emojiPool = [...getAllEmojiChars(), ...getAllKaomoji()];
+                        // 各类型独立概率 roll，无优先级：语音 / 字卡(组合) / 附带图 / 单独表情帖
+                        const voiceRoll = Math.random() < getContactReplySetting(contact, 'voiceReplyChance', 0.06);
+                        const sepSticker = (stickerPool.length && Math.random() < 0.15) ? stickerPool[Math.floor(Math.random() * stickerPool.length)] : null;
+                        let text = '', postType = 'text', imgSrc = null;
+                        if (pool.length) {
                             const cardRoll = (getContactReplySetting(contact, 'combineCardsEnabled') !== false) && Math.random() < (getContactReplySetting(contact, 'combineCardsChance') || 0.3);
-                            if (voiceRoll) {
-                                postType = 'voice';
-                                text = pool[Math.floor(Math.random() * pool.length)];
-                                if (emojiPool.length && Math.random() < 0.3) text = (Math.random() < 0.5 ? emojiPool[Math
-                                        .floor(Math.random() * emojiPool.length)] + ' ' : '') + text + (Math.random() <
-                                    0.5 ? ' ' + emojiPool[Math.floor(Math.random() * emojiPool.length)] : '');
-                            } else if (cardRoll && pool.length >= 2) {
+                            if (cardRoll && pool.length >= 2) {
                                 postType = 'card';
                                 const count = Math.min((getContactReplySetting(contact, 'combineCardsMax') || 4), pool.length);
                                 const cards = [];
@@ -13078,19 +13117,29 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                                 text = cards.join(Math.random() < 0.95 ? '，' : '');
                             } else {
                                 text = pool[Math.floor(Math.random() * pool.length)];
-                                if (emojiPool.length && Math.random() < 0.3) text = (Math.random() < 0.5 ? emojiPool[Math
-                                        .floor(Math.random() * emojiPool.length)] + ' ' : '') + text + (Math.random() <
-                                    0.5 ? ' ' + emojiPool[Math.floor(Math.random() * emojiPool.length)] : '');
                             }
-                            let post = { authorId: contactId, text, image: null, type: postType, likes: [], comments: [],
-                                timestamp: new Date().toISOString() };
-                            if (stickerPool.length && Math.random() < 0.2) post.image = stickerPool[Math.floor(Math
+                            if (emojiPool.length && Math.random() < 0.3) text = (Math.random() < 0.5 ? emojiPool[Math
+                                    .floor(Math.random() * emojiPool.length)] + ' ' : '') + text + (Math.random() <
+                                0.5 ? ' ' + emojiPool[Math.floor(Math.random() * emojiPool.length)] : '');
+                            // 附带图：独立概率 roll，跟字卡
+                            if (stickerPool.length && Math.random() < 0.2) imgSrc = stickerPool[Math.floor(Math
                                 .random() * stickerPool.length)].src;
-                            const id = await addData('posts', post);
-                            post.id = id;
-                            posts.push(post);
-                            if (document.getElementById('moments-panel').classList.contains('open')) renderMoments();
+                        } else if (emojiPool.length) {
+                            text = emojiPool[Math.floor(Math.random() * emojiPool.length)];
                         }
+                        // 单独表情帖：独立概率 roll，不限字卡
+                        if (sepSticker) {
+                            postType = 'image';
+                            text = '';
+                            imgSrc = sepSticker.src;
+                        }
+                        if (voiceRoll) postType = 'voice';
+                        let post = { authorId: contactId, text, image: imgSrc, type: postType, likes: [], comments: [],
+                            timestamp: new Date().toISOString() };
+                        const id = await addData('posts', post);
+                        post.id = id;
+                        posts.push(post);
+                        if (document.getElementById('moments-panel').classList.contains('open')) renderMoments();
                     }
                     scheduleNextMoment(contactId);
                 }, base);
@@ -17274,7 +17323,7 @@ const myTile = selfCamStream
                     partnerCallChance: 0.05, partnerLetterEnabled: false, partnerLetterMin: 10, partnerLetterMax: 24, partnerLetterChance: 0.3, callAcceptChance: 0.6, callRejectChance: 0.4, callHangupMin: 2,
                     callHangupMax: 15, patCooldown: 5, patLibrary: [...DEFAULT_PAT_LIBRARY], partnerPatGroups: [],
                     statusLibrary: [...DEFAULT_STATUS_LIBRARY], statusChance: 0.6, statusMin: 120, statusMax: 180, statusUnit: '分', customWeatherOptions: [],
-                    separateEmojiEnabled: true, quoteEnabled: true, quoteChance: 0.3, combineCardsEnabled: false, combineCardsChance: 0.3, combineCardsMin: 2, combineCardsMax: 4, recallEnabled: false, recallChance: 0.1, moodSymbols: DEFAULT_MOOD_SYMBOLS, myMoodHistory: [],
+                    quoteEnabled: true, quoteChance: 0.2, combineCardsEnabled: false, combineCardsChance: 0.3, combineCardsMin: 2, combineCardsMax: 4, recallEnabled: false, recallChance: 0.1, moodSymbols: DEFAULT_MOOD_SYMBOLS, myMoodHistory: [],
                     letterReplyMin: 3600, letterReplyMax: 86400, letterCardCountMin: 5, letterCardCountMax: 15, moodRefreshHour: 6, pendingLetterReplies: [], lastPartnerLetterTimes: {},
                     groupCallAcceptChance: 0.7, groupCallRejectChance: 0.2, groupCallTimeoutChance: 0.1,
                     replyPatChance: 0.07, replyCallChance: 0.03, postReplyMin: 30, postReplyMax: 120, postReplyUnit: '秒',
@@ -19206,23 +19255,10 @@ const myTile = selfCamStream
                 return { text: '在' + loc, location: loc, action: '' };
             }
 
-            function pickPatrolRejectCards(contact) {
-                var pool = [];
-                if (contact && contact.uniqueWordCardGroups) {
-                    contact.uniqueWordCardGroups.forEach(function(g) { (g.cards || []).forEach(function(c) { pool.push(c); }); });
-                }
-                if (!pool.length) {
-                    (wordCardGroups || []).forEach(function(g) { (g.cards || []).forEach(function(c) { pool.push(c); }); });
-                }
-                if (!pool.length) return [];
-                var n = 1 + Math.floor(Math.random() * Math.min(3, pool.length));
-                var res = [];
-                var copy = pool.slice();
-                for (var i = 0; i < n; i++) {
-                    var idx = Math.floor(Math.random() * copy.length);
-                    res.push(copy.splice(idx, 1)[0]);
-                }
-                return res;
+            function pickPatrolHeartNote(contact) {
+                if (Math.random() >= getContactReplySetting(contact, 'patrolHeartChance', 0.6)) return '';
+                var pool = buildWordCardPool(contact ? contact.id : null);
+                return pool.length ? pool[Math.floor(Math.random() * pool.length)] : '';
             }
 
             function savePatrolRecord(rec) {
@@ -19359,6 +19395,8 @@ const myTile = selfCamStream
 
             window.openPatrolPopup = function(contact, mode) {
                 if (!contact || _patrolPopupOpen) return;
+                var real = contacts.find(function(c) { return c && c.id === contact.id; });
+                if (real) contact = real;
                 var pop = document.getElementById('patrol-popup');
                 var av = document.getElementById('patrol-avatar');
                 var nm = document.getElementById('patrol-name');
@@ -19384,7 +19422,7 @@ const myTile = selfCamStream
                     pop.classList.add('show');
                     _patrolPopupOpen = true;
                     savePatrolRecord({ type: 'patrol_report', contactId: contact.id, initiator: 'contact', content: { text: lib.text, location: lib.location || '', photo: patImg }, created_at: new Date().toISOString() });
-                    pushReportChatMsg(contact, { text: lib.text, photo: patImg, isMe: false });
+                    pushReportChatMsg(contact, { text: lib.text, photo: patImg, note: pickPatrolHeartNote(contact), isMe: false });
                     patrolNotify(contact, '向你报备：' + lib.text);
                     return;
                 }
@@ -19445,14 +19483,7 @@ const myTile = selfCamStream
                 await savePatrolRecord({ type: 'patrol_reject', contactId: contact.id, initiator: 'me', content: { reason: reason }, created_at: new Date().toISOString() });
                 await pushReportChatMsg(contact, { text: reason ? ('拒绝了查岗：' + reason) : '拒绝了查岗', isMe: true });
                 markPatrolHandled(contact);
-                var cards = pickPatrolRejectCards(contact);
-                if (cards.length) {
-                    cards.forEach(function(card, i) {
-                        setTimeout(function() { sendPartnerTextMsg(contact, card); }, 2500 + i * 1800);
-                    });
-                } else {
-                    setTimeout(function() { sendPartnerTextMsg(contact, '好吧，那你忙完记得找我哦'); }, 2500);
-                }
+                scheduleUnifiedReply({ contactId: contact.id, groupId: null, chatType: 'private' });
                 showToast('已拒绝，对方好像有点委屈');
             };
 
@@ -19850,11 +19881,20 @@ const myTile = selfCamStream
                 box.innerHTML = html;
             }
 
+            function timelineLocationInText(it) {
+                if (!it.location || !it.text) return false;
+                var loc = String(it.location);
+                var txt = String(it.text);
+                if (txt.indexOf(loc) !== -1) return true;
+                if (txt.indexOf('在' + loc) !== -1) return true;
+                return false;
+            }
+
             function buildTimelineItemHtml(it) {
                 var name = timelineContactName(it.contactId, it.initiator);
                 var meta = timelineTimeStr(it.ts) + ' · ' + name;
                 var body = escapeHtml(it.text || '');
-                if (it.location) body += '<div class="text-xs text-[var(--text-secondary)] mt-1"><i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>' + escapeHtml(it.location) + '</div>';
+                if (it.location && !timelineLocationInText(it)) body += '<div class="text-xs text-[var(--text-secondary)] mt-1"><i class="fa fa-map-marker mr-1" style="color:var(--text-secondary);"></i>' + escapeHtml(it.location) + '</div>';
                 if (it.note) body += '<div class="text-xs text-[var(--text-secondary)] mt-1">备注：' + escapeHtml(it.note) + '</div>';
                 if (it.photo) body += '<img src="' + escapeHtml(it.photo) + '" class="w-full max-h-44 object-cover rounded-xl mt-2">';
                 var extra = '';
@@ -19874,7 +19914,7 @@ const myTile = selfCamStream
                 var title = timelineDateLabel(it.ts);
                 var meta = timelineTimeStr(it.ts) + ' · ' + name;
                 var parts = [];
-                if (it.location) parts.push(escapeHtml(it.location));
+                if (it.location && !timelineLocationInText(it)) parts.push(escapeHtml(it.location));
                 if (it.text) parts.push(escapeHtml(it.text));
                 var body = parts.length ? parts.join(' · ') : '';
                 var html = '';
@@ -21524,6 +21564,10 @@ const myTile = selfCamStream
                 return DEFAULT_REDPACKET_NOTES.slice();
             }
             function randomRedpacketNote(contact) {
+                if (Math.random() < 0.4) {
+                    var cards = buildWordCardPool(contact && contact.id);
+                    if (cards && cards.length) return cards[Math.floor(Math.random() * cards.length)];
+                }
                 var notes = getRedpacketNotes(contact);
                 return notes[Math.floor(Math.random() * notes.length)];
             }
@@ -22532,7 +22576,10 @@ const myTile = selfCamStream
             function renderDecidePage() {
                 var el = document.getElementById('dpage-decide');
                 if (!el) return;
-                if (!_decideContacts.length) _decideContacts = contacts.map(function(c) { return c.id; });
+                if (!_decideContacts.length) {
+                    // 默认只选当前联系人；群聊/未选中时不默认全选，由用户自己选
+                    if (currentContactId) _decideContacts = [currentContactId];
+                }
                 if (_decideView === 'thinking' && _decidePending) {
                     var names = _decidePending.contactIds.map(function(cid) { var c = contacts.find(function(x) { return x.id === cid; }); return c ? (c.remark || c.name) : ''; }).filter(Boolean);
                     var thinkingName = names.length === 1 ? names[0] + ' 正在思考中' : '对方正在思考中';
@@ -22619,16 +22666,23 @@ const myTile = selfCamStream
                 _decideView = 'thinking';
                 renderDecidePage();
                 setTimeout(async function() {
-                    var winner = opts[Math.floor(Math.random() * opts.length)];
+                    var firstWinner = null;
                     rec.status = 'decided';
-                    rec.result = winner;
                     rec.decidedAt = new Date().toISOString();
-                    await updateData('decisions', rec);
                     cids.forEach(function(cid) {
                         var contact = contacts.find(function(c) { return c.id === cid; });
-                        if (contact) pushReportChatMsg(contact, { text: '关于「' + q + '」，我帮你决定了：' + winner + '\n（选项：' + opts.join('、') + '）', isMe: false, kind: 'decide' });
+                        if (!contact) return;
+                        // 每个联系人各自独立随机决定，互不影响
+                        var winner = opts[Math.floor(Math.random() * opts.length)];
+                        if (firstWinner === null) firstWinner = winner;
+                        var heartText = '';
+                        var hc = buildWordCardPool(contact.id);
+                        if (hc.length && Math.random() < getContactReplySetting(contact, 'decideHeartChance', 0.6)) heartText = '心里话：' + hc[Math.floor(Math.random() * hc.length)];
+                        pushReportChatMsg(contact, { text: '关于「' + q + '」，我帮你决定了：' + winner + '\n（选项：' + opts.join('、') + '）' + (heartText ? '\n' + heartText : ''), isMe: false, kind: 'decide' });
                     });
-                    showToast('已决定：' + winner + ' ');
+                    rec.result = firstWinner || opts[0];
+                    await updateData('decisions', rec);
+                    showToast('已决定：' + (firstWinner || opts[0]) + ' ');
                     _decideView = 'form';
                     _decidePending = null;
                     renderDecidePage();
@@ -23117,7 +23171,7 @@ const myTile = selfCamStream
                 _qnView = 'home';
                 renderQnPage();
                 cids.forEach(function(cid) {
-                    setTimeout(function() { autoAnswerQn(qidOf(qn), cid); }, Math.random() * (limitMin * 60000));
+                    setTimeout(function() { autoAnswerQn(qidOf(qn), cid); }, Math.max(3000, limitMin * 60000 * (0.8 + Math.random() * 0.4)));
                 });
             }
             function qidOf(qn) { return qn.id; }

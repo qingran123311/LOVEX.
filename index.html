@@ -2639,14 +2639,14 @@
     </div>
     <footer id="footer" class="relative border-t border-[var(--border-color)] px-2 py-2 card-shadow z-20 transition-colors duration-400 footer-safe" style="background:color-mix(in srgb, var(--bg-solid,#f7f6f5) 72%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);">
         <div class="flex items-end space-x-1">
-            <button id="voice-mode-btn" class="text-[var(--text-secondary)] hover:text-[var(--theme)] w-10 h-10 flex items-center justify-center flex-shrink-0 transition-colors" title="语音"><i class="fa fa-microphone text-lg"></i></button>
+            <button id="voice-mode-btn" class="text-[var(--text-secondary)] hover:text-[var(--theme)] w-9 h-9 flex items-center justify-center flex-shrink-0 transition-colors" title="语音"><i class="fa fa-microphone text-lg"></i></button>
             <div class="flex-1 relative flex items-center">
-                <textarea id="message-input" rows="1" placeholder="输入消息..." class="w-full px-4 py-2.5 rounded-full bg-[var(--card-bg)] border border-[var(--border-color)] focus:ring-2 focus:outline-none resize-none text-sm text-[var(--text-primary)] pr-10" style="--tw-ring-color:var(--theme);max-height:80px;height:auto;"></textarea>
-                <button id="send-btn" class="absolute right-1 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg hidden" style="background:var(--theme)" title="长按3秒发送语音"><i class="fa fa-paper-plane text-sm"></i></button>
+                <textarea id="message-input" rows="1" placeholder="输入消息..." class="w-full px-4 py-2.5 rounded-full bg-[var(--card-bg)] border border-[var(--border-color)] focus:ring-2 focus:outline-none resize-none text-sm text-[var(--text-primary)] pr-3" style="--tw-ring-color:var(--theme);max-height:80px;height:auto;"></textarea>
                 <div id="voice-overlay"><i class="fa fa-microphone mr-1"></i>按住说话</div>
             </div>
-            <button id="emoji-btn" class="text-[var(--text-secondary)] hover:text-[var(--theme)] w-10 h-10 flex items-center justify-center flex-shrink-0 transition-colors" title="表情"><i class="fa fa-smile-o text-lg"></i></button>
-            <button id="expand-btn" class="text-[var(--text-secondary)] hover:text-[var(--theme)] w-10 h-10 flex items-center justify-center flex-shrink-0 transition-colors" title="更多"><i class="fa fa-ellipsis-h text-lg"></i></button>
+            <button id="send-btn" class="hidden absolute right-2 bottom-2 w-[74px] h-9 rounded-lg text-white flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg z-30" style="background:var(--theme)" title="发送"><i class="fa fa-paper-plane text-sm"></i></button>
+            <button id="emoji-btn" class="text-[var(--text-secondary)] hover:text-[var(--theme)] w-9 h-9 flex items-center justify-center flex-shrink-0 transition-colors" title="表情"><i class="fa fa-smile-o text-lg"></i></button>
+            <button id="expand-btn" class="text-[var(--text-secondary)] hover:text-[var(--theme)] w-9 h-9 flex items-center justify-center flex-shrink-0 transition-colors" style="margin-left:2px" title="更多"><i class="fa fa-ellipsis-h text-lg"></i></button>
         </div>
     </footer>
     </div>
@@ -2831,7 +2831,7 @@
             <!-- 群成员 -->
             <div class="px-4 py-4 border-b border-[var(--border-color)]">
                 <p class="text-sm font-medium text-[var(--text-primary)] mb-3">群成员 <span id="gh-member-count" class="text-xs text-[var(--text-secondary)]"></span></p>
-                <div id="gh-member-grid" class="grid grid-cols-5 gap-3"></div>
+                <div id="gh-member-grid" class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(56px,1fr))"></div>
             </div>
             <!-- 群管理 -->
             <div id="gh-manage-row" class="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-color)] cursor-pointer hover:bg-[var(--theme-light)] transition-colors">
@@ -3364,17 +3364,17 @@
                 <button id="stats-type-expense" class="px-3 py-1 rounded-lg text-xs bg-[var(--theme-light)] text-[var(--text-primary)]" onclick="switchStatsType('expense')">支出</button>
             </div>
             <div id="stats-summary" class="px-4 py-3 border-b border-[var(--border-color)]">
-                <div class="flex items-center justify-around">
-                    <div class="text-center"><p class="text-xs text-[var(--text-secondary)]">收入</p><p id="stats-income-amount" class="text-lg font-bold mt-0.5" style="color:var(--theme)">¥0.00</p></div>
-                    <div class="w-px h-10 bg-[var(--border-color)]"></div>
-                    <div class="text-center"><p class="text-xs text-[var(--text-secondary)]">支出</p><p id="stats-expense-amount" class="text-lg font-bold mt-0.5" style="color:#e57373">¥0.00</p></div>
-                    <div class="w-px h-10 bg-[var(--border-color)]"></div>
-                    <div class="text-center"><p class="text-xs text-[var(--text-secondary)]">结余</p><p id="stats-net-amount" class="text-lg font-bold mt-0.5">¥0.00</p></div>
+                <div class="flex items-center">
+                    <div class="flex-1 min-w-0 text-center px-1"><p class="text-xs text-[var(--text-secondary)]">收入</p><p id="stats-income-amount" class="text-base font-bold mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis" style="color:var(--theme)">¥0.00</p></div>
+                    <div class="w-px h-10 bg-[var(--border-color)] shrink-0"></div>
+                    <div class="flex-1 min-w-0 text-center px-1"><p class="text-xs text-[var(--text-secondary)]">支出</p><p id="stats-expense-amount" class="text-base font-bold mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis" style="color:#e57373">¥0.00</p></div>
+                    <div class="w-px h-10 bg-[var(--border-color)] shrink-0"></div>
+                    <div class="flex-1 min-w-0 text-center px-1"><p class="text-xs text-[var(--text-secondary)]">结余</p><p id="stats-net-amount" class="text-base font-bold mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">¥0.00</p></div>
                 </div>
                 <p id="stats-total-count" class="text-center text-xs text-[var(--text-secondary)] mt-2">共 0 笔</p>
             </div>
             <div id="stats-chart" class="px-4 py-4 border-b border-[var(--border-color)]">
-                <div id="stats-bars" class="flex items-end space-x-2 h-32"></div>
+                <div id="stats-bars" class="flex items-end h-32 overflow-x-auto" style="gap:2px;scrollbar-width:none;-ms-overflow-style:none"></div>
             </div>
             <div id="stats-composition" class="px-4 py-3 border-b border-[var(--border-color)] hidden">
                 <p class="text-xs font-medium text-[var(--text-primary)] mb-2">支出构成</p>
@@ -20981,14 +20981,19 @@ const myTile = selfCamStream
                 var due = false;
                 candidates.forEach(function(c) {
                     if (due || _patrolQueue.length) return;
-                    var last = c.lastPatrolAt || 0;
+                    var last = c.lastPatrolAt || now;
                     var min = getPatrolSetting(c, 'partnerPatrolMin', 30) * 60000;
                     var max = getPatrolSetting(c, 'partnerPatrolMax', 120) * 60000;
                     var interval = min + Math.random() * Math.max(0, max - min);
                     var chance = getPatrolSetting(c, 'partnerPatrolChance', 0.5);
-                    if (now - last >= interval && Math.random() < chance) {
-                        _patrolQueue.push(c);
-                        due = true;
+                    if (now - last >= interval) {
+                        if (Math.random() < chance) {
+                            _patrolQueue.push(c);
+                            due = true;
+                        } else {
+                            c.lastPatrolAt = now;
+                            queuedUpdateContact(c);
+                        }
                     }
                 });
                 if (_patrolQueue.length) {
@@ -20997,6 +21002,7 @@ const myTile = selfCamStream
                     openPatrolPopup(_patrolQueue.shift(), 'request');
                 }
             }
+            window.checkPatrolDue = checkPatrolDue;
 
             async function doAutoReport(contact) {
                 var lib = pickPatrolLibrary(contact);
@@ -21027,9 +21033,14 @@ const myTile = selfCamStream
                     var max = Math.max(getPatrolSetting(c, 'partnerAutoReportMax', 180), min) * 60000;
                     var interval = min + Math.random() * Math.max(0, max - min);
                     var chance = getPatrolSetting(c, 'partnerAutoReportChance', 0.5);
-                    var last = c.lastAutoReportAt || 0;
-                    if (now - last >= interval && Math.random() < chance) {
-                        doAutoReport(c);
+                    var last = c.lastAutoReportAt || now;
+                    if (now - last >= interval) {
+                        if (Math.random() < chance) {
+                            doAutoReport(c);
+                        } else {
+                            c.lastAutoReportAt = now;
+                            queuedUpdateContact(c);
+                        }
                     }
                 });
             }
@@ -21488,7 +21499,7 @@ const myTile = selfCamStream
                     var catLabel = { recharge:'充值', transfer:'转账', red_packet:'红包', group_collection:'群收款', user_spend:'用户消费', refund:'退款' }[t.category] || t.category;
                     var card = document.createElement('div');
                     card.className = 'flex items-center justify-between p-3 rounded-xl border border-[var(--border-color)]';
-                    card.innerHTML = '<div class="flex items-center space-x-3"><div class="w-8 h-8 rounded-full flex items-center justify-center text-sm" style="background:var(--theme-light);color:var(--theme)"><i class="fa fa-' + (t.type === 'income' ? 'arrow-down' : 'arrow-up') + '"></i></div><div><p class="text-sm text-[var(--text-primary)]">' + escapeHtml(t.note || catLabel) + '</p><p class="text-xs text-[var(--text-secondary)]">' + catLabel + ' · ' + formatDate(t.timestamp) + '</p></div></div><span class="text-sm font-medium" style="color:' + (t.type === 'income' ? 'var(--theme)' : '#e57373') + '">' + (t.type === 'income' ? '+' : '-') + '¥' + t.amount.toFixed(2) + '</span>';
+                    card.innerHTML = '<div class="flex items-center space-x-3 flex-1 min-w-0"><div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0" style="background:var(--theme-light);color:var(--theme)"><i class="fa fa-' + (t.type === 'income' ? 'arrow-down' : 'arrow-up') + '"></i></div><div class="min-w-0"><p class="text-sm text-[var(--text-primary)] truncate">' + escapeHtml(t.note || catLabel) + '</p><p class="text-xs text-[var(--text-secondary)] truncate">' + catLabel + ' · ' + formatDate(t.timestamp) + '</p></div></div><span class="text-sm font-medium whitespace-nowrap shrink-0" style="color:' + (t.type === 'income' ? 'var(--theme)' : '#e57373') + '">' + (t.type === 'income' ? '+' : '-') + '¥' + t.amount.toFixed(2) + '</span>';
                     list.appendChild(card);
                 });
             }
@@ -21568,18 +21579,19 @@ const myTile = selfCamStream
                     var px = Math.max((abs / maxVal) * 60, 2);
                     var isPos = b.value >= 0;
                     var bar = document.createElement('div');
-                    bar.className = 'relative flex-1 h-32';
+                    bar.className = 'relative h-32 shrink-0';
+                    bar.style.flex = '0 0 ' + (statsView === 'month' ? '24px' : '28px');
                     bar.innerHTML = '<div class="absolute left-0 right-0 top-1/2 border-t border-[var(--border-color)] opacity-50"></div>';
                     var body = document.createElement('div');
-                    body.style.background = isPos ? 'var(--theme)' : '#e57373';
+                    body.style.background = b.value === 0 ? 'var(--border-color)' : (isPos ? 'var(--theme)' : '#e57373');
                     body.style.opacity = '0.85';
                     body.style.width = '70%';
                     body.style.borderRadius = '4px';
                     body.style.height = px + 'px';
                     var valEl = document.createElement('span');
-                    valEl.className = 'absolute left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap';
+                    valEl.className = 'absolute left-1/2 -translate-x-1/2 text-[9px] whitespace-nowrap';
                     valEl.style.color = isPos ? 'var(--theme)' : '#e57373';
-                    valEl.textContent = (isPos ? '+' : '-') + '¥' + abs.toFixed(0);
+                    valEl.textContent = (isPos ? '+' : '-') + '¥' + (abs >= 10000 ? (abs / 10000).toFixed(1) + '万' : abs.toFixed(0));
                     if (isPos) {
                         body.classList.add('absolute', 'left-1/2', '-translate-x-1/2', 'bottom-1/2');
                         valEl.style.bottom = 'calc(50% + ' + (px + 3) + 'px)';
@@ -21588,9 +21600,9 @@ const myTile = selfCamStream
                         valEl.style.top = 'calc(50% + ' + (px + 3) + 'px)';
                     }
                     var dayEl = document.createElement('span');
-                    dayEl.className = 'absolute left-1/2 -translate-x-1/2 bottom-0 text-[10px] text-[var(--text-secondary)]';
-                    dayEl.textContent = b.label;
-                    bar.appendChild(body); bar.appendChild(valEl); bar.appendChild(dayEl);
+                    dayEl.className = 'absolute left-1/2 -translate-x-1/2 bottom-0 text-[9px] text-[var(--text-secondary)] whitespace-nowrap';
+                    if (b.label) dayEl.textContent = b.label;
+                    bar.appendChild(body); if (abs > 0) bar.appendChild(valEl); bar.appendChild(dayEl);
                     bar.onclick = function() { showMonthComposition(b.month, b.year); };
                     barsContainer.appendChild(bar);
                 });
@@ -23731,8 +23743,9 @@ const myTile = selfCamStream
                     var max = Math.max(getPatrolSetting(c, 'qnMax', 480), min) * 60000;
                     var interval = min + Math.random() * Math.max(0, max - min);
                     var chance = getPatrolSetting(c, 'qnChance', 0.5);
-                    var last = c.lastQnAt || 0;
-                    if (now - last >= interval && Math.random() < chance) {
+                    var last = c.lastQnAt || now;
+                    if (now - last >= interval) {
+                        if (Math.random() < chance) {
                         (function(contact) {
                             var tpl = null;
                             var bankQs = qnBuildFromBank();
@@ -23750,6 +23763,10 @@ const myTile = selfCamStream
                                 showNotification(contact.remark || contact.name, '发来一份问卷：《' + tpl.title + '》', contact.avatar, contact.id, function() { });
                             });
                         })(c);
+                        } else {
+                            c.lastQnAt = now;
+                            queuedUpdateContact(c);
+                        }
                     }
                 });
             }

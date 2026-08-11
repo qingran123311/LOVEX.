@@ -691,16 +691,6 @@
             font-size: 0.75rem;
             color: var(--text-secondary);
         }
-        .group-message-read-status {
-            font-size: 0.75rem;
-            margin-left: 4px;
-        }
-        .group-message-read-status.read {
-            color: #3b82f6;
-        }
-        .group-message-read-status.unread {
-            color: #9ca3af;
-        }
         .group-quote {
             border-left: 2px solid var(--theme);
             padding-left: 8px;
@@ -1166,8 +1156,6 @@
             background: #f59e0b !important;
         }
         .image-no-bubble {
-            max-width: 120px !important;
-            max-height: 120px !important;
             border-radius: 12px;
             object-fit: contain;
             cursor: pointer;

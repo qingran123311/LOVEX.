@@ -472,6 +472,37 @@
 .slide-panel.open {
             transform: translateX(0);
         }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 999px;
+            background: linear-gradient(to right, var(--theme) 0%, var(--theme) var(--fill, 50%), color-mix(in srgb, var(--border-color) 60%, transparent) var(--fill, 50%), color-mix(in srgb, var(--border-color) 60%, transparent) 100%);
+            outline: none;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid var(--theme);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+            cursor: pointer;
+            margin-top: 0;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid var(--theme);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+            cursor: pointer;
+        }
         .panel-header {
             display: flex;
             align-items: center;
@@ -835,16 +866,6 @@
             border-radius: 12px;
             font-size: 0.75rem;
             color: var(--text-secondary);
-        }
-        .group-message-read-status {
-            font-size: 0.75rem;
-            margin-left: 4px;
-        }
-        .group-message-read-status.read {
-            color: #3b82f6;
-        }
-        .group-message-read-status.unread {
-            color: #9ca3af;
         }
         .group-quote {
             border-left: 2px solid var(--theme);
@@ -2820,6 +2841,38 @@
                 </div>
                 <span id="gh-manage-sub" class="text-xs text-[var(--text-secondary)]">管理员</span>
                 <i class="fa fa-chevron-right text-xs text-[var(--text-secondary)] ml-2"></i>
+            </div>
+            <!-- 高级回复设置开关 -->
+            <div class="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-color)]">
+                <div class="flex items-center space-x-3">
+                    <i class="fa fa-sliders text-lg" style="color:var(--theme)"></i>
+                    <span class="text-sm text-[var(--text-primary)]">高级回复设置</span>
+                </div>
+                <div class="glass-toggle" id="gh-adv-toggle"><div class="knob"></div></div>
+            </div>
+            <div id="gh-adv-settings" style="display:none">
+                <!-- 每轮最多几人回复 -->
+                <div class="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-color)]">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa fa-comments-o text-lg" style="color:var(--theme)"></i>
+                        <span class="text-sm text-[var(--text-primary)]">每轮最多几人回复</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="range" id="gh-reply-limit" min="1" max="8" value="2" class="w-24">
+                        <span id="gh-reply-limit-label" class="text-xs text-[var(--text-secondary)] w-7 text-right">2人</span>
+                    </div>
+                </div>
+                <!-- 每轮最多几条消息 -->
+                <div class="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-color)]">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa fa-sort-amount-asc text-lg" style="color:var(--theme)"></i>
+                        <span class="text-sm text-[var(--text-primary)]">每轮最多几条消息</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="range" id="gh-msg-limit" min="2" max="20" value="8" class="w-24">
+                        <span id="gh-msg-limit-label" class="text-xs text-[var(--text-secondary)] w-7 text-right">8条</span>
+                    </div>
+                </div>
             </div>
             <!-- 查找聊天记录 -->
             <div id="gh-search-row" class="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-color)] cursor-pointer hover:bg-[var(--theme-light)] transition-colors">
@@ -5738,13 +5791,74 @@ async function createGroup(name, memberIds) {
                         var mAvatar = mid === 'me' ? settings.myAvatar : (c ? c.avatar : '');
                         var mName = mid === 'me' ? (settings.myName || '我') : (c ? (c.remark || c.name) : '未知成员');
                         cell.innerHTML =
-                            '<div class="relative"><img src="' + escapeHtml(mAvatar || 'https://picsum.photos/200/200?random=' + mid) + '" class="w-14 h-14 rounded-xl object-cover shadow-sm" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--card-bg)]" style="background:' + (mid === 'me' ? '#4ade80' : (c ? (c.status === '离线' ? '#9ca3af' : '#4ade80') : '#4ade80')) + '"></span></div>' +
+                            '<div class="relative"><img src="' + escapeHtml(mAvatar || 'https://picsum.photos/200/200?random=' + mid) + '" class="w-14 h-14 min-w-[56px] min-h-[56px] aspect-square rounded-xl object-cover shadow-sm" onerror="this.onerror=null;this.src=\'https://picsum.photos/200/200?random=1\'"><span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--card-bg)]" style="background:' + (mid === 'me' ? '#4ade80' : (c ? (c.status === '离线' ? '#9ca3af' : '#4ade80') : '#4ade80')) + '"></span></div>' +
                             '<span class="text-[11px] mt-1.5 text-[var(--text-primary)] truncate w-full text-center">' + escapeHtml(mName) + '</span>' + badge;
                         grid.appendChild(cell);
                     });
                 }
                 var pinToggle = document.getElementById('gh-pin-toggle');
                 if (pinToggle) pinToggle.classList.toggle('active', !!g.pinned);
+                var advToggle = document.getElementById('gh-adv-toggle');
+                var advSettings = document.getElementById('gh-adv-settings');
+                var advOn = g.advReplySettings !== false;
+                if (advToggle) advToggle.classList.toggle('active', advOn);
+                if (advSettings) advSettings.style.display = advOn ? '' : 'none';
+                if (advToggle) {
+                    advToggle.onclick = function() {
+                        var gg = getCurrentGroup();
+                        if (!gg) return;
+                        var isOn = !gg.advReplySettings;
+                        if (gg.advReplySettings === undefined) isOn = false;
+                        gg.advReplySettings = isOn;
+                        updateData('groups', gg);
+                        advToggle.classList.toggle('active', isOn);
+                        if (advSettings) advSettings.style.display = isOn ? '' : 'none';
+                    };
+                }
+                var replyLimit = document.getElementById('gh-reply-limit');
+                var replyLimitLabel = document.getElementById('gh-reply-limit-label');
+                if (replyLimit) {
+                    var nonMeCount = (g.members || []).filter(function(mid) { return mid !== 'me'; }).length;
+                    var curLimit = g.groupReplyMemberLimit !== undefined ? g.groupReplyMemberLimit : Math.min(2, Math.max(1, nonMeCount));
+                    replyLimit.max = Math.max(1, nonMeCount);
+                    replyLimit.value = Math.max(1, Math.min(curLimit, replyLimit.max));
+                    if (replyLimitLabel) replyLimitLabel.textContent = replyLimit.value + '人';
+                    var paintFill = function() {
+                        var pct = ((replyLimit.value - replyLimit.min) / (replyLimit.max - replyLimit.min)) * 100;
+                        replyLimit.style.setProperty('--fill', pct + '%');
+                    };
+                    paintFill();
+                    replyLimit.oninput = function() {
+                        var v = parseInt(this.value) || 2;
+                        if (replyLimitLabel) replyLimitLabel.textContent = v + '人';
+                        paintFill();
+                        var gg = getCurrentGroup();
+                        if (!gg) return;
+                        gg.groupReplyMemberLimit = v;
+                        updateData('groups', gg);
+                    };
+                }
+                var msgLimit = document.getElementById('gh-msg-limit');
+                var msgLimitLabel = document.getElementById('gh-msg-limit-label');
+                if (msgLimit) {
+                    var curMsgLimit = g.groupReplyMsgLimit !== undefined ? g.groupReplyMsgLimit : 8;
+                    msgLimit.value = curMsgLimit;
+                    if (msgLimitLabel) msgLimitLabel.textContent = curMsgLimit + '条';
+                    var paintMsgFill = function() {
+                        var pct = ((msgLimit.value - msgLimit.min) / (msgLimit.max - msgLimit.min)) * 100;
+                        msgLimit.style.setProperty('--fill', pct + '%');
+                    };
+                    paintMsgFill();
+                    msgLimit.oninput = function() {
+                        var v = parseInt(this.value) || 8;
+                        if (msgLimitLabel) msgLimitLabel.textContent = v + '条';
+                        paintMsgFill();
+                        var gg = getCurrentGroup();
+                        if (!gg) return;
+                        gg.groupReplyMsgLimit = v;
+                        updateData('groups', gg);
+                    };
+                }
                 var manageSub = document.getElementById('gh-manage-sub');
                 if (manageSub) {
                     var adminCount = (g.admins || []).filter(function(a) { return a !== 'me'; }).length;
@@ -6993,7 +7107,7 @@ async function createGroup(name, memberIds) {
             function updateMessageReadStatus(msgId, isRead, isMe) {
                 const el = chatContainer.querySelector(`[data-id="${msgId}"]`);
                 if (!el) return;
-                const readSpan = el.querySelector('.read-status') || el.querySelector('.group-message-read-status');
+                const readSpan = el.querySelector('.read-status');
                 if (readSpan) {
                     if (isMe) { readSpan.innerHTML = isRead ? '' : '●';
                         readSpan.className = `text-xs ml-1 read-dot-me`; } else { readSpan
@@ -7008,7 +7122,6 @@ async function createGroup(name, memberIds) {
                 if (!unreadMsgs.length) return;
                 unreadMsgs.forEach(function(m) { m.read = true; });
                 try { await bulkPutData('groupMessages', unreadMsgs); } catch (e) {}
-                unreadMsgs.forEach(function(m) { updateMessageReadStatus(m.id, true, false); });
             }
 
             function createVoiceBubble(msg, isMe) {
@@ -7381,7 +7494,8 @@ async function createGroup(name, memberIds) {
                 if (el) el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
             }
 
-            function createGroupMessageElement(msg, hideAvatarAndName = false) {
+                function createGroupMessageElement(msg, hideAvatarAndName = false) {
+                    const metaVisible = msg._isTail !== false;
                 if (msg.recalled) {
                     var rd = document.createElement('div');
                     rd.className = 'flex justify-center w-full my-1';
@@ -7537,9 +7651,7 @@ async function createGroup(name, memberIds) {
                     metaDiv.className = 'flex msg-meta';
                     metaDiv.style.justifyContent = isMe ? 'flex-end' : 'flex-start';
                     metaDiv.style.padding = isMe ? '0 36px 0 0' : '0 0 0 36px';
-                    const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
-                    const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    metaDiv.innerHTML = `${metaVisible ? `<span class="text-xs text-[var(--text-secondary)] msg-time">${formatTime(msg.timestamp)}</span>` : ''}<span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
                     div.ondblclick = () => toggleMsgActions(msg.id);
                     div.appendChild(metaDiv);
                     if (!msg.read && !isMe) {
@@ -7597,9 +7709,7 @@ async function createGroup(name, memberIds) {
                     metaDiv.className = 'flex msg-meta';
                     metaDiv.style.justifyContent = isMe ? 'flex-end' : 'flex-start';
                     metaDiv.style.padding = isMe ? '0 36px 0 0' : '0 0 0 36px';
-                    const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
-                    const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
-                    metaDiv.innerHTML = `${msg.hideTime ? '' : `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span>`}<span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    metaDiv.innerHTML = `${metaVisible ? `<span class="text-xs text-[var(--text-secondary)] msg-time">${formatTime(msg.timestamp)}</span>` : ''}<span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
                     div.ondblclick = () => toggleMsgActions(msg.id);
                     div.appendChild(metaDiv);
                     return div;
@@ -7620,10 +7730,8 @@ async function createGroup(name, memberIds) {
                 }
                 let contentHtml = '';
                 if (msg.type === 'text') contentHtml = `<p class="break-words text-sm">${escapeHtml(msg.text)}</p>`;
-                const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
-                const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
-                const timeStrG = msg.hideTime ? '' : formatTime(msg.timestamp);
-                const metaRowG = `<div class="msg-meta" style="justify-content:${isMe ? 'flex-end' : 'flex-start'}"><span class="msg-time">${timeStrG}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
+                const timeStrG = metaVisible ? formatTime(msg.timestamp) : '';
+                const metaRowG = `<div class="msg-meta" style="justify-content:${isMe ? 'flex-end' : 'flex-start'}"><span class="msg-time">${timeStrG}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
                 div.innerHTML = `
               <div class="flex items-end space-x-2 max-w-[82%]">
                 ${(!isMe && !hideAvatarAndName) ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=1'">` : (!isMe ? `<div class="w-7 h-7"></div>` : '')}
@@ -7633,7 +7741,7 @@ async function createGroup(name, memberIds) {
                 </div>
                 ${isMe ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">` : ''}
               </div>
-              <div class="msg-meta" style="justify-content:${isMe ? 'flex-end' : 'flex-start'};${isMe ? 'padding-right:36px;' : 'padding-left:36px;'}"><span class="msg-time">${timeStrG}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
+              <div class="msg-meta" style="justify-content:${isMe ? 'flex-end' : 'flex-start'};${isMe ? 'padding-right:36px;' : 'padding-left:36px;'}"><span class="msg-time">${timeStrG}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
                 div.ondblclick = function() { toggleMsgActions(msg.id); };
                 return div;
             }
@@ -7643,7 +7751,27 @@ async function createGroup(name, memberIds) {
             }
 
             function appendMessageToChat(msg) {
-                var el = createMessageElement(msg, false);
+                var el;
+                if (currentChatType === 'group' && msg.senderId && msg.senderId !== 'me') {
+                    var lastEl = null;
+                    var allEls = chatContainer.querySelectorAll('[data-id]');
+                    if (allEls.length > 0) lastEl = allEls[allEls.length - 1];
+                    var merged = false;
+                    if (lastEl) {
+                        var lastData = null;
+                        try {
+                            lastData = groupMessages.find(function(gm) { return String(gm.id) === String(lastEl.dataset.id); }) || null;
+                        } catch (e) {}
+                        if (lastData && lastData.senderId === msg.senderId && lastData.type !== 'date-separator' && (new Date(msg.timestamp).getTime() - new Date(lastData.timestamp).getTime()) < 60000) {
+                            var prevMetaEls = lastEl.querySelectorAll('.msg-time');
+                            for (var pm = 0; pm < prevMetaEls.length; pm++) prevMetaEls[pm].textContent = '';
+                            merged = true;
+                        }
+                    }
+                    el = createMessageElement(msg, merged);
+                } else {
+                    el = createMessageElement(msg, false);
+                }
                 var typingEl = document.getElementById('typing-indicator');
                 if (typingEl) { chatContainer.insertBefore(el, typingEl); } else { chatContainer.appendChild(el); }
                 postProcessMsgActions(el, msg);
@@ -7796,21 +7924,27 @@ async function createGroup(name, memberIds) {
             function appendDisplayMsgsToChat(displayMsgs, isFirstPage) {
                 var lastSenderId = null;
                 var lastSenderTimestamp = null;
-                displayMsgs.forEach(function(m) {
+                displayMsgs.forEach(function(m, mIdx) {
                     if (m.type === 'date-separator') {
                         const el = createMessageElement(m, false);
                         chatContainer.appendChild(el);
                         return;
                     }
                     let hideAvatarAndName = false;
-                    if (currentChatType === 'group' && m.senderId !== 'me') {
+                    let isTail = true;
+                    if (currentChatType === 'group' && m.senderId && m.senderId !== 'me') {
                         if (lastSenderId === m.senderId && lastSenderTimestamp) {
                             const diff = new Date(m.timestamp).getTime() - new Date(lastSenderTimestamp).getTime();
                             if (diff < 60000) hideAvatarAndName = true;
                         }
                         lastSenderId = m.senderId;
                         lastSenderTimestamp = m.timestamp;
+                        const nextM = displayMsgs[mIdx + 1];
+                        if (nextM && nextM.type !== 'date-separator' && nextM.senderId === m.senderId && (new Date(nextM.timestamp).getTime() - new Date(m.timestamp).getTime()) < 60000) {
+                            isTail = false;
+                        }
                     }
+                    m._isTail = isTail;
                     const el = createMessageElement(m, hideAvatarAndName);
                     chatContainer.appendChild(el);
                     postProcessMsgActions(el, m);
@@ -8082,12 +8216,42 @@ async function createGroup(name, memberIds) {
                     return;
                 }
 
-                // ===== 回复单元：私聊 = 该联系人；群聊 = 每个非我成员（各自独立的回复设置与专属池） =====
+                // ===== 回复单元：私聊 = 该联系人；群聊 = 每轮随机选最多 N 个成员（各自独立的回复设置与专属池） =====
                 var units = [];
                 if (chatType === 'group') {
                     var grp = groups.find(function(g) { return g.id === groupId; });
                     var gMembers = (grp && grp.members) ? grp.members.filter(function(mid) { return mid !== 'me'; }) : [];
                     units = gMembers.slice();
+                    // 每轮只让一部分成员回复，避免刷屏
+                    var replyLimit = (grp && grp.groupReplyMemberLimit !== undefined) ? grp.groupReplyMemberLimit : 2;
+                    replyLimit = Math.max(1, Math.min(replyLimit, units.length));
+                    // 公平机制：默认每轮等概率随机；仅当近期（最近500条）发言差距比例超过 10% 时，
+                    // 才给发言过少的成员轻微加权（差得越多拉得稍多，但仍然温和），否则保持纯随机
+                    var gRecent = (cachedGroupMessages && cachedGroupMessages[groupId]) ? cachedGroupMessages[groupId].slice(-500) : [];
+                    var gCounts = {};
+                    gRecent.forEach(function(m) { if (m.senderId && m.senderId !== 'me') gCounts[m.senderId] = (gCounts[m.senderId] || 0) + 1; });
+                    var gMinCnt = Infinity, gMaxCnt = 0;
+                    units.forEach(function(uid) {
+                        var gcnt = gCounts[uid] || 0;
+                        if (gcnt < gMinCnt) gMinCnt = gcnt;
+                        if (gcnt > gMaxCnt) gMaxCnt = gcnt;
+                    });
+                    var gDiffRatio = gMaxCnt > 0 ? (gMaxCnt - gMinCnt) / gMaxCnt : 0;
+                    var gPool = [];
+                    units.forEach(function(uid) {
+                        var gw = 1;
+                        if (gDiffRatio > 0.1) gw = 1 + (gMaxCnt - (gCounts[uid] || 0)) * 0.02;
+                        var gwi = Math.max(1, Math.round(gw));
+                        for (var _wi = 0; _wi < gwi; _wi++) gPool.push(uid);
+                    });
+                    for (var _pi = gPool.length - 1; _pi > 0; _pi--) {
+                        var _pj = Math.floor(Math.random() * (_pi + 1));
+                        var _pt = gPool[_pi]; gPool[_pi] = gPool[_pj]; gPool[_pj] = _pt;
+                    }
+                    units = [];
+                    for (var _qi = 0; _qi < gPool.length && units.length < replyLimit; _qi++) {
+                        if (units.indexOf(gPool[_qi]) === -1) units.push(gPool[_qi]);
+                    }
                 } else {
                     units = [contactId];
                 }
@@ -8224,6 +8388,27 @@ async function createGroup(name, memberIds) {
                         unitPlans.push({ messages: [{ type: 'text', text: single }], senderId: chatType === 'group' ? uid : null });
                     }
                 });
+
+                // ===== 每轮最多几条消息：超限则从尾部整组裁剪（含红包计划，表情包都算条数） =====
+                if (chatType === 'group') {
+                    var msgLimit = (grp && grp.groupReplyMsgLimit !== undefined) ? grp.groupReplyMsgLimit : 8;
+                    var totalPlans = unitPlans.concat(rpPlans);
+                    var totalMsgs = 0;
+                    totalPlans.forEach(function(p) { totalMsgs += p.messages.length; });
+                    while (totalMsgs > msgLimit && totalPlans.length > 1) {
+                        var removedPlan = totalPlans.pop();
+                        totalMsgs -= removedPlan.messages.length;
+                        var uiIdx = unitPlans.indexOf(removedPlan);
+                        if (uiIdx > -1) { unitPlans.splice(uiIdx, 1); }
+                        else { var riIdx = rpPlans.indexOf(removedPlan); if (riIdx > -1) rpPlans.splice(riIdx, 1); }
+                    }
+                    if (totalMsgs > msgLimit && totalPlans.length > 0) {
+                        var lastPlan = totalPlans[totalPlans.length - 1];
+                        var overMsgs = totalMsgs - msgLimit;
+                        if (overMsgs >= lastPlan.messages.length) { lastPlan.messages.length = 0; }
+                        else { lastPlan.messages.splice(lastPlan.messages.length - overMsgs, overMsgs); }
+                    }
+                }
 
                 if (!hasContent) {
                     showToast('当前无可回复内容，请先添加字卡或表情');
@@ -8567,16 +8752,79 @@ async function createGroup(name, memberIds) {
                 packs.forEach(function(pack, pi) {
                     addTab(pack.name || ('分组' + (pi + 1)), window._activeEmojiPack === pi, function() { window._activeEmojiPack = pi; renderEmojiDrawer(); });
                 });
+                var selMode = window._emojiPackSelMode || false;
+                if (!window._emojiPackSelChars) window._emojiPackSelChars = [];
+                var packSpacer = document.createElement('div');
+                packSpacer.className = 'flex-1';
+                tabBar.appendChild(packSpacer);
+                var packSelBtn = document.createElement('button');
+                packSelBtn.className = 'text-xs px-2.5 py-1 rounded-lg whitespace-nowrap ' + (selMode ? 'text-white' : 'text-[var(--text-secondary)] border border-[var(--border-color)]');
+                if (selMode) packSelBtn.style.background = 'var(--theme)';
+                packSelBtn.textContent = selMode ? '退出选择' : '选择';
+                packSelBtn.title = selMode ? '退出批量选择' : '批量选择表情（可多选删除/移动）';
+                packSelBtn.onclick = function() { window._emojiPackSelMode = !selMode; renderEmojiDrawer(); };
+                tabBar.appendChild(packSelBtn);
+                if (selMode) {
+                    var packDelSelBtn = document.createElement('button');
+                    packDelSelBtn.textContent = '删除选中';
+                    packDelSelBtn.className = 'text-xs px-2.5 py-1 rounded-lg whitespace-nowrap text-white';
+                    packDelSelBtn.style.background = '#ef4444';
+                    packDelSelBtn.onclick = function() {
+                        var sel = window._emojiPackSelChars || [];
+                        if (!sel.length) { showToast('请先选择表情'); return; }
+                        if (!confirm('删除选中的 ' + sel.length + ' 个表情？')) return;
+                        sel.forEach(function(ch) {
+                            var i1 = emojiChars.indexOf(ch); if (i1 !== -1) emojiChars.splice(i1, 1);
+                            (settings.emojiPacks || []).forEach(function(p) { var i2 = (p.emojis || []).indexOf(ch); if (i2 !== -1) p.emojis.splice(i2, 1); });
+                        });
+                        saveSettings(); window._emojiPackSelChars = []; renderEmojiDrawer(); showToast('已删除 ' + sel.length + ' 个表情 ');
+                    };
+                    tabBar.appendChild(packDelSelBtn);
+                    var packMvBtn = document.createElement('button');
+                    packMvBtn.textContent = '移动到分组';
+                    packMvBtn.className = 'text-xs px-2.5 py-1 rounded-lg whitespace-nowrap text-white';
+                    packMvBtn.style.background = '#3b82f6';
+                    packMvBtn.onclick = function() {
+                        var sel = window._emojiPackSelChars || [];
+                        if (!sel.length) { showToast('请先选择表情'); return; }
+                        showEmojiPackPicker(function(tpi) {
+                            sel.forEach(function(ch) {
+                                var i1 = emojiChars.indexOf(ch); if (i1 !== -1) emojiChars.splice(i1, 1);
+                                (settings.emojiPacks || []).forEach(function(p) { var i2 = (p.emojis || []).indexOf(ch); if (i2 !== -1) p.emojis.splice(i2, 1); });
+                            });
+                            if (tpi >= 0 && tpi < (settings.emojiPacks || []).length) {
+                                var pk = settings.emojiPacks[tpi];
+                                if (!pk.emojis) pk.emojis = [];
+                                sel.forEach(function(ch) { pk.emojis.push(ch); });
+                            } else {
+                                sel.forEach(function(ch) { emojiChars.push(ch); });
+                            }
+                            saveSettings(); window._emojiPackSelChars = []; renderEmojiDrawer(); showToast('已移动 ' + sel.length + ' 个表情 ');
+                        }, '选择移动到的分组', '确定移动');
+                    };
+                    tabBar.appendChild(packMvBtn);
+                }
                 lib.appendChild(tabBar);
                 if (!packs.length || window._activeEmojiPack === -1) {
                     var grid = document.createElement('div');
                     grid.className = 'grid grid-cols-8 gap-1 content-start';
+                    var selChars = window._emojiPackSelChars || [];
+                    var selMode = window._emojiPackSelMode || false;
                     getAllEmojiChars().forEach(function(ch, idx) {
                         var s = document.createElement('span');
-                        s.className = 'text-xl cursor-pointer p-1 text-center rounded hover:bg-[var(--theme-light)]';
+                        var isSel = selChars.indexOf(ch) !== -1;
+                        s.className = 'text-xl cursor-pointer p-1 text-center rounded ' + (isSel ? 'bg-[var(--theme-light)] ring-2 ring-[var(--theme)]' : 'hover:bg-[var(--theme-light)]');
                         s.textContent = ch;
-                        s.onclick = function() { sendEmojiMsg(ch); };
-                        s.oncontextmenu = function(e) { e.preventDefault(); if (confirm('删除？')) { emojiChars.splice(idx, 1); saveSettings(); renderEmojiDrawer(); } };
+                        if (selMode) {
+                            s.onclick = function() {
+                                var i = selChars.indexOf(ch);
+                                if (i === -1) selChars.push(ch); else selChars.splice(i, 1);
+                                renderEmojiDrawer();
+                            };
+                        } else {
+                            s.onclick = function() { sendEmojiMsg(ch); };
+                            s.oncontextmenu = function(e) { e.preventDefault(); if (confirm('删除？')) { emojiChars.splice(idx, 1); saveSettings(); renderEmojiDrawer(); } };
+                        }
                         grid.appendChild(s);
                     });
                     lib.appendChild(grid);
@@ -8585,12 +8833,23 @@ async function createGroup(name, memberIds) {
                     if (pack.emojis && pack.emojis.length) {
                         var grid = document.createElement('div');
                         grid.className = 'grid grid-cols-8 gap-1';
+                        var selChars2 = window._emojiPackSelChars || [];
+                        var selMode2 = window._emojiPackSelMode || false;
                         pack.emojis.forEach(function(ch) {
                             var s = document.createElement('span');
-                            s.className = 'text-xl cursor-pointer p-1 text-center rounded hover:bg-[var(--theme-light)]';
+                            var isSel2 = selChars2.indexOf(ch) !== -1;
+                            s.className = 'text-xl cursor-pointer p-1 text-center rounded ' + (isSel2 ? 'bg-[var(--theme-light)] ring-2 ring-[var(--theme)]' : 'hover:bg-[var(--theme-light)]');
                             s.textContent = ch;
-                            s.onclick = function() { sendEmojiMsg(ch); };
-                            s.oncontextmenu = function(e) { e.preventDefault(); var idx = pack.emojis.indexOf(ch); if (idx !== -1 && confirm('从"' + pack.name + '"中删除？')) { pack.emojis.splice(idx, 1); saveSettings(); renderEmojiDrawer(); } };
+                            if (selMode2) {
+                                s.onclick = function() {
+                                    var i = selChars2.indexOf(ch);
+                                    if (i === -1) selChars2.push(ch); else selChars2.splice(i, 1);
+                                    renderEmojiDrawer();
+                                };
+                            } else {
+                                s.onclick = function() { sendEmojiMsg(ch); };
+                                s.oncontextmenu = function(e) { e.preventDefault(); var idx = pack.emojis.indexOf(ch); if (idx !== -1 && confirm('从"' + pack.name + '"中删除？')) { pack.emojis.splice(idx, 1); saveSettings(); renderEmojiDrawer(); } };
+                            }
                             grid.appendChild(s);
                         });
                         lib.appendChild(grid);
@@ -8734,65 +8993,11 @@ async function createGroup(name, memberIds) {
                 if (!container) return;
                 container.innerHTML = '';
                 var packs = settings.emojiPacks || [];
-                var batch = window._emojiPackBatch || false;
-                if (packs.length > 1) {
-                    var tb = document.createElement('div');
-                    tb.className = 'flex items-center gap-2 mb-1';
-                    var toggleBtn = document.createElement('button');
-                    toggleBtn.className = 'text-xs px-2 py-0.5 rounded ' + (batch ? 'text-white' : 'text-[var(--text-secondary)] border');
-                    toggleBtn.style.background = batch ? 'var(--theme)' : 'transparent';
-                    toggleBtn.textContent = batch ? '退出选择' : '选择分组';
-                    toggleBtn.onclick = function() { window._emojiPackBatch = !batch; window._emojiPackSelected = []; renderEmojiPacksList(); renderEmojiDrawer(); };
-                    tb.appendChild(toggleBtn);
-                    if (batch) {
-                        var mvBtn = document.createElement('button');
-                        mvBtn.textContent = '移动分组';
-                        mvBtn.className = 'text-xs px-2 py-0.5 bg-blue-500 text-white rounded';
-                        mvBtn.onclick = function() {
-                            var sel = window._emojiPackSelected || [];
-                            if (!sel.length) { showToast('请先勾选分组'); return; }
-                            var tgt = prompt('将选中的 ' + sel.length + ' 个分组移动到哪个分组后面？输入目标序号 (0=放最前, 1-' + packs.length + '=放到该序号后)');
-                            if (tgt === null) return;
-                            var ti = parseInt(tgt);
-                            if (isNaN(ti) || ti < 0 || ti > packs.length) { showToast('无效序号'); return; }
-                            var moved = sel.sort(function(a,b){return b-a;}).map(function(i){ return packs.splice(i,1)[0]; });
-                            ti = Math.min(ti, packs.length);
-                            moved.reverse().forEach(function(p){ packs.splice(ti, 0, p); });
-                            saveSettings(); window._emojiPackSelected = []; renderEmojiPacksList(); renderEmojiDrawer(); showToast('移动成功 ');
-                        };
-                        tb.appendChild(mvBtn);
-                        var delSelBtn = document.createElement('button');
-                        delSelBtn.textContent = '删除选中';
-                        delSelBtn.className = 'text-xs px-2 py-0.5 bg-red-500 text-white rounded';
-                        delSelBtn.onclick = function() {
-                            var sel = window._emojiPackSelected || [];
-                            if (!sel.length) { showToast('请先勾选分组'); return; }
-                            if (!confirm('删除选中的 ' + sel.length + ' 个分组？分组内的表情不会被删除')) return;
-                            sel.sort(function(a,b){return b-a;}).forEach(function(i){ packs.splice(i,1); });
-                            saveSettings(); window._emojiPackSelected = []; renderEmojiPacksList(); renderEmojiDrawer(); showToast('已删除 ');
-                        };
-                        tb.appendChild(delSelBtn);
-                    }
-                    container.appendChild(tb);
-                }
                 packs.forEach(function(pack, pi) {
                     var row = document.createElement('div');
                     row.className = 'flex items-center justify-between py-1 px-2 bg-[var(--theme-light)] rounded';
                     var left = document.createElement('div');
                     left.className = 'flex items-center gap-1';
-                    if (batch) {
-                        var cb = document.createElement('input');
-                        cb.type = 'checkbox';
-                        cb.className = 'w-3 h-3';
-                        if (!window._emojiPackSelected) window._emojiPackSelected = [];
-                        cb.checked = window._emojiPackSelected.indexOf(pi) !== -1;
-                        cb.onchange = function() {
-                            var idx = window._emojiPackSelected.indexOf(pi);
-                            if (this.checked && idx === -1) window._emojiPackSelected.push(pi);
-                            else if (!this.checked && idx !== -1) window._emojiPackSelected.splice(idx, 1);
-                        };
-                        left.appendChild(cb);
-                    }
                     var nameSpan = document.createElement('span');
                     nameSpan.className = 'text-xs font-medium';
                     nameSpan.textContent = (pack.name || '未命名') + ' (' + (pack.emojis ? pack.emojis.length : 0) + ')';
@@ -8800,7 +9005,7 @@ async function createGroup(name, memberIds) {
                     row.appendChild(left);
                     var btnGroup = document.createElement('div');
                     btnGroup.className = 'flex space-x-1';
-                    if (!batch) {
+                    {
                         if (pi > 0) {
                             var upBtn = document.createElement('button');
                             upBtn.textContent = '⬆';
@@ -8924,6 +9129,32 @@ async function createGroup(name, memberIds) {
                     callback(selected ? selected.value : '');
                 };
             }
+            function getGlobalEmojiCharSet() {
+                var set = new Set();
+                (emojiChars || []).forEach(function(c) { set.add(c); });
+                (settings.emojiPacks || []).forEach(function(p) { (p.emojis || []).forEach(function(c) { set.add(c); }); });
+                return set;
+            }
+            function showEmojiPackPicker(callback, titleText, btnText) {
+                var pks = settings.emojiPacks || [];
+                var modal = document.getElementById('ch-sub-modal');
+                var title = document.getElementById('ch-sub-title');
+                var content = document.getElementById('ch-sub-content');
+                if (!modal || !title || !content) { callback(-1); return; }
+                title.textContent = titleText || '选择添加分组';
+                var html = '<label class="flex items-center px-3 py-2 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)] mb-2"><input type="radio" name="char-pack-radio" value="-1" class="mr-3" checked><span class="text-sm text-[var(--text-primary)]">默认（无分组）</span></label>';
+                pks.forEach(function(p, pi) {
+                    html += '<label class="flex items-center px-3 py-2 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)] mb-2"><input type="radio" name="char-pack-radio" value="' + pi + '" class="mr-3"><span class="text-sm text-[var(--text-primary)]">' + escapeHtml(p.name || ('分组' + (pi + 1))) + '</span></label>';
+                });
+                html += '<button id="char-pack-confirm" class="w-full mt-4 py-2.5 text-white rounded-xl text-sm" style="background:var(--theme)">' + (btnText || '确定添加') + '</button>';
+                content.innerHTML = html;
+                modal.classList.remove('hidden');
+                document.getElementById('char-pack-confirm').onclick = function() {
+                    var selected = document.querySelector('input[name="char-pack-radio"]:checked');
+                    modal.classList.add('hidden');
+                    callback(selected ? parseInt(selected.value) : -1);
+                };
+            }
             function buildStickerData(f, maxDim) {
                 return new Promise(function(resolve) {
                     var animTypes = ['image/gif', 'image/apng', 'image/webp'];
@@ -8940,24 +9171,38 @@ async function createGroup(name, memberIds) {
             }
             function processEmojiFiles(files, cat, grp, inputEl) {
                 var count = 0;
+                var skip = 0;
                 var total = files.length;
                 var done = function(inputEl2) { if (inputEl2) inputEl2.value = ''; };
+                var finish = function() {
+                    if (count + skip !== total) return;
+                    done(inputEl);
+                    showToast('上传' + count + (cat === 'exclusive' ? '个专属表情包' : '个表情包') + (skip ? '(跳过重复' + skip + '个) ' : ' '));
+                };
                 Array.from(files).forEach(function(f) {
                     buildStickerData(f, cat === 'exclusive' ? 1200 : 512).then(function(src) {
-                        if (!src) { count++; if (count === total) done(inputEl); return; }
+                        if (!src) { count++; finish(); return; }
+                        var dup = false;
+                        for (var i = 0; i < emojis.length; i++) { if (emojis[i].src === src) { dup = true; break; } }
+                        if (!dup) {
+                            for (var j = 0; j < contacts.length && !dup; j++) {
+                                var ues = contacts[j].uniqueEmojis || [];
+                                for (var k = 0; k < ues.length; k++) { if (ues[k].src === src) { dup = true; break; } }
+                            }
+                        }
+                        if (dup) { skip++; finish(); return; }
                         if (cat === 'exclusive') {
                             var cid = parseInt(grp);
                             var c = contacts.find(function(x) { return x.id === cid; });
-                            if (!c) { count++; if (count === total) done(inputEl); return; }
+                            if (!c) { skip++; finish(); return; }
                             if (!c.uniqueEmojis) c.uniqueEmojis = [];
                             c.uniqueEmojis.push({ src: src });
                             count++;
-                            if (count === total) {
+                            if (count + skip === total) {
                                 queuedUpdateContact(c);
                                 renderFmExclusiveEmojis(cid);
                                 renderEmojiDrawer();
-                                showToast('上传' + count + '个专属表情包 ');
-                                done(inputEl);
+                                finish();
                             }
                             return;
                         }
@@ -8967,10 +9212,9 @@ async function createGroup(name, memberIds) {
                             obj.id = id;
                             emojis.push(obj);
                             count++;
-                            if (count === total) {
+                            if (count + skip === total) {
                                 renderEmojiDrawer();
-                                showToast('上传' + count + '个表情包 ');
-                                done(inputEl);
+                                finish();
                             }
                         });
                     });
@@ -9179,13 +9423,13 @@ async function createGroup(name, memberIds) {
                     try { document.getElementById('fm-img-tab-mine').onclick = function() { _fmImgTab = 'mine'; renderFmImage(el); }; } catch(e){}
                     try { document.getElementById('fm-img-tab-shared').onclick = function() { _fmImgTab = 'shared'; renderFmImage(el); }; } catch(e){}
                     try { document.getElementById('fm-img-tab-exclusive').onclick = function() { _fmImgTab = 'exclusive'; renderFmImage(el); }; } catch(e){}
-                    try { document.getElementById('batch-emoji-btn').onclick = function() { var txt = document.getElementById('batch-emoji-input').value.trim(); if (!txt) return; var chars = [...new Set([...txt].filter(function(ch) { return /\p{Emoji}/u.test(ch); }))]; var packs = settings.emojiPacks || []; if (packs.length > 0) { if (!packs[0].emojis) packs[0].emojis = []; var set = new Set(packs[0].emojis); chars.forEach(function(c) { if (!set.has(c)) { packs[0].emojis.push(c); set.add(c); } }); } else { var set = new Set(emojiChars); chars.forEach(function(c) { if (!set.has(c)) { emojiChars.push(c); set.add(c); } }); } saveSettings(); renderEmojiDrawer(); renderEmojiPacksList(); document.getElementById('batch-emoji-input').value = ''; showToast('导入' + chars.length + '个表情 '); }; } catch(e) {}
+                    try { document.getElementById('batch-emoji-btn').onclick = function() { var txt = document.getElementById('batch-emoji-input').value.trim(); if (!txt) return; var chars = [...new Set([...txt].filter(function(ch) { return /\p{Emoji}/u.test(ch); }))]; if (!chars.length) { showToast('未识别到Emoji'); return; } showEmojiPackPicker(function(tpi) { var globalSet = getGlobalEmojiCharSet(); var fresh = chars.filter(function(c) { return !globalSet.has(c); }); var added = fresh.length; if (tpi >= 0 && tpi < (settings.emojiPacks || []).length) { var pk = settings.emojiPacks[tpi]; if (!pk.emojis) pk.emojis = []; pk.emojis = pk.emojis.concat(fresh); } else { var set2 = new Set(emojiChars); fresh.forEach(function(c) { if (!set2.has(c)) { emojiChars.push(c); set2.add(c); } }); } saveSettings(); renderEmojiDrawer(); renderEmojiPacksList(); document.getElementById('batch-emoji-input').value = ''; showToast('导入' + added + '个表情' + (chars.length > added ? '(跳过重复' + (chars.length - added) + '个) ' : ' ')); }); }; } catch(e) {}
                     try { document.getElementById('create-emoji-pack').onclick = function() { var inp = document.getElementById('new-pack-name'); var name = inp?.value.trim(); if (!name) { showToast('请输入分组名'); return; } var packs = settings.emojiPacks || []; packs.push({ name: name, icon: '📁', emojis: [] }); settings.emojiPacks = packs; saveSettings(); inp.value = ''; renderEmojiPacksList(); renderEmojiDrawer(); showToast('创建分组 '); }; } catch(e) {}
                     try { document.getElementById('create-shared-group').onclick = function() { var inp = document.getElementById('new-shared-group-name'); var name = inp?.value.trim(); if (!name) { showToast('请输入组名'); return; } var groups = settings.sharedEmojiGroups || []; groups.push({ id: 'g_' + Date.now(), name: name, enabled: true }); settings.sharedEmojiGroups = groups; saveSettings(); inp.value = ''; renderSharedGroupList(); renderEmojiDrawer(); showToast('创建分组 '); }; } catch(e) {}
                     try { document.getElementById('emoji-upload').onchange = function(e) { var files = e.target.files; if (!files.length) return; processEmojiFiles(files, 'mine', '', e.target); }; } catch(e) {}
                     try { document.getElementById('emoji-upload-shared').onchange = function(e) { var files = e.target.files; if (!files.length) return; showEmojiGroupPicker(function(grp) { processEmojiFiles(files, 'shared', grp, e.target); }); }; } catch(e) {}
                     try { document.getElementById('fm-img-exclusive-upload').onchange = function(e) { var files = e.target.files; if (!files.length) return; var sel = document.getElementById('fm-img-exclusive-contact'); var cid = parseInt(sel?.value); if (!cid) { showToast('请先选择联系人'); e.target.value = ''; return; } processEmojiFiles(files, 'exclusive', cid, e.target); }; } catch(e) {}
-                    try { document.getElementById('add-custom-emoji-btn').onclick = function() { var v = prompt('输入Emoji'); if (v?.trim()) { emojiChars.push(v.trim()); saveSettings(); renderEmojiDrawer(); } }; } catch(e) {}
+                    try { document.getElementById('add-custom-emoji-btn').onclick = function() { var v = prompt('输入Emoji'); if (!v || !v.trim()) return; var ch = v.trim(); if (getGlobalEmojiCharSet().has(ch)) { showToast('该表情已存在 '); return; } showEmojiPackPicker(function(tpi) { if (tpi >= 0 && tpi < (settings.emojiPacks || []).length) { var pk = settings.emojiPacks[tpi]; if (!pk.emojis) pk.emojis = []; pk.emojis.push(ch); } else { emojiChars.push(ch); } saveSettings(); renderEmojiDrawer(); renderEmojiPacksList(); showToast('已添加 '); }); }; } catch(e) {}
                 }, 50);
             }
             function renderFmExclusiveEmojis(contactId) {
@@ -9388,7 +9632,7 @@ async function createGroup(name, memberIds) {
                     btn.onclick = function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var card=decodeURIComponent(this.dataset.card);var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;var g2=ct.uniqueWordCardGroups[gi];var idx=(g2.blockedCards||[]).indexOf(card);if(idx!==-1)g2.blockedCards.splice(idx,1);else{if(!g2.blockedCards)g2.blockedCards=[];g2.blockedCards.push(card);}saveEx(ct);renderFmExclusiveWordCardGroups(contactId,searchQuery);};
                 });
                 list.querySelectorAll('.fm-wc-ex-edit-card').forEach(function(btn){
-                    btn.onclick = function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var oldCard=decodeURIComponent(this.dataset.card);var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;var g2=ct.uniqueWordCardGroups[gi];var n=prompt('编辑字卡',oldCard);if(n&&n.trim()&&n.trim()!==oldCard){var ci2=g2.cards.indexOf(oldCard);if(ci2!==-1)g2.cards[ci2]=n.trim();var bi=(g2.blockedCards||[]).indexOf(oldCard);if(bi!==-1)g2.blockedCards[bi]=n.trim();saveEx(ct);renderFmExclusiveWordCardGroups(contactId,searchQuery);}};
+                    btn.onclick = function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var oldCard=decodeURIComponent(this.dataset.card);var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;var g2=ct.uniqueWordCardGroups[gi];var n=prompt('编辑字卡',oldCard);if(n&&n.trim()&&n.trim()!==oldCard){var nt=n.trim();var cardIdx=g2.cards.indexOf(oldCard);if(cardIdx!==-1&&(getAllExclusiveCardsExcept(ci,gi,cardIdx).indexOf(nt)!==-1||isSharedCardDuplicate(nt))){showToast('其他位置已存在该字卡');return;}if(cardIdx!==-1)g2.cards[cardIdx]=nt;var bi=(g2.blockedCards||[]).indexOf(oldCard);if(bi!==-1)g2.blockedCards[bi]=nt;saveEx(ct);renderFmExclusiveWordCardGroups(contactId,searchQuery);}};
                 });
                 list.querySelectorAll('.fm-wc-ex-del-card').forEach(function(btn){
                     btn.onclick = function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var card=decodeURIComponent(this.dataset.card);var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;if(!confirm('删除 "'+card+'"？'))return;var arr=ct.uniqueWordCardGroups[gi].cards;var idx=arr.indexOf(card);if(idx!==-1)arr.splice(idx,1);saveEx(ct);renderFmExclusiveWordCardGroups(contactId,searchQuery);};
@@ -9406,16 +9650,16 @@ async function createGroup(name, memberIds) {
                     btn.onclick = function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;var g2=ct.uniqueWordCardGroups[gi];var d={type:'exclusive-wordcards',contactId:ci,groupName:g2.name,cards:g2.cards,exportTime:new Date().toISOString()};var blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='专属字卡_'+g2.name+'_'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);showToast('导出成功 ');};
                 });
                 list.querySelectorAll('.fm-wc-ex-g-import').forEach(function(inp){
-                    inp.onchange = function(e){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var file=e.target.files[0];if(!file)return;var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;var g2=ct.uniqueWordCardGroups[gi];var mode=confirm('确定=覆盖模式（替换该分组所有字卡）\n取消=追加模式（只添加不重复的）');var reader=new FileReader();reader.onload=function(ev){try{var lines=[];if(file.name.endsWith('.json')){var jd=JSON.parse(ev.target.result);if(jd.cards&&Array.isArray(jd.cards))lines=jd.cards;else{showToast('文件格式错误');return;}}else{lines=ev.target.result.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});}if(mode){g2.cards=[];g2.blockedCards=[];}var added=0,dup=0;lines.forEach(function(l){if(g2.cards.indexOf(l)!==-1){dup++;return;}g2.cards.push(l);added++;});saveEx(ct);renderFmExclusiveWordCardGroups(contactId,searchQuery);showToast('导入完成：新增'+added+'条，跳过重复'+dup+'条 ');}catch(err){showToast('导入失败：'+err.message);}};reader.readAsText(file);this.value='';};
+                    inp.onchange = function(e){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var file=e.target.files[0];if(!file)return;var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;var g2=ct.uniqueWordCardGroups[gi];var mode=confirm('确定=覆盖模式（替换该分组所有字卡）\n取消=追加模式（只添加不重复的）');var reader=new FileReader();reader.onload=function(ev){try{var lines=[];if(file.name.endsWith('.json')){var jd=JSON.parse(ev.target.result);if(jd.cards&&Array.isArray(jd.cards))lines=jd.cards;else{showToast('文件格式错误');return;}}else{lines=ev.target.result.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});}if(mode){g2.cards=[];g2.blockedCards=[];}var added=0,dup=0;lines.forEach(function(l){if(g2.cards.indexOf(l)!==-1||getAllExclusiveCardsExcept(ci,gi,-1).indexOf(l)!==-1||isSharedCardDuplicate(l)){dup++;return;}g2.cards.push(l);added++;});saveEx(ct);renderFmExclusiveWordCardGroups(contactId,searchQuery);showToast('导入完成：新增'+added+'条，跳过重复'+dup+'条 ');}catch(err){showToast('导入失败：'+err.message);}};reader.readAsText(file);this.value='';};
                 });
                 list.querySelectorAll('.fm-wc-ex-add-btn').forEach(function(btn){
-                    btn.onclick = function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var input=document.querySelector('.fm-wc-ex-add-input[data-cid="'+ci+'"][data-gidx="'+gi+'"]');if(!input)return;var t=input.value.trim();if(!t)return;var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;var g2=ct.uniqueWordCardGroups[gi];if(g2.cards.indexOf(t)!==-1){showToast('已存在');input.value='';return;}g2.cards.push(t);input.value='';saveEx(ct);renderFmExclusiveWordCardGroups(contactId,searchQuery);};
+                    btn.onclick = function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var input=document.querySelector('.fm-wc-ex-add-input[data-cid="'+ci+'"][data-gidx="'+gi+'"]');if(!input)return;var t=input.value.trim();if(!t)return;var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;var g2=ct.uniqueWordCardGroups[gi];if(g2.cards.indexOf(t)!==-1){showToast('已存在');input.value='';return;}if(getAllExclusiveCardsExcept(ci,gi,-1).indexOf(t)!==-1||isSharedCardDuplicate(t)){showToast('其他位置已存在该字卡');input.value='';return;}g2.cards.push(t);input.value='';saveEx(ct);renderFmExclusiveWordCardGroups(contactId,searchQuery);};
                 });
                 list.querySelectorAll('.fm-wc-ex-add-input').forEach(function(inp){
                     inp.onkeydown = function(e){if(e.key==='Enter'){e.preventDefault();var addBtn=document.querySelector('.fm-wc-ex-add-btn[data-cid="'+this.dataset.cid+'"][data-gidx="'+this.dataset.gidx+'"]');if(addBtn)addBtn.click();}};
                 });
                 list.querySelectorAll('.fm-wc-ex-batch-import-btn').forEach(function(btn){
-                    btn.onclick = function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var ta=document.querySelector('.fm-wc-ex-batch-import[data-cid="'+ci+'"][data-gidx="'+gi+'"]');if(!ta)return;var lines=ta.value.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});if(!lines.length){showToast('请输入字卡，每行一条');return;}var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;var g2=ct.uniqueWordCardGroups[gi];var added=0,dup=0;lines.forEach(function(l){if(g2.cards.indexOf(l)!==-1){dup++;return;}g2.cards.push(l);added++;});ta.value='';saveEx(ct);renderFmExclusiveWordCardGroups(contactId,searchQuery);showToast('添加'+added+'张，去重'+dup+'张 ');};
+                    btn.onclick = function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var ta=document.querySelector('.fm-wc-ex-batch-import[data-cid="'+ci+'"][data-gidx="'+gi+'"]');if(!ta)return;var lines=ta.value.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});if(!lines.length){showToast('请输入字卡，每行一条');return;}var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueWordCardGroups||!ct.uniqueWordCardGroups[gi])return;var g2=ct.uniqueWordCardGroups[gi];var added=0,dup=0;lines.forEach(function(l){if(g2.cards.indexOf(l)!==-1||getAllExclusiveCardsExcept(ci,gi,-1).indexOf(l)!==-1||isSharedCardDuplicate(l)){dup++;return;}g2.cards.push(l);added++;});ta.value='';saveEx(ct);renderFmExclusiveWordCardGroups(contactId,searchQuery);showToast('添加'+added+'张，去重'+dup+'张 ');};
                 });
             }
             function updateFmWcExBatchBar() {
@@ -9629,8 +9873,10 @@ async function createGroup(name, memberIds) {
                         var grpName = prompt('选择或输入语音分组名称' + (c.uniqueVoiceGroups.length ? '（已有：' + c.uniqueVoiceGroups.map(function(g){return g.name;}).join('、') + '）' : '')) || '语音';
                         var grp = c.uniqueVoiceGroups.find(function(g){return g.name === grpName;});
                         if (!grp) { grp = { name: grpName, enabled: true, items: [] }; c.uniqueVoiceGroups.push(grp); }
-                        Array.from(files).forEach(function(f){var url=URL.createObjectURL(f);grp.items.push({src:url,duration:3,name:f.name,enabled:true});});
-                        updateContact(c); renderFmExclusiveVoiceGroups(cid); showToast('上传' + files.length + '个语音 ');
+                        var vset = getAllVoiceNames();
+                        var vadded = 0;
+                        Array.from(files).forEach(function(f){var nm=(f.name||'').replace(/\.[^.]+$/,'');if(!nm||vset.has(nm))return;var url=URL.createObjectURL(f);grp.items.push({src:url,duration:3,name:nm,enabled:true});vset.add(nm);vadded++;});
+                        updateContact(c); renderFmExclusiveVoiceGroups(cid); showToast('上传' + vadded + '个语音' + (files.length > vadded ? '(跳过重复' + (files.length - vadded) + '个) ' : ' '));
                     };
                 }
                 document.getElementById('fm-voice-tab-general').onclick = function() { _fmVoiceTab = 'general'; renderFmVoice(el); };
@@ -9644,6 +9890,12 @@ async function createGroup(name, memberIds) {
                 list.innerHTML = groups.map(function(g,gi){return '<div class="bg-[var(--theme-light)] rounded-lg p-2"><div class="flex items-center justify-between mb-1"><span class="text-xs font-medium">'+escapeHtml(g.name)+'</span><button class="text-red-400 text-xs" data-cid="'+c.id+'" data-gidx="'+gi+'">删除</button></div><div class="space-y-1">'+(g.items||[]).map(function(v,vi){return '<div class="flex items-center justify-between py-1 px-2 bg-[var(--card-bg)] rounded"><span class="text-xs truncate flex-1">'+(v.name||'语音'+(vi+1))+'</span><button class="text-red-400 text-xs" data-cid="'+c.id+'" data-gidx="'+gi+'" data-vidx="'+vi+'">✕</button></div>';}).join('')+'</div></div>';}).join('');
                 list.querySelectorAll('[data-vidx]').forEach(function(btn){btn.onclick=function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var vi=parseInt(this.dataset.vidx);var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueVoiceGroups||!ct.uniqueVoiceGroups[gi])return;ct.uniqueVoiceGroups[gi].items.splice(vi,1);updateContact(ct);renderFmExclusiveVoiceGroups(ci);};});
                 list.querySelectorAll('[data-gidx]:not([data-vidx])').forEach(function(btn){btn.onclick=function(){var ci=parseInt(this.dataset.cid);var gi=parseInt(this.dataset.gidx);var ct=contacts.find(function(x){return x.id===ci;});if(!ct||!ct.uniqueVoiceGroups)return;ct.uniqueVoiceGroups.splice(gi,1);updateContact(ct);renderFmExclusiveVoiceGroups(ci);};});
+            }
+            function getAllVoiceNames() {
+                var set = new Set();
+                (settings.generalVoiceGroups || []).forEach(function(g){ (g.items||[]).forEach(function(v){ if (v.name) set.add(v.name); }); });
+                contacts.forEach(function(ct){ (ct.uniqueVoiceGroups || []).forEach(function(g){ (g.items||[]).forEach(function(v){ if (v.name) set.add(v.name); }); }); });
+                return set;
             }
             var _fmMediaRecorder = null; var _fmAudioChunks = [];
             function startFmVoiceRecording() {
@@ -9674,9 +9926,10 @@ async function createGroup(name, memberIds) {
                             grpIdx = settings.generalVoiceGroups.length - 1;
                         }
                         var grp = settings.generalVoiceGroups[grpIdx];
+                        if (getAllVoiceNames().has(name)) { showToast('该名称已存在，请修改名称 '); return; }
                         var audio = new Audio(preview.src);
-                        audio.onloadedmetadata = function() { grp.items.push({ src: preview.src, duration: Math.round(audio.duration || 3), name: name, enabled: true }); saveSettings(); renderFmVoiceGroups(); showToast('已保存 '); if (saveBtns) saveBtns.classList.add('hidden'); if (preview) { preview.classList.add('hidden'); preview.src = ''; } document.getElementById('fm-voice-record-name').value = ''; };
-                        audio.onerror = function() { grp.items.push({ src: preview.src, duration: 3, name: name, enabled: true }); saveSettings(); renderFmVoiceGroups(); showToast('已保存 '); if (saveBtns) saveBtns.classList.add('hidden'); if (preview) { preview.classList.add('hidden'); preview.src = ''; } document.getElementById('fm-voice-record-name').value = ''; };
+                        audio.onloadedmetadata = function() { if (getAllVoiceNames().has(name)) { showToast('该名称已存在，请修改名称 '); return; } grp.items.push({ src: preview.src, duration: Math.round(audio.duration || 3), name: name, enabled: true }); saveSettings(); renderFmVoiceGroups(); showToast('已保存 '); if (saveBtns) saveBtns.classList.add('hidden'); if (preview) { preview.classList.add('hidden'); preview.src = ''; } document.getElementById('fm-voice-record-name').value = ''; };
+                        audio.onerror = function() { if (getAllVoiceNames().has(name)) { showToast('该名称已存在，请修改名称 '); return; } grp.items.push({ src: preview.src, duration: 3, name: name, enabled: true }); saveSettings(); renderFmVoiceGroups(); showToast('已保存 '); if (saveBtns) saveBtns.classList.add('hidden'); if (preview) { preview.classList.add('hidden'); preview.src = ''; } document.getElementById('fm-voice-record-name').value = ''; };
                     };
                 }).catch(function(err) { if (status) status.textContent = '录音失败：' + err.message; showToast('无法访问麦克风'); });
             }
@@ -9783,17 +10036,22 @@ async function createGroup(name, memberIds) {
                     btn.onclick = function() { var gi = parseInt(this.dataset.gidx); var ii = parseInt(this.dataset.idx); var g = settings.generalVoiceGroups[gi]; if (!g || !g.items[ii]) return; g.items[ii].enabled = g.items[ii].enabled !== false ? false : true; saveSettings(); renderFmVoiceGroups(sq); };
                 });
                 container.querySelectorAll('.fm-vi-add-btn').forEach(function(btn) {
-                    btn.onclick = function() { var gi = parseInt(this.dataset.gidx); var input = document.querySelector('.fm-vi-add-input[data-gidx="' + gi + '"]'); if (!input) return; var t = input.value.trim(); if (!t) return; var g = settings.generalVoiceGroups[gi]; if (!g) return; if (!g.items) g.items = []; var allNames = []; settings.generalVoiceGroups.forEach(function(pg) { (pg.items||[]).forEach(function(it) { if (it.name) allNames.push(it.name); }); }); if (allNames.indexOf(t) !== -1) { showToast('已存在，已去重'); input.value = ''; return; } g.items.push({ src: '', duration: 1, name: t, enabled: true }); input.value = ''; saveSettings(); renderFmVoiceGroups(sq); };
+                    btn.onclick = function() { var gi = parseInt(this.dataset.gidx); var input = document.querySelector('.fm-vi-add-input[data-gidx="' + gi + '"]'); if (!input) return; var t = input.value.trim(); if (!t) return; var g = settings.generalVoiceGroups[gi]; if (!g) return; if (!g.items) g.items = []; if (getAllVoiceNames().has(t)) { showToast('已存在，已去重'); input.value = ''; return; } g.items.push({ src: '', duration: 1, name: t, enabled: true }); input.value = ''; saveSettings(); renderFmVoiceGroups(sq); };
                 });
                 container.querySelectorAll('.fm-vi-upload').forEach(function(input) {
                     input.onchange = function() {
                         var files = this.files; if (!files.length) return; var gi = parseInt(this.dataset.gidx); if (!settings.generalVoiceGroups[gi]) return;
                         Array.from(files).forEach(function(f) {
                             var reader = new FileReader();
+                            var nm = (f.name || '').replace(/\.[^.]+$/, '');
                             reader.onload = function(ev) {
                                 var audio = new Audio(ev.target.result);
-                                audio.onloadedmetadata = function() { settings.generalVoiceGroups[gi].items.push({ src: ev.target.result, duration: Math.round(audio.duration || 3), name: f.name.replace(/\.[^.]+$/, ''), enabled: true }); saveSettings(); renderFmVoiceGroups(sq); };
-                                audio.onerror = function() { settings.generalVoiceGroups[gi].items.push({ src: ev.target.result, duration: 3, name: f.name.replace(/\.[^.]+$/, ''), enabled: true }); saveSettings(); renderFmVoiceGroups(sq); };
+                                var doSave = function(dur) {
+                                    if (getAllVoiceNames().has(nm)) { showToast('跳过重复语音：' + nm); saveSettings(); renderFmVoiceGroups(sq); return; }
+                                    settings.generalVoiceGroups[gi].items.push({ src: ev.target.result, duration: dur, name: nm, enabled: true }); saveSettings(); renderFmVoiceGroups(sq);
+                                };
+                                audio.onloadedmetadata = function() { doSave(Math.round(audio.duration || 3)); };
+                                audio.onerror = function() { doSave(3); };
                             }; reader.readAsDataURL(f);
                         });
                         this.value = '';
@@ -9806,7 +10064,7 @@ async function createGroup(name, memberIds) {
                         if (!lines.length) { showToast('请输入内容'); return; }
                         if (!settings.generalVoiceGroups[gi]) return;
                         var g = settings.generalVoiceGroups[gi]; if (!g.items) g.items = [];
-                        var allSrcs = []; settings.generalVoiceGroups.forEach(function(pg) { (pg.items||[]).forEach(function(it) { if (it.src) allSrcs.push(it.src); }); });
+                        var allSrcs = []; settings.generalVoiceGroups.forEach(function(pg) { (pg.items||[]).forEach(function(it) { if (it.src) allSrcs.push(it.src); }); }); contacts.forEach(function(ct) { (ct.uniqueVoiceGroups || []).forEach(function(pg) { (pg.items||[]).forEach(function(it) { if (it.src) allSrcs.push(it.src); }); }); });
                         var added = 0;
                         lines.forEach(function(line) {
                             var parts = line.split('|');

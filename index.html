@@ -965,6 +965,12 @@
             font-size: 0.8rem !important;
         }
         /* WeChat-style Moments */
+        #moments-panel {
+            background: var(--card-bg);
+        }
+        #moments-panel .moment-feed-card {
+            background: var(--card-bg);
+        }
         #moments-cover-container {
             transition: height 0.3s ease;
         }
@@ -4058,7 +4064,7 @@
 
     <div id="moments-panel" class="slide-panel">
         <div id="moments-feed-scroll" class="flex-1 overflow-y-auto relative" style="-webkit-overflow-scrolling:touch;">
-            <div id="moments-cover-wrap" class="relative" style="flex-shrink:0;">
+                <div id="moments-cover-wrap" class="relative" style="flex-shrink:0;">
                 <div id="moments-cover-container" class="relative w-full overflow-hidden" style="height:230px;cursor:pointer;">
                     <div id="moments-cover-blur" class="absolute inset-0" style="background-size:cover;background-position:center;filter:blur(30px);transform:scale(1.2);"></div>
                     <img id="moments-cover-img" src="" class="relative w-full h-full object-cover" style="transform-origin:center;transition:transform 0.3s;">
@@ -4102,23 +4108,23 @@
                     profileArea.style.bottom = '-28px';
                     profileArea.style.top = 'auto';
                     profileArea.style.transform = 'translateY(0)';
+                    profileArea.style.zIndex = '';
                     if (refreshInd) refreshInd.classList.remove('moments-refresh-hidden');
-                } else if (scrollTop < 200) {
-                    var h = Math.max(0, 230 - scrollTop * 0.9);
-                    coverContainer.style.height = h + 'px';
-                    coverWrap.style.marginBottom = '28px';
-                    if (refreshInd) refreshInd.classList.add('moments-refresh-hidden');
                 } else {
-                    coverContainer.style.height = '0px';
-                    coverWrap.style.marginBottom = '64px';
-                    // 头像+名字停顶（sticky）
-                    profileArea.style.position = 'sticky';
-                    profileArea.style.top = '8px';
-                    profileArea.style.bottom = 'auto';
+                    coverContainer.style.height = '230px';
+                    coverWrap.style.marginBottom = '28px';
+                    profileArea.style.position = 'absolute';
+                    profileArea.style.bottom = '-28px';
+                    profileArea.style.top = 'auto';
                     profileArea.style.transform = 'translateY(0)';
-                    profileArea.style.zIndex = '20';
+                    profileArea.style.zIndex = '';
                     if (refreshInd) refreshInd.classList.add('moments-refresh-hidden');
                 }
+                var coverImg = document.getElementById('moments-cover-img');
+                if (coverImg) coverImg.style.transform = scrollTop > 0 ? 'scale(1.15) translateY(' + (scrollTop * 0.2) + 'px)' : '';
+                var coverBlur = document.getElementById('moments-cover-blur');
+                if (coverBlur) coverBlur.style.transform = scrollTop > 0 ? 'scale(1.25) translateY(' + (scrollTop * 0.15) + 'px)' : 'scale(1.2)';
+            }
                 var coverImg = document.getElementById('moments-cover-img');
                 if (coverImg) coverImg.style.transform = scrollTop > 0 ? 'scale(1.15) translateY(' + (scrollTop * 0.2) + 'px)' : '';
                 var coverBlur = document.getElementById('moments-cover-blur');
@@ -12769,11 +12775,18 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                     var v = document.createElement('video');
                     v.muted = true;
                     v.playsInline = true;
-                    v.preload = 'metadata';
+                    v.preload = 'auto';
+                    var _cvFired = false;
                     v.onloadedmetadata = function() {
+                        v.onloadedmetadata = null;
                         var target = Math.min(0.1, ((v.duration || 1) * 0.1));
-                        v.onseeked = function() {
-                            v.onseeked = null;
+                        var onReady = function() {
+                            if (_cvFired) return;
+                            _cvFired = true;
+                            v.removeEventListener('seeked', onReady);
+                            v.removeEventListener('loadeddata', onReady);
+                            v.removeEventListener('canplay', onReady);
+                            try { v.pause(); } catch (e) {}
                             try {
                                 var c = document.createElement('canvas');
                                 c.width = 200; c.height = 200;
@@ -12786,14 +12799,26 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                                 p.cover = cover;
                                 updateData('posts', p).catch(function() {});
                                 var img = document.querySelector('#moments-list img[data-cover-for="' + p.id + '"]');
-                                if (img) img.src = cover;
+                                if (img) { img.src = cover; }
                                 var fb = document.querySelector('#moments-list .moment-video-fallback[data-video-fallback="' + p.id + '"]');
-                                if (fb) fb.style.display = 'none';
+                                if (fb) {
+                                    var nimg = document.createElement('img');
+                                    nimg.src = cover;
+                                    nimg.className = 'w-full h-full object-cover';
+                                    nimg.style.cssText = 'display:block;width:100%;height:100%;';
+                                    fb.parentNode.replaceChild(nimg, fb);
+                                }
                             } catch (e) {}
                             finishCover();
                         };
-                        try { v.currentTime = target; } catch (e) { finishCover(); }
-                        setTimeout(function() { if (v.onseeked) { v.onseeked = null; finishCover(); } }, 3000);
+                        v.addEventListener('seeked', onReady);
+                        v.addEventListener('loadeddata', onReady);
+                        v.addEventListener('canplay', onReady);
+                        try { v.currentTime = target; } catch (e) { finishCover(); return; }
+                        var pp = null;
+                        try { pp = v.play(); } catch (e) {}
+                        if (pp && pp.catch) pp.catch(function() {});
+                        setTimeout(function() { if (!_cvFired) { _cvFired = true; try { v.pause(); } catch (e) {} finishCover(); } }, 3000);
                     };
                     v.onerror = function() { finishCover(); };
                     function finishCover() {
@@ -12811,38 +12836,57 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                 return new Promise(function(res) {
                     var done = false;
                     function finish(val) { if (!done) { done = true; res(val); } }
+                    function grabFrame(v) {
+                        try {
+                            var vw = v.videoWidth, vh = v.videoHeight;
+                            if (!vw || !vh) return false;
+                            var c = document.createElement('canvas');
+                            c.width = 200; c.height = 200;
+                            var ctx = c.getContext('2d');
+                            var scale = Math.max(200 / vw, 200 / vh);
+                            var dw = vw * scale, dh = vh * scale;
+                            ctx.drawImage(v, (200 - dw) / 2, (200 - dh) / 2, dw, dh);
+                            finish(c.toDataURL('image/jpeg', 0.7));
+                            return true;
+                        } catch (e) { return false; }
+                    }
                     try {
                         var v = videoEl;
                         if (!v || !v.src) { finish(null); return; }
-                        var vw = v.videoWidth, vh = v.videoHeight;
-                        if (!vw || !vh) {
-                            if (v.readyState === 0) {
-                                var oldMeta = v.onloadedmetadata;
-                                v.onloadedmetadata = function() { v.onloadedmetadata = oldMeta; capture(); };
-                                setTimeout(function() { finish(null); }, 2000);
-                                return;
-                            }
-                            finish(null); return;
-                        }
-                        capture();
-                        function capture() {
-                            var v2 = v;
-                            var seekTo = Math.min(0.1, ((v2.duration || 1) * 0.1));
-                            var oldSeeked = v2.onseeked;
-                            v2.onseeked = function() {
-                                v2.onseeked = oldSeeked;
-                                try {
-                                    var c = document.createElement('canvas');
-                                    c.width = 200; c.height = 200;
-                                    var ctx = c.getContext('2d');
-                                    var scale = Math.max(200 / vw, 200 / vh);
-                                    var dw = vw * scale, dh = vh * scale;
-                                    ctx.drawImage(v2, (200 - dw) / 2, (200 - dh) / 2, dw, dh);
-                                    finish(c.toDataURL('image/jpeg', 0.7));
-                                } catch (e) { finish(null); }
+                        var fired = false;
+                        var tryGrab = function() {
+                            if (fired) return;
+                            var target = Math.min(0.1, ((v.duration || 1) * 0.1));
+                            var onReady = function() {
+                                if (fired) return;
+                                fired = true;
+                                v.removeEventListener('seeked', onReady);
+                                v.removeEventListener('loadeddata', onReady);
+                                v.removeEventListener('canplay', onReady);
+                                try { v.pause(); } catch (e) {}
+                                if (!grabFrame(v)) finish(null);
                             };
-                            try { v2.currentTime = seekTo; } catch (e) { finish(null); }
-                            setTimeout(function() { finish(null); }, 1500);
+                            v.addEventListener('seeked', onReady);
+                            v.addEventListener('loadeddata', onReady);
+                            v.addEventListener('canplay', onReady);
+                            try { v.muted = true; v.playsInline = true; v.preload = 'auto'; } catch (e) {}
+                            try { v.currentTime = target; } catch (e) {}
+                            var pp = null;
+                            try { pp = v.play(); } catch (e) {}
+                            if (pp && pp.catch) pp.catch(function() {});
+                            setTimeout(function() {
+                                if (fired) return;
+                                fired = true;
+                                try { v.pause(); } catch (e) {}
+                                if (v.videoWidth) grabFrame(v); else finish(null);
+                            }, 2000);
+                        };
+                        if (v.readyState >= 1 && v.videoWidth) { tryGrab(); }
+                        else {
+                            var onMeta = function() { v.removeEventListener('loadedmetadata', onMeta); tryGrab(); };
+                            v.addEventListener('loadedmetadata', onMeta);
+                            try { v.muted = true; v.playsInline = true; v.preload = 'auto'; v.load(); } catch (e) {}
+                            setTimeout(function() { if (!fired) { fired = true; finish(null); } }, 3000);
                         }
                     } catch (e) { finish(null); }
                 });

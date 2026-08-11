@@ -3256,7 +3256,7 @@
         <div class="panel-header">
             <button class="text-[var(--text-secondary)]" onclick="closeBillsPage()"><i class="fa fa-arrow-left text-lg"></i></button>
             <h2 class="font-semibold text-lg text-[var(--text-primary)]">账单</h2>
-            <button class="text-[var(--text-secondary)] text-xs" onclick="showStatsPage(currentBillContactId)">收支统计</button>
+            <button class="text-[var(--text-secondary)] text-xs" onclick="openStatsForCurrent()">收支统计</button>
         </div>
         <div class="panel-body overflow-y-auto text-sm">
             <div id="bills-filter-bar" class="px-3 py-2 flex items-center space-x-2 border-b border-[var(--border-color)]">
@@ -7343,7 +7343,7 @@ async function createGroup(name, memberIds) {
                     metaDiv.style.padding = msg.isMe ? '0 36px 0 0' : '0 0 0 36px';
                     const readIcon = msg.read ? '' : '●';
                     const readClass = msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    metaDiv.innerHTML = `${msg.hideTime ? '' : `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span>`}<span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
                     div.ondblclick = () => toggleMsgActions(msg.id);
                     div.appendChild(metaDiv);
                     return div;
@@ -7364,7 +7364,7 @@ async function createGroup(name, memberIds) {
                 if (msg.type === 'text') cHtml = `<p class="break-words text-sm">${escapeHtml(msg.text)}</p>`;
                 const readIcon =
                     `<span class="read-status text-xs ml-1 ${msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400')}">${msg.read ? '' : '●'}</span>`;
-                const timeStr = formatTime(msg.timestamp);
+                const timeStr = msg.hideTime ? '' : formatTime(msg.timestamp);
                 const metaRow = `<div class="msg-meta" style="justify-content:${msg.isMe ? 'flex-end' : 'flex-start'}"><span class="msg-time">${timeStr}${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
                 div.innerHTML =
                     `<div class="flex items-end space-x-2 max-w-[82%]">${!msg.isMe ? `<img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=1'">` : ''}<div class="min-w-0"><div class="${bubble} px-3.5 py-2.5 card-shadow">${qHtml}${cHtml}</div></div>${msg.isMe ? `<img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">` : ''}</div>` +
@@ -7599,7 +7599,7 @@ async function createGroup(name, memberIds) {
                     metaDiv.style.padding = isMe ? '0 36px 0 0' : '0 0 0 36px';
                     const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
                     const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
-                    metaDiv.innerHTML = `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    metaDiv.innerHTML = `${msg.hideTime ? '' : `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span>`}<span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
                     div.ondblclick = () => toggleMsgActions(msg.id);
                     div.appendChild(metaDiv);
                     return div;
@@ -7622,7 +7622,7 @@ async function createGroup(name, memberIds) {
                 if (msg.type === 'text') contentHtml = `<p class="break-words text-sm">${escapeHtml(msg.text)}</p>`;
                 const readStatusClass = isMe ? 'read-dot-me' : (msg.read ? 'read' : 'unread');
                 const readStatusText = isMe ? (msg.read ? '' : '●') : (msg.read ? '✓✓' : '✓');
-                const timeStrG = formatTime(msg.timestamp);
+                const timeStrG = msg.hideTime ? '' : formatTime(msg.timestamp);
                 const metaRowG = `<div class="msg-meta" style="justify-content:${isMe ? 'flex-end' : 'flex-start'}"><span class="msg-time">${timeStrG}</span><span class="group-message-read-status ${readStatusClass}">${readStatusText}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
                 div.innerHTML = `
               <div class="flex items-end space-x-2 max-w-[82%]">
@@ -8170,7 +8170,7 @@ async function createGroup(name, memberIds) {
                             // ===== 附带表情包：独立概率 roll（开关+概率，默认开/20%） =====
                             if (stickerPool.length > 0 && rc('attachStickerEnabled') !== false && Math.random() < rc('attachStickerChance', 0.2)) {
                                 const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
-                                plan.messages.push({ type: 'image', src: sticker.src, sticker: true });
+                                plan.messages.push({ type: 'image', src: sticker.src, sticker: true, hideTime: true });
                             }
                         }
 
@@ -8353,7 +8353,7 @@ async function createGroup(name, memberIds) {
                     if (!exists) return;
                 }
                 const msg = { type: plan.type, text: plan.text || '', src: plan.src || null, timestamp: new Date().toISOString(),
-                    read: false, duration: plan.duration || 0, sticker: !!plan.sticker };
+                    read: false, duration: plan.duration || 0, sticker: !!plan.sticker, hideTime: !!plan.hideTime };
                 var isActiveChat = false;
                 if (chatType === 'group') {
                     if (msg.type === 'redpacket') {
@@ -21203,6 +21203,7 @@ const myTile = selfCamStream
                 document.getElementById('bills-page').classList.add('open');
             };
             window.closeBillsPage = function() { document.getElementById('bills-page').classList.remove('open'); };
+            window.openStatsForCurrent = function() { showStatsPage(currentBillContactId); };
             function getFilteredTxns() {
                 var typeF = document.getElementById('bills-type-filter').value;
                 var catF = document.getElementById('bills-category-filter').value;

@@ -7675,12 +7675,15 @@ async function createGroup(name, memberIds) {
                     var nodes = chatContainer.querySelectorAll('[data-id]');
                     if (nodes.length > keep) {
                         var toRemove = nodes.length - keep;
+                        var wasScrolledUp = chatContainer.scrollTop + chatContainer.clientHeight < chatContainer.scrollHeight - 50;
+                        var prevHeight = chatContainer.scrollHeight;
                         for (var i = 0; i < toRemove; i++) {
                             var n = nodes[i];
                             var typing = document.getElementById('typing-indicator');
                             if (typing && n === typing) continue;
                             n.remove();
                         }
+                        if (wasScrolledUp) chatContainer.scrollTop += (chatContainer.scrollHeight - prevHeight);
                         _chatPageStart += toRemove;
                         prependChatLoadMore();
                     }
@@ -7765,6 +7768,10 @@ async function createGroup(name, memberIds) {
                 appendDisplayMsgsToChat(buildDisplayMsgs(renderSlice), true);
                 if (startIdx > 0) prependChatLoadMore();
                 scrollToBottom();
+                // 图片加载后高度才稳定，延迟再滚几次避免停在半路（用户滚上去后不会被打扰）
+                setTimeout(scrollToBottom, 150);
+                setTimeout(scrollToBottom, 500);
+                setTimeout(scrollToBottom, 1200);
                 var curTk = currentChatType === 'private' ? 'p_' + currentContactId : (currentChatType === 'group' ? 'g_' + currentGroupId : null);
                 if (isTypingMap[curTk] && !document.getElementById('typing-indicator')) {
                     isTypingVisible = false;

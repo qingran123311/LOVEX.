@@ -2832,6 +2832,7 @@
                     <button id="ch-mood-history" class="flex flex-col items-center py-3 rounded-xl text-xs hover:bg-[var(--theme-light)] transition-colors"><i class="fa fa-heart text-lg mb-1" style="color:var(--theme)"></i><span>心情记录</span></button>
                     <button id="ch-data-manager" class="flex flex-col items-center py-3 rounded-xl text-xs hover:bg-[var(--theme-light)] transition-colors"><i class="fa fa-database text-lg mb-1" style="color:var(--theme)"></i><span>数据</span></button>
                     <button id="ch-delete-contact" class="flex flex-col items-center py-3 rounded-xl text-xs hover:bg-red-50 transition-colors"><i class="fa fa-trash text-lg mb-1" style="color:#ef4444"></i><span style="color:#ef4444">删除</span></button>
+                    <button id="ch-set-admin" class="flex flex-col items-center py-3 rounded-xl text-xs hover:bg-[var(--theme-light)] transition-colors hidden"><i class="fa fa-user-circle-o text-lg mb-1" style="color:var(--theme)"></i><span>设为管理员</span></button>
                 </div>
             </div>
         </div>
@@ -3039,10 +3040,6 @@
                 <div class="flex items-center justify-between px-4 py-3.5">
                     <span class="text-sm text-[var(--text-secondary)]">手机号</span>
                     <input id="mp-phone-input" class="text-right text-sm text-[var(--text-primary)] bg-transparent outline-none border-none max-w-[180px]" placeholder="未设置" value="">
-                </div>
-                <div class="flex items-center justify-between px-4 py-3.5">
-                    <span class="text-sm text-[var(--text-secondary)]">心钥</span>
-                    <span id="mp-heartkey" class="text-sm text-[var(--text-primary)] select-all"></span>
                 </div>
                 <div class="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-[var(--theme-light)] transition-colors" onclick="showRingtonePicker()">
                     <span class="text-sm text-[var(--text-secondary)]">来电铃声</span>
@@ -3538,15 +3535,13 @@
     </div>
 
     <!-- ===== 铃声选择弹窗 ===== -->
-    <div id="ringtone-picker-modal" class="fixed inset-0 bg-black/30 z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-[var(--card-bg)] rounded-3xl w-full max-w-sm p-6 shadow-xl">
+    <div id="ringtone-picker-modal" class="fixed inset-0 bg-black/30 z-[100001] hidden flex items-center justify-center p-4">
+        <div class="bg-[var(--card-bg)] rounded-3xl w-full max-w-sm p-6 shadow-xl relative">
             <h3 class="font-semibold text-lg mb-4 text-[var(--text-primary)]">来电铃声</h3>
-            <div class="space-y-2">
-                <label class="flex items-center px-3 py-3 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)]"><input type="radio" name="ringtone" value="" class="mr-3" checked><span class="text-sm text-[var(--text-primary)]">默认</span></label>
-                <label class="flex items-center px-3 py-3 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)]"><input type="radio" name="ringtone" value="call1" class="mr-3"><span class="text-sm text-[var(--text-primary)]">柔和铃声</span></label>
-                <label class="flex items-center px-3 py-3 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)]"><input type="radio" name="ringtone" value="call2" class="mr-3"><span class="text-sm text-[var(--text-primary)]">轻快铃声</span></label>
-                <label class="flex items-center px-3 py-3 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)]"><input type="radio" name="ringtone" value="call3" class="mr-3"><span class="text-sm text-[var(--text-primary)]">经典铃声</span></label>
-            </div>
+            <div class="space-y-2" id="ringtone-options"></div>
+            <button id="ringtone-upload-btn" class="w-full mt-3 py-2.5 bg-[var(--theme-light)] rounded-xl text-sm" style="color:var(--theme)">📁 上传自定义铃声</button>
+            <input type="file" id="ringtone-file-input" accept="audio/*" class="hidden">
+            <div id="ringtone-custom-name" class="text-[10px] mt-1.5 text-[var(--text-secondary)] text-center" style="display:none"></div>
             <button class="w-full mt-4 py-2.5 text-white rounded-xl text-sm" style="background:var(--theme)" onclick="saveRingtone()">确定</button>
         </div>
     </div>
@@ -3658,10 +3653,11 @@
     </div>
 
     <!-- ===== 原有心情模块（完全保留） ===== -->
-    <div id="mood-panel" class="fixed inset-0 bg-black/30 z-50 hidden flex items-center justify-center p-4">
+    <div id="mood-panel" class="fixed inset-0 bg-black/30 z-[100002] hidden flex items-center justify-center p-4">
         <div class="bg-[var(--card-bg)] rounded-3xl w-full max-w-sm p-6 shadow-xl relative">
             <button id="close-mood-btn" class="absolute top-4 right-4 text-[var(--text-secondary)]"><i class="fa fa-times text-xl"></i></button>
             <h3 class="font-semibold text-lg mb-4 text-[var(--text-primary)]">💖 今日心情</h3>
+            <div id="mood-partner-box" class="mb-3 p-3 rounded-xl bg-[var(--theme-light)] text-sm" style="display:none"></div>
             <div id="mood-emoji-picker"></div>
             <textarea id="mood-note" rows="2" placeholder="记录心情..." class="w-full px-3 py-2 border border-[var(--border-color)] rounded-xl text-sm resize-none mb-3"></textarea>
             <div class="mb-3">
@@ -3669,6 +3665,7 @@
                 <input type="text" id="mood-weather" placeholder="例如：晴朗 / 阴天 / 小雨..." class="w-full px-3 py-2 border border-[var(--border-color)] rounded-xl text-sm">
             </div>
             <button id="save-mood-btn" class="w-full py-2.5 text-white rounded-xl text-sm" style="background:var(--theme)"> 保存心情</button>
+            <button id="mood-sync-btn" class="w-full mt-2 py-1 text-[10px] rounded-full bg-[var(--theme-light)] text-[var(--text-secondary)] hover:opacity-80" style="color:var(--theme)">⤴ 一键同步到全部联系人</button>
         </div>
     </div>
 
@@ -4335,6 +4332,51 @@
             let cachedContactMessages = {};
             let cachedGroupMessages = {};
             const MAX_CACHED_CONTACTS = 30;
+            let convoLastTime = {};
+            function noteConvoTime(type, id, ts) {
+                var key = type + ':' + String(id);
+                var t = new Date(ts).getTime();
+                if (isNaN(t)) return;
+                if (!convoLastTime[key] || t > convoLastTime[key]) convoLastTime[key] = t;
+            }
+            function getConvoLastTime(type, id) {
+                var key = type + ':' + String(id);
+                if (convoLastTime[key]) return convoLastTime[key];
+                var cached = type === 'private' ? cachedContactMessages[id] : cachedGroupMessages[id];
+                if (cached && cached.length) {
+                    var last = cached[cached.length - 1];
+                    var t = new Date(last.timestamp).getTime();
+                    if (!isNaN(t)) { noteConvoTime(type, id, t); return t; }
+                }
+                return 0;
+            }
+            function scanStoreTimes(storeName, fieldName, prefix) {
+                return new Promise(function(resolve) {
+                    if (!db) { resolve(); return; }
+                    try {
+                        var tx = db.transaction(storeName, 'readonly');
+                        var st = tx.objectStore(storeName);
+                        var req = st.openCursor();
+                        req.onsuccess = function() {
+                            var cur = req.result;
+                            if (cur) {
+                                var v = cur.value;
+                                if (v && v[fieldName] !== undefined && v.timestamp) {
+                                    noteConvoTime(prefix, v[fieldName], v.timestamp);
+                                }
+                                cur.continue();
+                            }
+                        };
+                        tx.oncomplete = function() { resolve(); };
+                        tx.onerror = function() { resolve(); };
+                        tx.onabort = function() { resolve(); };
+                    } catch (e) { resolve(); }
+                });
+            }
+            async function buildConvoLastTimeMap() {
+                await scanStoreTimes('messages', 'contactId', 'private');
+                await scanStoreTimes('groupMessages', 'groupId', 'group');
+            }
             function trimMessageCache() {
                 const keys = Object.keys(cachedContactMessages);
                 if (keys.length > MAX_CACHED_CONTACTS) {
@@ -5025,10 +5067,53 @@
             }
             window.jumpToMessageDate = jumpToMessageDate;
 
+            function jumpToGroupMessage(msgId) {
+                var g = getCurrentGroup(); if (!g) return;
+                if (!document.getElementById('chat-view').classList.contains('open')) {
+                    switchGroup(g.id).then(function() { doJump(); });
+                } else { doJump(); }
+                function doJump() {
+                    var tryFind = function() {
+                        var el = chatContainer.querySelector('[data-id="' + msgId + '"]');
+                        if (el) {
+                            el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                            el.classList.add('msg-highlight');
+                            setTimeout(function() { el.classList.remove('msg-highlight'); }, 2500);
+                            return;
+                        }
+                        if (_chatPageStart <= 0) { showToast('该消息不在已加载记录中'); return; }
+                        loadOlderMessages();
+                        setTimeout(tryFind, 150);
+                    };
+                    setTimeout(tryFind, 100);
+                }
+            }
+            function jumpToPrivateMessage(msgId) {
+                var c = getCurrentContact(); if (!c) return;
+                if (!document.getElementById('chat-view').classList.contains('open')) {
+                    switchContact(c.id).then(function() { doJump(); });
+                } else { doJump(); }
+                function doJump() {
+                    var tryFind = function() {
+                        var el = chatContainer.querySelector('[data-id="' + msgId + '"]');
+                        if (el) {
+                            el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                            el.classList.add('msg-highlight');
+                            setTimeout(function() { el.classList.remove('msg-highlight'); }, 2500);
+                            return;
+                        }
+                        if (_chatPageStart <= 0) { showToast('该消息不在已加载记录中'); return; }
+                        loadOlderMessages();
+                        setTimeout(tryFind, 150);
+                    };
+                    setTimeout(tryFind, 100);
+                }
+            }
+
             function showToast(msg) {
                 const t = document.createElement('div');
                 t.className =
-                    'fixed top-20 left-1/2 transform -translate-x-1/2 bg-white/95 backdrop-blur-sm text-[var(--text-primary)] px-5 py-3 rounded-2xl shadow-xl z-[100] text-sm font-medium border border-[var(--theme-light)]';
+                    'fixed top-20 left-1/2 transform -translate-x-1/2 bg-white/95 backdrop-blur-sm text-[var(--text-primary)] px-5 py-3 rounded-2xl shadow-xl z-[100001] text-sm font-medium border border-[var(--theme-light)]';
                 t.textContent = msg;
                 document.body.appendChild(t);
                 setTimeout(() => t.remove(), 2500);
@@ -5285,7 +5370,7 @@
                     }
                 });
                 if (contactId) {
-                    const contact = contacts.find(c => c.id === contactId);
+                    const contact = contacts.find(c => String(c.id) === String(contactId));
                     if (contact?.uniqueWordCardGroups) {
                         contact.uniqueWordCardGroups.forEach(group => {
                             if (group.enabled) {
@@ -5307,7 +5392,7 @@
                 let pool = [];
                 emojis.filter(e => e.category === 'shared').forEach(e => pool.push(e));
                 if (contactId) {
-                    const contact = contacts.find(c => c.id === contactId);
+                    const contact = contacts.find(c => String(c.id) === String(contactId));
                     if (contact?.uniqueEmojis) pool.push(...contact.uniqueEmojis);
                 }
                 return pool;
@@ -5315,7 +5400,7 @@
 
             function buildVoicePool(contactId) {
                 let pool = [];
-                var contact = contactId ? contacts.find(function(c) { return c.id === contactId; }) : null;
+                var contact = contactId ? contacts.find(function(c) { return String(c.id) === String(contactId); }) : null;
                 var vGroups = contact ? getContactReplySetting(contact, 'generalVoiceGroups') : settings.generalVoiceGroups;
                 if (vGroups) {
                     vGroups.forEach(function(group) { if (group.enabled) { (group.items||[]).forEach(function(item) { if (item.enabled !== false) pool.push(item); }); } });
@@ -5626,8 +5711,8 @@ async function createGroup(name, memberIds) {
                     if (cached && cached.length) {
                         var last = cached[cached.length - 1];
                         lastMsg = last.text || (last.type === 'image' ? '[图片]' : (last.type === 'voice' ? '[语音]' : (last.type === 'redpacket' ? '[红包]' : '')));
-                        lastTime = new Date(last.timestamp).getTime();
                     }
+                    lastTime = getConvoLastTime('private', c.id);
                     items.push({ id: c.id, type: 'private', name: c.remark || c.name, avatar: c.avatar, unread: unread, lastMsg: lastMsg, lastTime: lastTime, status: c.status, pinned: !!c.pinned });
                 });
                 groups.forEach(function(g) {
@@ -5638,8 +5723,8 @@ async function createGroup(name, memberIds) {
                     if (cached && cached.length) {
                         var last = cached[cached.length - 1];
                         lastMsg = last.text || (last.type === 'image' ? '[图片]' : '');
-                        lastTime = new Date(last.timestamp).getTime();
                     }
+                    lastTime = getConvoLastTime('group', g.id);
                     items.push({ id: g.id, type: 'group', name: g.name, avatar: g.avatar || 'https://picsum.photos/200/200?random=group', unread: unread, lastMsg: lastMsg, lastTime: lastTime, status: g.members ? g.members.length + '人' : '' });
                 });
                 items.sort(function(a, b) {
@@ -5774,11 +5859,25 @@ async function createGroup(name, memberIds) {
 
             // ===== 群聊主页（微信群聊设置样式） =====
             function getGroupMemberById(memberId) {
-                return contacts.find(function(c) { return c.id === memberId; });
+                return contacts.find(function(c) { return String(c.id) === String(memberId); });
             }
-            function isGroupOwner(g) { return !g.owner || g.owner === 'me'; }
-            function isGroupAdmin(g, memberId) { return (g.admins || []).indexOf(memberId) !== -1; }
+            function isGroupOwner(g) { return !g.owner || String(g.owner) === 'me'; }
+            function isGroupAdmin(g, memberId) {
+                var s = String(memberId);
+                return (g.admins || []).some(function(a) { return String(a) === s; });
+            }
             function canManageGroup(g) { return isGroupOwner(g) || isGroupAdmin(g, 'me'); }
+            function sortGroupMembersByRole(memberList, g) {
+                var ownerMid = String(g.owner ? g.owner : 'me');
+                var owner = [], admins = [], others = [];
+                memberList.forEach(function(m) {
+                    var s = String(m);
+                    if (s === ownerMid) owner.push(m);
+                    else if (isGroupAdmin(g, m)) admins.push(m);
+                    else others.push(m);
+                });
+                return owner.concat(admins).concat(others);
+            }
             function showGroupHome() {
                 try {
                 var g = getCurrentGroup();
@@ -5797,7 +5896,15 @@ async function createGroup(name, memberIds) {
                 document.getElementById('gh-avatar').src = g.avatar || 'https://picsum.photos/200/200?random=group';
                 document.getElementById('gh-name').textContent = g.name;
                 var ownerLabel = document.getElementById('gh-owner-label');
-                if (ownerLabel) ownerLabel.textContent = isGroupOwner(g) ? '群主：我' : '';
+                if (ownerLabel) {
+                    var roleText = isGroupOwner(g) ? '群主：我' : '';
+                    var adminNames = (g.admins || []).filter(function(a) { return String(a) !== 'me' && String(a) !== String(g.owner ? g.owner : 'me'); }).map(function(a) {
+                        var cc = getGroupMemberById(a);
+                        return cc ? (cc.remark || cc.name) : a;
+                    });
+                    if (adminNames.length) roleText += (roleText ? '　' : '') + '管理员：' + adminNames.join('、');
+                    ownerLabel.textContent = roleText;
+                }
                 var annText = document.getElementById('gh-announcement-text');
                 if (annText) annText.textContent = g.announcement || '暂无公告';
                 var countEl = document.getElementById('gh-member-count');
@@ -5805,10 +5912,8 @@ async function createGroup(name, memberIds) {
                 if (memberList.indexOf('me') === -1) {
                     if (isGroupOwner(g)) memberList.unshift('me');
                     else memberList.push('me');
-                } else if (isGroupOwner(g) && memberList.indexOf('me') > 0) {
-                    memberList.splice(memberList.indexOf('me'), 1);
-                    memberList.unshift('me');
                 }
+                memberList = sortGroupMembersByRole(memberList, g);
                 if (countEl) countEl.textContent = '(' + memberList.length + ')';
                 var grid = document.getElementById('gh-member-grid');
                 if (grid) {
@@ -5819,7 +5924,7 @@ async function createGroup(name, memberIds) {
                         cell.className = 'flex flex-col items-center cursor-pointer';
                         cell.onclick = function() { openGroupMemberHome(mid); };
                         var badge = '';
-                        if (isGroupOwner(g) && (g.owner ? g.owner : 'me') === mid) badge = '<span class="text-[9px] mt-0.5" style="color:var(--theme)">群主</span>';
+                        if (isGroupOwner(g) && String(g.owner ? g.owner : 'me') === String(mid)) badge = '<span class="text-[9px] mt-0.5" style="color:var(--theme)">群主</span>';
                         else if (isGroupAdmin(g, mid)) badge = '<span class="text-[9px] mt-0.5" style="color:var(--theme)">管理员</span>';
                         var mAvatar = mid === 'me' ? settings.myAvatar : (c ? c.avatar : '');
                         var mName = mid === 'me' ? (settings.myName || '我') : (c ? (c.remark || c.name) : '未知成员');
@@ -6057,14 +6162,18 @@ async function createGroup(name, memberIds) {
             }
             // ===== 群聊禁言 =====
             function getGroupMuteUntil(g, memberId) {
-                if (!g || !memberId || memberId === 'system') return 0;
-                if ((g.owner ? g.owner : 'me') === memberId || (g.admins || []).indexOf(memberId) !== -1) return 0;
+                if (!g || !memberId || String(memberId) === 'system') return 0;
+                if (String(g.owner ? g.owner : 'me') === String(memberId)) return 0;
+                var isAdm = isGroupAdmin(g, memberId);
                 var now = Date.now();
                 var FAR = 1e15;
                 var t = 0;
-                if (g.muteMode === 'always') t = FAR;
-                if (g.muteMode === 'timed' && g.muteStart && g.muteEnd && now >= g.muteStart && now <= g.muteEnd) t = Math.max(t, g.muteEnd);
-                if (g.muteTempAll && now < g.muteTempAll) t = Math.max(t, g.muteTempAll);
+                var isExempt = (g.muteExempt || []).some(function(e) { return String(e) === String(memberId); });
+                if (!isAdm && !isExempt) {
+                    if (g.muteMode === 'always') t = FAR;
+                    if (g.muteMode === 'timed' && g.muteStart && g.muteEnd && now >= g.muteStart && now <= g.muteEnd) t = Math.max(t, g.muteEnd);
+                    if (g.muteTempAll && now < g.muteTempAll) t = Math.max(t, g.muteTempAll);
+                }
                 var mu = g.muteMembers && g.muteMembers[memberId];
                 if (mu === 0 || (mu && now < mu)) t = mu === 0 ? FAR : Math.max(t, mu);
                 return t;
@@ -6112,40 +6221,74 @@ async function createGroup(name, memberIds) {
                     cachedGroupMessages[groupId] = cgm;
                 }
             }
-            async function doGroupMute(g, memberIds, minutes, byId) {
+            async function doGroupMute(g, memberIds, minutes, byId, single) {
                 if (!g || !memberIds || !memberIds.length) return;
                 var byName = groupMemberDispName(byId);
-                if (!g.muteMembers) g.muteMembers = {};
+                var ownerMid = g.owner ? g.owner : 'me';
+                var singleOp = single || memberIds.length === 1;
+                var targets = [];
+                var skipped = [];
                 memberIds.forEach(function(mid) {
+                    if (String(mid) === String(ownerMid)) { skipped.push(mid); return; }
+                    if (isGroupAdmin(g, mid) && !singleOp) { skipped.push(mid); return; }
+                    targets.push(mid);
+                });
+                if (!targets.length) {
+                    showToast('群主不可被禁言' + (skipped.some(function(m) { return isGroupAdmin(g, m); }) ? '，批量禁言不可作用于管理员（仅可单个禁言）' : ''));
+                    return;
+                }
+                if (!g.muteMembers) g.muteMembers = {};
+                targets.forEach(function(mid) {
                     g.muteMembers[mid] = minutes > 0 ? Date.now() + minutes * 60000 : 0;
+                    if (g.muteExempt) g.muteExempt = g.muteExempt.filter(function(e) { return String(e) !== String(mid); });
                 });
                 updateData('groups', g);
-                var names = memberIds.map(groupMemberDispName);
+                var names = targets.map(groupMemberDispName);
                 var durText = minutes > 0 ? (minutes >= 60 ? (minutes % 60 === 0 ? Math.floor(minutes / 60) + '小时' : Math.floor(minutes / 60) + '小时' + (minutes % 60) + '分钟') : minutes + '分钟') : '永久';
-                await addGroupSystemMessage(g.id, names.join('、') + ' 被 ' + byName + ' 禁言 ' + durText);
+                var msgText = names.join('、') + ' 被 ' + byName + ' 禁言 ' + durText;
+                if (skipped.length) msgText += '（' + skipped.map(groupMemberDispName).join('、') + ' 为群主，禁言未生效）';
+                await addGroupSystemMessage(g.id, msgText);
                 return true;
             }
             async function doGroupUnmute(g, memberIds, byId) {
                 if (!g || !memberIds || !memberIds.length) return;
                 var mutedList = g.muteMembers || {};
                 var unmuted = memberIds.filter(function(mid) { return mutedList[mid] !== undefined; });
-                if (!unmuted.length) return;
-                if (!g.muteMembers) g.muteMembers = {};
-                var byName = groupMemberDispName(byId);
-                unmuted.forEach(function(mid) { delete g.muteMembers[mid]; });
+                if (unmuted.length) {
+                    if (!g.muteMembers) g.muteMembers = {};
+                    unmuted.forEach(function(mid) { delete g.muteMembers[mid]; });
+                }
+                var exemptedNow = memberIds.filter(function(mid) {
+                    return mutedList[mid] === undefined && getGroupMuteUntil(g, mid) > 0 && !(g.muteExempt || []).some(function(e) { return String(e) === String(mid); });
+                });
+                if (exemptedNow.length) {
+                    if (!g.muteExempt) g.muteExempt = [];
+                    exemptedNow.forEach(function(mid) {
+                        if (g.muteExempt.indexOf(String(mid)) === -1) g.muteExempt.push(String(mid));
+                    });
+                }
+                if (!unmuted.length && !exemptedNow.length) return;
                 updateData('groups', g);
+                var byName = groupMemberDispName(byId);
                 var names = unmuted.map(groupMemberDispName);
-                await addGroupSystemMessage(g.id, names.join('、') + ' 被 ' + byName + ' 解除禁言');
+                if (names.length) await addGroupSystemMessage(g.id, names.join('、') + ' 被 ' + byName + ' 解除禁言');
+                var exemptNames = exemptedNow.map(groupMemberDispName);
+                if (exemptNames.length) await addGroupSystemMessage(g.id, exemptNames.join('、') + ' 被 ' + byName + ' 从全员禁言中解除，可正常发言');
                 return true;
             }
             function maybeAdminRandomMuteAction(grp) {
                 if (!grp || !grp.admins || !grp.admins.length) return;
                 var prob = (grp.muteAdminProb === undefined || grp.muteAdminProb === null) ? 1 : grp.muteAdminProb;
                 if (!(prob > 0) || Math.random() * 100 >= prob) return;
-                var admins = grp.admins.filter(function(a) { return a !== 'me'; });
+                var admins = grp.admins.filter(function(a) { return String(a) !== 'me' && String(a) !== String(grp.owner ? grp.owner : 'me'); });
                 if (!admins.length) return;
                 var admin = admins[Math.floor(Math.random() * admins.length)];
-                var members = (grp.members || []).filter(function(m) { return m !== 'me' && m !== admin && (grp.owner ? grp.owner : 'me') !== m; });
+                var members = (grp.members || []).filter(function(m) {
+                    if (String(m) === 'me') return false;
+                    if (String(m) === String(grp.owner ? grp.owner : 'me')) return false;
+                    if (isGroupAdmin(grp, m)) return false;
+                    return true;
+                });
                 if (!members.length) return;
                 var freeNow = members.filter(function(m) { return getGroupMuteUntil(grp, m) <= 0; });
                 var mutedNow = members.filter(function(m) { return getGroupMuteUntil(grp, m) > 0; });
@@ -6217,26 +6360,38 @@ async function createGroup(name, memberIds) {
                 if (!content) return;
                 var mgList = (g.members || []).slice();
                 if (mgList.indexOf('me') === -1) { if (isGroupOwner(g)) mgList.unshift('me'); else mgList.push('me'); }
+                mgList = sortGroupMembersByRole(mgList, g);
                 var rows = mgList.map(function(mid) {
                     var c = getGroupMemberById(mid);
-                    var name = mid === 'me' ? (settings.myName || '我') : (c ? (c.remark || c.name) : '未知成员');
-                    var isOwner = (g.owner ? g.owner : 'me') === mid;
+                    var name = String(mid) === 'me' ? (settings.myName || '我') : (c ? (c.remark || c.name) : '未知成员');
+                    var isOwner = String(g.owner ? g.owner : 'me') === String(mid);
                     var isAdmin = isGroupAdmin(g, mid);
                     var badge = isOwner ? '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:var(--theme-light);color:var(--theme)">群主</span>' : (isAdmin ? '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:var(--theme-light);color:var(--theme)">管理员</span>' : '');
                     var btnHtml = isOwner ? '<span class="text-xs text-[var(--text-secondary)]">群主</span>' : (isAdmin ? '<button class="gh-admin-toggle text-xs px-2.5 py-1 rounded-lg border border-[var(--border-color)]" data-mid="' + mid + '">取消管理员</button>' : '<button class="gh-admin-toggle text-xs px-2.5 py-1 rounded-lg border border-[var(--border-color)]" data-mid="' + mid + '">设为管理员</button>');
-                    var mgAvatar = mid === 'me' ? settings.myAvatar : (c ? c.avatar : '');
-                    return '<div class="flex items-center justify-between py-2.5 border-b border-[var(--border-color)]"><div class="flex items-center space-x-2.5 min-w-0"><img src="' + escapeHtml(mgAvatar || 'https://picsum.photos/200/200?random=' + mid) + '" class="w-9 h-9 rounded-lg object-cover" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><div class="min-w-0"><p class="text-sm text-[var(--text-primary)] truncate">' + escapeHtml(name) + '</p><div class="mt-0.5">' + badge + '</div></div></div>' + btnHtml + '</div>';
+                    var mgAvatar = String(mid) === 'me' ? settings.myAvatar : (c ? c.avatar : '');
+                    var rowClickable = isOwner ? '' : ' cursor-pointer hover:bg-[var(--theme-light)]';
+                    return '<div class="flex items-center justify-between py-2.5 border-b border-[var(--border-color)]' + rowClickable + '" data-row-mid="' + mid + '"><div class="flex items-center space-x-2.5 min-w-0"><img src="' + escapeHtml(mgAvatar || 'https://picsum.photos/200/200?random=' + mid) + '" class="w-9 h-9 rounded-lg object-cover" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><div class="min-w-0"><p class="text-sm text-[var(--text-primary)] truncate">' + escapeHtml(name) + '</p><div class="mt-0.5">' + badge + '</div></div></div>' + btnHtml + '</div>';
                 }).join('');
                 content.innerHTML = rows || '<div class="text-xs text-[var(--text-secondary)] text-center py-4">暂无成员</div>';
+                content.querySelectorAll('[data-row-mid]').forEach(function(row) {
+                    row.onclick = function() {
+                        var tgl = row.querySelector('.gh-admin-toggle');
+                        if (tgl) tgl.click();
+                    };
+                });
                 content.querySelectorAll('.gh-admin-toggle').forEach(function(btn) {
                     btn.onclick = function() {
+                        var gg = g;
+                        if (!gg) return;
                         var mid = btn.dataset.mid;
-                        var admins = g.admins || [];
-                        var idx = admins.indexOf(mid);
-                        if (idx !== -1) admins.splice(idx, 1); else admins.push(mid);
-                        g.admins = admins;
-                        updateData('groups', g);
-                        showToast(idx !== -1 ? '已取消管理员' : '已设为管理员 ');
+                        var admins = (gg.admins || []).slice();
+                        var wasAdm = admins.some(function(a) { return String(a) === String(mid); });
+                        if (wasAdm) { gg.admins = admins.filter(function(a) { return String(a) !== String(mid); }); }
+                        else { admins.push(mid); gg.admins = admins; }
+                        updateData('groups', gg);
+                        var who = String(mid) === 'me' ? (settings.myName || '我') : (function() { var cc = getGroupMemberById(mid); return cc ? (cc.remark || cc.name) : mid; })();
+                        showToast(wasAdm ? ('已取消管理员：' + who) : ('✅ 已设为管理员：' + who));
+                        try { if (document.getElementById('gh-owner-label')) renderGroupHome(); } catch (e) {}
                         openGroupManage();
                     };
                 });
@@ -6276,17 +6431,20 @@ async function createGroup(name, memberIds) {
                 if (!listEl) return;
                 var memberList = (g.members || []).slice();
                 if (memberList.indexOf('me') === -1) memberList.unshift('me');
+                memberList = sortGroupMembersByRole(memberList, g);
                 var rows = memberList.map(function(mid) {
                     var c = getGroupMemberById(mid);
                     var name = groupMemberDispName(mid);
                     var avatar = mid === 'me' ? settings.myAvatar : (c ? c.avatar : '');
-                    var isOwner = (g.owner ? g.owner : 'me') === mid;
+                    var isOwner = String(g.owner ? g.owner : 'me') === String(mid);
                     var isAdmin = isGroupAdmin(g, mid);
                     var until = getGroupMuteUntil(g, mid);
+                    var exemptNow = (g.muteExempt || []).some(function(e) { return String(e) === String(mid); });
                     var statusHtml = '';
                     if (isOwner) statusHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:var(--theme-light);color:var(--theme)">群主</span>';
+                    else if (until > 0) statusHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded inline-block mt-0.5" style="background:#fde8e8;color:#e04c4c">禁言中 · ' + groupMuteUntilText(until) + '解除</span>';
+                    else if (exemptNow) statusHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:#e8f7ee;color:#2e9e5b">已解除全员禁言</span>';
                     else if (isAdmin) statusHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:var(--theme-light);color:var(--theme)">管理员</span>';
-                    if (until > 0) statusHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded inline-block mt-0.5" style="background:#fde8e8;color:#e04c4c">禁言中 · ' + groupMuteUntilText(until) + '解除</span>';
                     var btnHtml = '';
                     if (isOwner) btnHtml = '<span class="text-xs" style="color:var(--text-secondary)">群主</span>';
                     else if (until > 0) btnHtml = '<button class="gm-unmute-btn text-xs px-2.5 py-1 rounded-lg border border-[var(--border-color)]" data-mid="' + mid + '">解除禁言</button>';
@@ -6318,7 +6476,7 @@ async function createGroup(name, memberIds) {
                                 var mids = [];
                                 membersEl.querySelectorAll('.gm-mute-cb:checked').forEach(function(cb) { mids.push(cb.dataset.mid); });
                                 if (!mids.length) mids.push(btn.dataset.mid);
-                                doGroupMute(g, mids, minutes, 'me');
+                                doGroupMute(g, mids, minutes, 'me', true);
                                 renderGroupManageMute(g, container);
                             };
                         });
@@ -6361,6 +6519,7 @@ async function createGroup(name, memberIds) {
                 var modeBtns = container.querySelectorAll('.gm-mode-btn');
                 modeBtns.forEach(function(btn) {
                     btn.onclick = function() {
+                        var prevMode = g.muteMode;
                         g.muteMode = btn.dataset.mode;
                         if (g.muteMode === 'timed' && (!g.muteStart || !g.muteEnd)) {
                             var now2 = Date.now();
@@ -6368,6 +6527,14 @@ async function createGroup(name, memberIds) {
                             g.muteEnd = now2 + 3600000;
                         }
                         updateData('groups', g);
+                        if (g.muteMode !== prevMode) {
+                            var muteMsgTxt = '我 ' + (g.muteMode === 'off' ? '关闭了全员禁言' : g.muteMode === 'always' ? '开启了始终禁言' : '开启了定时禁言');
+                            if (g.muteMode === 'timed' && g.muteStart && g.muteEnd) {
+                                var fmtD = function(ts) { var d = new Date(ts); return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); };
+                                muteMsgTxt += '（' + fmtD(g.muteStart) + ' 至 ' + fmtD(g.muteEnd) + '）';
+                            }
+                            addGroupSystemMessage(g.id, muteMsgTxt);
+                        }
                         showToast(g.muteMode === 'off' ? '已关闭全员禁言' : g.muteMode === 'always' ? '已开启始终禁言' : '已开启定时禁言');
                         renderGroupManageMute(g, container);
                     };
@@ -6397,6 +6564,395 @@ async function createGroup(name, memberIds) {
                 };
             }
             // ---- 查找聊天记录 ----
+            function _stPad(n) { return (n < 10 ? '0' : '') + n; }
+            function _stIsChatMsg(m) { return !!(m && m.type !== 'system' && m.type !== 'date-separator'); }
+            function _stTime(m) {
+                var t = m.timestamp || m.createdAt;
+                if (!t) return null;
+                var d = new Date(t);
+                return isNaN(d.getTime()) ? null : d;
+            }
+            function _stIsMe(m, isGroup) {
+                if (isGroup) return String(m.senderId) === 'me';
+                if (m.isMe !== undefined) return !!m.isMe;
+                return String(m.senderId) === 'me';
+            }
+            function computeChatStats(msgs, isGroup) {
+                var st = { total: 0, me: 0, other: 0, members: {}, membersPhrases: {}, byDay: {}, byHour: {}, weekHour: {}, phrasesAll: {}, phrasesMe: {}, phrasesOther: {}, types: {}, sticker: 0, firstTs: 0, lastTs: 0, maxDayKey: '', maxDayCount: 0 };
+                msgs.forEach(function(m) {
+                    if (!_stIsChatMsg(m)) return;
+                    var d = _stTime(m);
+                    if (!d) return;
+                    var ts = d.getTime();
+                    if (!st.firstTs || ts < st.firstTs) st.firstTs = ts;
+                    if (!st.lastTs || ts > st.lastTs) st.lastTs = ts;
+                    st.total++;
+                    var isMe = _stIsMe(m, isGroup);
+                    if (isMe) st.me++; else st.other++;
+                    if (isGroup) {
+                        var sid = String(m.senderId);
+                        if (!st.members[sid]) st.members[sid] = 0;
+                        st.members[sid]++;
+                    }                    var dayKey = d.getFullYear() + '-' + _stPad(d.getMonth() + 1) + '-' + _stPad(d.getDate());
+                    if (!st.byDay[dayKey]) st.byDay[dayKey] = { me: 0, other: 0 };
+                    st.byDay[dayKey].me += isMe ? 1 : 0;
+                    st.byDay[dayKey].other += isMe ? 0 : 1;
+                    var dayCount = st.byDay[dayKey].me + st.byDay[dayKey].other;
+                    if (dayCount > st.maxDayCount) { st.maxDayCount = dayCount; st.maxDayKey = dayKey; }
+                    var h = d.getHours();
+                    if (!st.byHour[h]) st.byHour[h] = 0;
+                    st.byHour[h]++;
+                    var wh = d.getDay() + '-' + h;
+                    if (!st.weekHour[wh]) st.weekHour[wh] = 0;
+                    st.weekHour[wh]++;
+                    var t = m.type || 'text';
+                    if (!st.types[t]) st.types[t] = 0;
+                    st.types[t]++;
+                    if (t === 'image' && m.sticker) st.sticker++;
+                    if (t === 'text' && m.text) {
+                        var txt = String(m.text).replace(/^\s+|\s+$/g, '');
+                        if (txt.length >= 2) {
+                            if (!st.phrasesAll[txt]) st.phrasesAll[txt] = 0;
+                            st.phrasesAll[txt]++;
+                            var pk = isMe ? st.phrasesMe : st.phrasesOther;
+                            if (!pk[txt]) pk[txt] = 0;
+                            pk[txt]++;
+                            if (isGroup) {
+                                if (!st.membersPhrases[sid]) st.membersPhrases[sid] = {};
+                                if (!st.membersPhrases[sid][txt]) st.membersPhrases[sid][txt] = 0;
+                                st.membersPhrases[sid][txt]++;
+                            }
+                        }
+                    }
+                });
+                return st;
+            }
+            function bucketChatSeries(st, mode) {
+                var days = Object.keys(st.byDay).sort();
+                if (mode === 'day') {
+                    return days.map(function(k) {
+                        return { key: k, label: k.slice(5), me: st.byDay[k].me, other: st.byDay[k].other };
+                    });
+                }
+                var buckets = {};
+                days.forEach(function(k) {
+                    var bk;
+                    if (mode === 'week') {
+                        var dt = new Date(k + 'T00:00:00');
+                        var tmp = new Date(dt.getTime());
+                        tmp.setHours(0, 0, 0, 0);
+                        tmp.setDate(tmp.getDate() + 3 - ((tmp.getDay() + 6) % 7));
+                        var w1 = new Date(tmp.getFullYear(), 0, 4);
+                        var wn = 1 + Math.round(((tmp - w1) / 86400000 - 3 + ((w1.getDay() + 6) % 7)) / 7);
+                        bk = tmp.getFullYear() + '-W' + _stPad(wn);
+                    } else if (mode === 'month') bk = k.slice(0, 7);
+                    else bk = k.slice(0, 4);
+                    if (!buckets[bk]) buckets[bk] = { me: 0, other: 0 };
+                    buckets[bk].me += st.byDay[k].me;
+                    buckets[bk].other += st.byDay[k].other;
+                });
+                return Object.keys(buckets).sort().map(function(bk) {
+                    var label = bk;
+                    if (mode === 'month') label = parseInt(bk.slice(5), 10) + '月';
+                    if (mode === 'week') label = bk.slice(5);
+                    return { key: bk, label: label, me: buckets[bk].me, other: buckets[bk].other };
+                });
+            }
+            function _stMax(arr) { var m = 0; arr.forEach(function(v) { if (v > m) m = v; }); return m; }
+            function _stBarChartHTML(st, mode) {
+                var series = bucketChatSeries(st, mode);
+                if (!series.length) return '<div class="text-xs text-center py-6" style="color:var(--text-secondary)">暂无数据</div>';
+                var max = _stMax(series.map(function(s) { return s.me + s.other; })) || 1;
+                var labelEvery = Math.max(1, Math.ceil(series.length / 12));
+                var bars = series.map(function(s, i) {
+                    var hm = Math.round(s.me / max * 100);
+                    var ho = Math.round(s.other / max * 100);
+                    var label = (i % labelEvery === 0 || i === series.length - 1) ? '<div class="text-center text-[8px] truncate" style="width:26px;color:var(--text-secondary)">' + escapeHtml(s.label) + '</div>' : '<div style="width:26px;height:14px"></div>';
+                    return '<div class="cs-bar flex flex-col items-center flex-shrink-0 cursor-pointer" data-label="' + escapeHtml(s.label) + '" data-me="' + s.me + '" data-other="' + s.other + '" title="' + escapeHtml(s.label) + '：我 ' + s.me + ' 条 · 对方 ' + s.other + ' 条">' +
+                        '<div class="flex items-end" style="height:96px">' +
+                        (ho > 0 ? '<div style="height:' + ho + '%;width:9px;background:#f87171;border-radius:2px 2px 0 0;margin-right:1px"></div>' : '') +
+                        (hm > 0 ? '<div style="height:' + hm + '%;width:9px;background:#60a5fa;border-radius:2px 2px 0 0"></div>' : '') +
+                        '</div>' + label + '</div>';
+                }).join('');
+                return '<div class="overflow-x-auto" style="padding-bottom:4px"><div class="flex items-end" style="min-width:' + Math.max(series.length * 28, 100) + 'px">' + bars + '</div></div>' +
+                    '<div id="cs-chart-detail" class="text-xs rounded-lg px-3 py-2 mt-1.5" style="background:var(--theme-light);color:var(--text-secondary);display:none"></div>';
+            }
+            function _stHeatmapHTML(st) {
+                var max = _stMax(Object.keys(st.weekHour).map(function(k) { return st.weekHour[k]; }));
+                if (!max) return '<div class="text-xs text-center py-6" style="color:var(--text-secondary)">暂无数据</div>';
+                var dow = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                var cells = '';
+                for (var d = 0; d < 7; d++) {
+                    cells += '<div class="flex items-center text-[8px]" style="color:var(--text-secondary);height:15px">' + dow[d] + '</div>';
+                    for (var h = 0; h < 24; h++) {
+                        var v = st.weekHour[d + '-' + h] || 0;
+                        var op = v ? Math.max(0.15, Math.min(1, 0.15 + 0.85 * (v / max))) : 0.05;
+                        cells += '<div title="' + dow[d] + ' ' + h + '点：' + v + ' 条" style="background:var(--theme);opacity:' + op + ';border-radius:3px;height:15px"></div>';
+                    }
+                }
+                var hours = '';
+                for (var h2 = 0; h2 < 24; h2++) {
+                    hours += '<div class="text-center text-[8px]" style="color:var(--text-secondary);height:12px">' + (h2 % 6 === 0 ? h2 : '') + '</div>';
+                }
+                return '<div class="grid" style="grid-template-columns:30px repeat(24,1fr);gap:2px">' + cells + '</div>' +
+                    '<div class="grid" style="grid-template-columns:30px repeat(24,1fr);gap:2px"><div></div>' + hours + '</div>' +
+                    '<div class="flex items-center mt-1.5 text-[9px]" style="color:var(--text-secondary)"><span class="mr-1">少</span>' +
+                    '<span style="display:inline-block;width:44px;height:8px;border-radius:4px;background:var(--theme);opacity:0.05;margin-right:1px"></span>' +
+                    '<span style="display:inline-block;width:44px;height:8px;border-radius:4px;background:var(--theme);opacity:0.3;margin-right:1px"></span>' +
+                    '<span style="display:inline-block;width:44px;height:8px;border-radius:4px;background:var(--theme);opacity:0.6;margin-right:1px"></span>' +
+                    '<span style="display:inline-block;width:44px;height:8px;border-radius:4px;background:var(--theme);opacity:1;margin-right:1px"></span>' +
+                    '<span class="ml-1">多</span></div>';
+            }
+            function _stTopPhrase(map, n) {
+                var arr = [];
+                Object.keys(map).forEach(function(k) { arr.push({ t: k, n: map[k] }); });
+                arr.sort(function(a, b) { return b.n - a.n; });
+                return arr.slice(0, n);
+            }
+            function _stPhraseRowHTML(p, i) {
+                var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+                return '<div class="flex items-start px-2.5 py-2 rounded-lg" style="background:var(--theme-light)"><span class="text-xs flex-shrink-0 mr-2" style="color:var(--theme);font-weight:600;min-width:20px;text-align:center">' + medal + '</span><div class="flex-1 min-w-0"><p class="text-xs break-all" style="color:var(--text-primary);line-height:1.4">' + escapeHtml(p.t) + '</p></div><span class="text-[10px] flex-shrink-0 ml-2" style="color:var(--text-secondary)">×' + p.n + '</span></div>';
+            }
+            function _stPhrasesHTML(st, opts) {
+                if (opts && opts.isGroup) {
+                    var members = [];
+                    Object.keys(st.membersPhrases).forEach(function(sid) {
+                        var ph = _stTopPhrase(st.membersPhrases[sid], 5);
+                        if (ph.length) members.push({ sid: sid, name: opts.memberName(sid), count: st.members[sid] || 0, ph: ph });
+                    });
+                    members.sort(function(a, b) { return b.count - a.count; });
+                    var allTop = _stTopPhrase(st.phrasesAll, 10);
+                    if (!members.length && !allTop.length) return '<div class="text-xs text-center py-4" style="color:var(--text-secondary)">还没有人说过话</div>';
+                    var tabs = [{ id: '__all__', name: '全部' }].concat(members.map(function(m) { return { id: m.sid, name: m.name }; }));
+                    var tabHtml = '<div class="flex overflow-x-auto pb-1.5 mb-1.5" style="scrollbar-width:none">' + tabs.map(function(t, ti) {
+                        return '<button data-csp-tab="' + t.id + '" class="cs-p-tab flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] border mr-1.5" style="' + (ti === 0 ? 'background:var(--theme);color:#fff;border-color:var(--theme);font-weight:600' : 'border-color:var(--border-color);color:var(--text-primary)') + '">' + escapeHtml(t.name) + '</button>';
+                    }).join('') + '</div>';
+                    var panels = '<div class="cs-p-panel" data-csp-panel="__all__">' + (allTop.length ? allTop.map(function(p, i) { return _stPhraseRowHTML(p, i); }).join('') : '<div class="text-xs text-center py-3" style="color:var(--text-secondary)">暂无</div>') + '</div>' +
+                        members.map(function(mem) {
+                            return '<div class="cs-p-panel" data-csp-panel="' + mem.sid + '" style="display:none"><div class="text-[10px] mb-1" style="color:var(--text-secondary)">' + escapeHtml(mem.name) + ' 共 ' + mem.count + ' 条</div>' + (mem.ph.length ? mem.ph.map(function(p, i) { return _stPhraseRowHTML(p, i); }).join('') : '<div class="text-xs text-center py-3" style="color:var(--text-secondary)">暂无</div>') + '</div>';
+                        }).join('');
+                    return '<div class="mb-1"><span class="text-[10px]" style="color:var(--text-secondary)">点击成员查看 TA 常说的话</span></div>' + tabHtml + '<div class="space-y-1">' + panels + '</div>';
+                }
+                var allTop = _stTopPhrase(st.phrasesAll, 10);
+                var meTop = _stTopPhrase(st.phrasesMe, 5);
+                var taTop = _stTopPhrase(st.phrasesOther, 5);
+                if (!allTop.length && !meTop.length && !taTop.length) return '<div class="text-xs text-center py-4" style="color:var(--text-secondary)">还没有说过什么话</div>';
+                var tabs = [{ id: '__all__', name: '全部' }, { id: '__me__', name: '我' }, { id: '__ta__', name: 'TA' }];
+                var tabHtml = '<div class="flex overflow-x-auto pb-1.5 mb-1.5" style="scrollbar-width:none">' + tabs.map(function(t, ti) {
+                    return '<button data-csp-tab="' + t.id + '" class="cs-p-tab flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] border mr-1.5" style="' + (ti === 0 ? 'background:var(--theme);color:#fff;border-color:var(--theme);font-weight:600' : 'border-color:var(--border-color);color:var(--text-primary)') + '">' + escapeHtml(t.name) + '</button>';
+                }).join('') + '</div>';
+                var panels = '<div class="cs-p-panel" data-csp-panel="__all__">' + (allTop.length ? allTop.map(function(p, i) { return _stPhraseRowHTML(p, i); }).join('') : '<div class="text-xs text-center py-3" style="color:var(--text-secondary)">暂无</div>') + '</div>' +
+                    '<div class="cs-p-panel" data-csp-panel="__me__" style="display:none">' + (meTop.length ? meTop.map(function(p, i) { return _stPhraseRowHTML(p, i); }).join('') : '<div class="text-xs text-center py-3" style="color:var(--text-secondary)">暂无</div>') + '</div>' +
+                    '<div class="cs-p-panel" data-csp-panel="__ta__" style="display:none">' + (taTop.length ? taTop.map(function(p, i) { return _stPhraseRowHTML(p, i); }).join('') : '<div class="text-xs text-center py-3" style="color:var(--text-secondary)">暂无</div>') + '</div>';
+                return '<div class="mb-1"><span class="text-[10px]" style="color:var(--text-secondary)">点击「我 / TA」查看各自常说的话</span></div>' + tabHtml + '<div class="space-y-1">' + panels + '</div>';
+            }
+            function _stTypesHTML(st, opts) {
+                var defs = [['text', '💬', '文本'], ['image', '🖼️', '图片'], ['sticker', '😊', '表情包'], ['voice', '🎙️', '语音'], ['video', '📹', '视频'], ['file', '📎', '文件'], ['link', '🔗', '链接'], ['redpacket', '🧧', '红包'], ['call', '📞', '通话'], ['pat', '👋', '拍一拍'], ['gift', '🎁', '礼物']];
+                var rows = [];
+                var totalTyped = 0;
+                defs.forEach(function(d) {
+                    var n = d[0] === 'image' ? (st.types.image || 0) - st.sticker : (st.types[d[0]] || 0);
+                    if (d[0] === 'sticker') n = st.sticker;
+                    if (d[0] === 'redpacket') n = (st.types.redpacket || 0) + (st.types['rp-claim'] || 0);
+                    if (n > 0) { rows.push({ icon: d[1], label: d[2], n: n }); totalTyped += n; }
+                });
+                if (!rows.length) return '<div class="text-xs text-center py-4" style="color:var(--text-secondary)">暂无记录</div>';
+                var colors = ['#60a5fa', '#f87171', '#34d399', '#fbbf24', '#a78bfa', '#f472b6', '#38bdf8', '#fb923c', '#4ade80', '#e879f9', '#2dd4bf', '#facc15'];
+                var bar = '';
+                rows.forEach(function(r, i) {
+                    var w = Math.round(r.n / totalTyped * 100);
+                    bar += '<span title="' + escapeHtml(r.label) + ' ' + r.n + ' 条" style="display:inline-block;width:' + w + '%;height:8px;background:' + colors[i % colors.length] + '"></span>';
+                });
+                var callTypes = null;
+                if (st.types.call) {
+                    var calls = (opts && opts.msgs ? opts.msgs() : []).filter(function(m) { return m.type === 'call' && _stIsChatMsg(m); });
+                    var cAns = 0, cRej = 0, cMiss = 0;
+                    calls.forEach(function(m) {
+                        var t = String(m.text || '');
+                        if (t.indexOf('拒绝') !== -1) cRej++;
+                        else if (t.indexOf('未接听') !== -1) cMiss++;
+                        else cAns++;
+                    });
+                    callTypes = { ans: cAns, rej: cRej, miss: cMiss, total: calls.length };
+                }
+                var typeItems = rows.map(function(r, i) {
+                    return '<div class="cs-type-item flex items-center px-2.5 py-2 rounded-lg cursor-pointer hover:opacity-80 transition-opacity" style="background:var(--theme-light)" data-type="' + r.label + '"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + colors[i % colors.length] + ';margin-right:6px"></span><span class="text-xs flex-1" style="color:var(--text-primary)">' + r.icon + ' ' + escapeHtml(r.label) + '</span>' + (r.label === '通话' && callTypes ? '<span class="text-[9px] mr-2" style="color:var(--text-secondary)">接' + callTypes.ans + ' 拒' + callTypes.rej + ' 未' + callTypes.miss + '</span>' : '') + '<span class="text-xs font-semibold" style="color:var(--text-primary)">' + r.n + '</span></div>';
+                }).join('');
+                return '<div class="flex rounded-full overflow-hidden mb-2" style="background:var(--border-color)">' + bar + '</div>' +
+                    '<div class="grid grid-cols-2 gap-1.5">' + typeItems + '</div>' +
+                    '<div id="cs-type-detail" class="mt-2" style="display:none"></div>';
+            }
+            function _stMembersHTML(st, memberName) {
+                var arr = [];
+                Object.keys(st.members).forEach(function(sid) { arr.push({ sid: sid, n: st.members[sid], name: memberName(sid) }); });
+                arr.sort(function(a, b) { return b.n - a.n; });
+                var max = _stMax(arr.map(function(a) { return a.n; })) || 1;
+                return arr.map(function(a) {
+                    var w = Math.round(a.n / max * 100);
+                    return '<div class="flex items-center justify-between py-1.5"><span class="text-xs truncate flex-1 mr-2" style="color:var(--text-primary)">' + escapeHtml(a.name) + (a.sid === 'me' ? '（我）' : '') + '</span><span class="text-[10px] mr-2" style="color:var(--text-secondary)">' + a.n + ' 条</span><span style="display:inline-block;width:70px;height:6px;border-radius:3px;background:var(--border-color);overflow:hidden"><span style="display:inline-block;width:' + w + '%;height:100%;background:var(--theme);border-radius:3px"></span></span></div>';
+                }).join('');
+            }
+            function _stSummaryHTML(st, isGroup, spanDays, memberName) {
+                if (!st.total) return '';
+                function fmtDay(k) {
+                    var p = k.split('-');
+                    return parseInt(p[1], 10) + '月' + parseInt(p[2], 10) + '日';
+                }
+                var lines = [];
+                var avg = Math.round(st.total / spanDays * 10) / 10;
+                var firstK = st.firstTs ? (function() { var d = new Date(st.firstTs); return d.getFullYear() + '-' + _stPad(d.getMonth() + 1) + '-' + _stPad(d.getDate()); })() : '';
+                var lastK = st.lastTs ? (function() { var d = new Date(st.lastTs); return d.getFullYear() + '-' + _stPad(d.getMonth() + 1) + '-' + _stPad(d.getDate()); })() : '';
+                var yearSame = firstK.slice(0, 4) === lastK.slice(0, 4);
+                lines.push('从 ' + (yearSame ? firstK.slice(5) : firstK) + ' 到 ' + (yearSame ? lastK.slice(5) : lastK) + '，一共聊了 <b>' + st.total + '</b> 条消息，平均每天 <b>' + avg + '</b> 条。');
+                if (isGroup) lines.push('你发了 <b>' + st.me + '</b> 条，其他人一共 <b>' + st.other + '</b> 条。');
+                else lines.push('你发了 <b>' + st.me + '</b> 条，TA 发了 <b>' + st.other + '</b> 条。');
+                if (st.maxDayKey) lines.push('聊得最多的一天是 ' + fmtDay(st.maxDayKey) + '，有 <b>' + st.maxDayCount + '</b> 条。');
+                var topHour = 0, topHourN = 0;
+                for (var h = 0; h < 24; h++) { if ((st.byHour[h] || 0) > topHourN) { topHourN = st.byHour[h]; topHour = h; } }
+                if (topHourN > 0) lines.push('你们最常在 <b>' + topHour + ' 点</b>聊天（共 ' + topHourN + ' 条）。');
+                var myTop = _stTopPhrase(st.phrasesMe, 1)[0];
+                var taTop = _stTopPhrase(st.phrasesOther, 1)[0];
+                var allTop = _stTopPhrase(st.phrasesAll, 1)[0];
+                if (isGroup) {
+                    if (allTop) lines.push('群里说得最多的是「' + allTop.t + '」（' + allTop.n + ' 次）。');
+                } else {
+                    if (taTop) lines.push('TA 说得最多的是「' + taTop.t + '」（' + taTop.n + ' 次）。');
+                    if (myTop) lines.push('你说得最多的是「' + myTop.t + '」（' + myTop.n + ' 次）。');
+                }
+                return lines.map(function(l) { return '<p class="text-xs leading-relaxed mb-1" style="color:var(--text-primary)">' + l + '</p>'; }).join('');
+            }
+            function renderChatStatsView(content, opts) {
+                if (!content) return;
+                var msgs = opts.msgs() || [];
+                var valid = msgs.filter(_stIsChatMsg);
+                var st = computeChatStats(valid, opts.isGroup);
+                var spanDays = 1;
+                if (st.lastTs && st.firstTs) {
+                    spanDays = Math.max(1, Math.round((st.lastTs - st.firstTs) / 86400000) + 1);
+                }
+                var modes = [['day', '按天'], ['week', '按周'], ['month', '按月'], ['year', '按年']];
+                var defMode = spanDays < 31 ? 'day' : spanDays < 181 ? 'week' : spanDays < 400 ? 'month' : 'year';
+                var otherLabel = opts.isGroup ? '成员' : 'TA';
+                var card = function(label, val, color) {
+                    return '<div class="flex-1 rounded-xl px-3 py-2.5" style="background:var(--theme-light)"><p class="text-[10px]" style="color:var(--text-secondary)">' + label + '</p><p class="text-xl font-bold mt-0.5" style="color:' + (color || 'var(--text-primary)') + '">' + val + '</p></div>';
+                };
+                var html =
+                    '<div class="grid grid-cols-2 gap-2 mb-2.5">' +
+                    card('总计', st.total) +
+                    card('我发的', st.me, '#60a5fa') +
+                    card(otherLabel + '发的', st.other, '#f87171') +
+                    card('平均每天', (st.total ? (Math.round(st.total / spanDays * 10) / 10) : 0)) +
+                    '</div>' +
+                    '<div class="rounded-xl px-3 py-2.5 mb-3" style="background:var(--theme-light)">' + _stSummaryHTML(st, opts.isGroup, spanDays) + '</div>' +
+                    '<div class="flex space-x-2 mb-2" id="cs-mode-bar">' + modes.map(function(m) {
+                        return '<button data-cs-mode="' + m[0] + '" class="cs-mode-btn flex-1 py-1.5 rounded-lg text-xs border' + (m[0] === defMode ? '' : '') + '" style="' + (m[0] === defMode ? 'background:var(--theme);color:#fff;font-weight:600;border-color:var(--theme)' : 'border-color:var(--border-color);color:var(--text-primary)') + '">' + m[1] + '</button>';
+                    }).join('') + '</div>' +
+                    '<div class="mb-2"><div class="flex items-center justify-between mb-1"><span class="text-xs font-medium" style="color:var(--text-secondary)">消息量趋势</span><span class="flex items-center text-[9px]" style="color:var(--text-secondary)"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#60a5fa;margin-right:3px"></span>我<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#f87171;margin-left:8px;margin-right:3px"></span>对方</span></div><div id="cs-chart"></div></div>' +
+                    '<div class="mb-3"><div class="text-xs font-medium mb-1.5" style="color:var(--text-secondary)">活跃时段热力图（行=星期，列=小时）</div><div id="cs-heatmap"></div></div>' +
+                    '<div class="mb-3"><div class="text-xs font-medium mb-1.5" style="color:var(--text-secondary)">😴 说得最多的句子 ' + (opts.isGroup ? '（按成员）' : 'TOP10') + '</div>' + _stPhrasesHTML(st, opts) + '</div>' +
+                    '<div class="mb-3"><div class="text-xs font-medium mb-1.5" style="color:var(--text-secondary)">📦 消息类型 <span class="text-[9px] font-normal">（点击查看明细）</span></div>' + _stTypesHTML(st, opts) + '</div>';
+                if (opts.isGroup) {
+                    html += '<div class="mb-2"><div class="text-xs font-medium mb-1.5" style="color:var(--text-secondary)">👥 成员发言排行</div>' + _stMembersHTML(st, opts.memberName) + '</div>';
+                }
+                content.innerHTML = html;
+                var chartEl = document.getElementById('cs-chart');
+                if (chartEl) chartEl.innerHTML = _stBarChartHTML(st, defMode);
+                var heatEl = document.getElementById('cs-heatmap');
+                if (heatEl) heatEl.innerHTML = _stHeatmapHTML(st);
+                content.querySelectorAll('.cs-mode-btn').forEach(function(btn) {
+                    btn.onclick = function() {
+                        var mode = btn.dataset.csMode;
+                        content.querySelectorAll('.cs-mode-btn').forEach(function(b) {
+                            if (b === btn) { b.style.background = 'var(--theme)'; b.style.color = '#fff'; b.style.fontWeight = '600'; b.style.borderColor = 'var(--theme)'; }
+                            else { b.style.background = ''; b.style.color = ''; b.style.fontWeight = ''; b.style.borderColor = ''; }
+                        });
+                        var c2 = document.getElementById('cs-chart');
+                        if (c2) c2.innerHTML = _stBarChartHTML(st, mode);
+                        bindCsBars();
+                    };
+                });
+                function bindCsBars() {
+                    content.querySelectorAll('.cs-bar').forEach(function(bar) {
+                        bar.onclick = function() {
+                            var d = document.getElementById('cs-chart-detail');
+                            if (!d) return;
+                            var label = this.dataset.label;
+                            var me = parseInt(this.dataset.me, 10) || 0;
+                            var other = parseInt(this.dataset.other, 10) || 0;
+                            d.innerHTML = '<span style="font-weight:600;color:var(--text-primary)">' + escapeHtml(label) + '</span>：共 <b>' + (me + other) + '</b> 条（我 <b style="color:#60a5fa">' + me + '</b> · 对方 <b style="color:#f87171">' + other + '</b>）';
+                            d.style.display = 'block';
+                        };
+                    });
+                }
+                bindCsBars();
+                content.querySelectorAll('.cs-p-tab').forEach(function(tab) {
+                    tab.onclick = function() {
+                        var id = this.dataset.cspTab;
+                        content.querySelectorAll('.cs-p-tab').forEach(function(b) {
+                            if (b === tab) { b.style.background = 'var(--theme)'; b.style.color = '#fff'; b.style.borderColor = 'var(--theme)'; b.style.fontWeight = '600'; }
+                            else { b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; b.style.fontWeight = ''; }
+                        });
+                        content.querySelectorAll('.cs-p-panel').forEach(function(p) {
+                            p.style.display = p.dataset.cspPanel === id ? '' : 'none';
+                        });
+                    };
+                });
+                function _stTypeMsgHTML(m, opts2) {
+                    var sender = opts2.isGroup ? (m.senderId === 'me' ? (settings.myName || '我') : (function() { var cc = getGroupMemberById(m.senderId); return cc ? (cc.remark || cc.name) : '成员'; })()) : (m.isMe ? (settings.myName || '我') : (opts2.otherName ? opts2.otherName() : 'TA'));
+                    var time = m.timestamp ? formatDateTime(m.timestamp) : '';
+                    var body = m.text || '';
+                    if (m.type === 'image') body = m.sticker ? '[表情包]' : '[图片]';
+                    else if (m.type === 'voice') body = '[语音]';
+                    else if (m.type === 'redpacket' || m.type === 'rp-claim') body = '[红包] ' + (m.note || m.text || '');
+                    else if (m.type === 'video') body = '[视频]';
+                    else if (m.type === 'file') body = '[文件] ' + (m.fileName || '');
+                    else if (m.type === 'link') body = '[链接] ' + (m.link || '');
+                    else if (m.type === 'gift') body = '[礼物]';
+                    else if (m.type === 'call') body = m.text || '[通话]';
+                    else if (m.type === 'pat') body = m.text || '[拍一拍]';
+                    return '<div class="cs-type-msg px-3 py-2 rounded-xl bg-[var(--theme-light)] text-xs cursor-pointer hover:opacity-80 transition-opacity" data-mid="' + (m.id !== undefined ? m.id : '') + '"><div class="text-[var(--text-primary)] font-medium">' + escapeHtml(sender) + ' · ' + time + '</div><div class="text-[var(--text-primary)] mt-0.5 break-all">' + escapeHtml(body) + '</div></div>';
+                }
+                content.querySelectorAll('.cs-type-item').forEach(function(item) {
+                    item.onclick = function() {
+                        var label = this.dataset.type;
+                        var detail = document.getElementById('cs-type-detail');
+                        if (!detail) return;
+                        var msgs = (opts.msgs ? opts.msgs() : []).filter(_stIsChatMsg);
+                        var filtered = [];
+                        if (label === '文本') filtered = msgs.filter(function(m) { return m.type === 'text'; });
+                        else if (label === '图片') filtered = msgs.filter(function(m) { return m.type === 'image' && !m.sticker; });
+                        else if (label === '表情包') filtered = msgs.filter(function(m) { return m.type === 'image' && m.sticker; });
+                        else if (label === '语音') filtered = msgs.filter(function(m) { return m.type === 'voice'; });
+                        else if (label === '视频') filtered = msgs.filter(function(m) { return m.type === 'video'; });
+                        else if (label === '文件') filtered = msgs.filter(function(m) { return m.type === 'file'; });
+                        else if (label === '链接') filtered = msgs.filter(function(m) { return m.type === 'link'; });
+                        else if (label === '红包') filtered = msgs.filter(function(m) { return m.type === 'redpacket' || m.type === 'rp-claim'; });
+                        else if (label === '通话') filtered = msgs.filter(function(m) { return m.type === 'call'; });
+                        else if (label === '拍一拍') filtered = msgs.filter(function(m) { return m.type === 'pat'; });
+                        else if (label === '礼物') filtered = msgs.filter(function(m) { return m.type === 'gift'; });
+                        if (detail.style.display === 'block' && detail.dataset.label === label) {
+                            detail.style.display = 'none';
+                            return;
+                        }
+                        detail.dataset.label = label;
+                        if (!filtered.length) {
+                            detail.innerHTML = '<div class="text-xs text-center py-3" style="color:var(--text-secondary)">该类型暂无消息</div>';
+                        } else {
+                            detail.innerHTML = '<div class="text-[10px] mb-1" style="color:var(--text-secondary)">' + label + ' · 共 ' + filtered.length + ' 条（最多显示 50 条，点击可跳转）</div><div class="space-y-1 max-h-52 overflow-y-auto">' + filtered.slice(0, 50).map(function(m) { return _stTypeMsgHTML(m, opts); }).join('') + '</div>';
+                            detail.querySelectorAll('.cs-type-msg').forEach(function(row) {
+                                row.onclick = function() {
+                                    var mid = this.dataset.mid;
+                                    if (!mid) { showToast('该消息无法定位'); return; }
+                                    document.getElementById('ch-sub-modal').classList.add('hidden');
+                                    if (opts.isGroup) jumpToGroupMessage(mid);
+                                    else jumpToPrivateMessage(mid);
+                                };
+                            });
+                        }
+                        detail.style.display = 'block';
+                    };
+                });
+            }
             function getGroupMessagesAll() {
                 var g = getCurrentGroup(); if (!g) return [];
                 return cachedGroupMessages[g.id] || groupMessages || [];
@@ -6414,13 +6970,127 @@ async function createGroup(name, memberIds) {
                 if (m.type === 'gift') return '礼物';
                 return '文本';
             }
-            function openGroupSearch() {
-                var g = getCurrentGroup(); if (!g) return;
+            function openChatSubWithTabs(opts) {
                 var modal = document.getElementById('ch-sub-modal');
                 var title = document.getElementById('ch-sub-title');
                 var content = document.getElementById('ch-sub-content');
                 if (!modal || !title || !content) return;
-                title.textContent = ' 查找聊天记录';
+                modal.classList.remove('hidden');
+                title.textContent = opts.title;
+                var tabBar = '<div class="flex border-b border-[var(--border-color)] mb-2.5">' + opts.tabs.map(function(t) {
+                    return '<button data-cstab="' + t.id + '" class="cs-tab flex-1 py-2 text-sm font-medium text-center" style="color:var(--text-secondary);border-bottom:2px solid transparent">' + t.label + '</button>';
+                }).join('') + '</div>';
+                function showTab(id) {
+                    content.innerHTML = tabBar + '<div id="cs-tab-body"></div>';
+                    var body = content.querySelector('#cs-tab-body');
+                    content.querySelectorAll('.cs-tab').forEach(function(b) {
+                        if (b.dataset.cstab === id) { b.style.color = 'var(--theme)'; b.style.borderBottomColor = 'var(--theme)'; b.style.fontWeight = '600'; }
+                        else { b.style.color = 'var(--text-secondary)'; b.style.borderBottomColor = 'transparent'; b.style.fontWeight = ''; }
+                    });
+                    opts.tabs.forEach(function(t) { if (t.id === id && t.render) t.render(body); });
+                    content.querySelectorAll('.cs-tab').forEach(function(b) {
+                        b.onclick = function() { showTab(b.dataset.cstab); };
+                    });
+                }
+                showTab(opts.active || opts.tabs[0].id);
+            }
+            function renderPrivateSearchView(content) {
+                var c = getCurrentContact(); if (!c) return;
+                content.innerHTML =
+                    '<div class="space-y-2.5">' +
+                    '<input id="ph-search-input" type="text" placeholder="搜索关键词…" class="w-full px-3 py-2 border border-[var(--border-color)] rounded-xl text-sm text-[var(--text-primary)] outline-none">' +
+                    '<input id="ph-search-date" type="date" class="w-full px-3 py-2 border border-[var(--border-color)] rounded-xl text-sm text-[var(--text-primary)] outline-none" title="按日期筛选">' +
+                    '<div class="flex flex-wrap gap-1.5" id="ph-search-types">' +
+                    ['all:全部', 'text:文本', 'image:图片', 'sticker:表情包', 'voice:语音', 'video:视频', 'file:文件', 'link:链接', 'redpacket:红包', 'call:通话', 'pat:拍一拍', 'gift:礼物'].map(function(t) {
+                        var parts = t.split(':');
+                        return '<button data-type="' + parts[0] + '" class="ph-search-type px-2.5 py-1 rounded-lg text-xs border border-[var(--border-color)] text-[var(--text-primary)]' + (parts[0] === 'all' ? ' active" style="background:var(--theme);color:#fff;border-color:var(--theme)' : '"') + '">' + parts[1] + '</button>';
+                    }).join('') +
+                    '</div>' +
+                    '<div id="ph-search-results" class="max-h-60 overflow-y-auto space-y-1"></div>' +
+                    '</div>';
+                var currentType = 'all';
+                content.querySelectorAll('.ph-search-type').forEach(function(btn) {
+                    btn.onclick = function() {
+                        currentType = btn.dataset.type;
+                        content.querySelectorAll('.ph-search-type').forEach(function(b) {
+                            if (b === btn) { b.style.background = 'var(--theme)'; b.style.color = '#fff'; b.style.borderColor = 'var(--theme)'; }
+                            else { b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; }
+                        });
+                        runPrivateSearch();
+                    };
+                });
+                function runPrivateSearch() {
+                    var keyword = (document.getElementById('ph-search-input').value || '').toLowerCase().trim();
+                    var dateVal = document.getElementById('ph-search-date').value;
+                    var msgs = (cachedContactMessages[c.id] || []).filter(function(m) {
+                        if (m.type === 'date-separator' || m.type === 'system') return false;
+                        if (currentType === 'sticker') { if (!(m.type === 'image' && m.sticker)) return false; }
+                        else if (currentType !== 'all' && m.type !== currentType) return false;
+                        if (dateVal) {
+                            var d = new Date(m.timestamp || m.createdAt);
+                            var ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                            if (ds !== dateVal) return false;
+                        }
+                        if (keyword) {
+                            var hay = ((m.text || '') + ' ' + (m.fileName || '') + ' ' + (m.link || '') + ' ' + (m.videoUrl || '') + ' ' + msgTypeLabel(m)).toLowerCase();
+                            if (hay.indexOf(keyword) === -1) return false;
+                        }
+                        return true;
+                    });
+                    var resultsEl = document.getElementById('ph-search-results');
+                    if (!resultsEl) return;
+                    if (!msgs.length) { resultsEl.innerHTML = '<div class="text-xs text-[var(--text-secondary)] text-center py-4">无匹配结果</div>'; return; }
+                    resultsEl.innerHTML = msgs.slice(0, 100).map(function(m) {
+                        var sender = m.isMe ? (settings.myName || '我') : (c.remark || c.name);
+                        var body = m.text || '';
+                        if (m.type === 'image') body = m.sticker ? '[表情包]' : '[图片]';
+                        else if (m.type === 'voice') body = '[语音]';
+                        else if (m.type === 'redpacket' || m.type === 'rp-claim') body = '[红包] ' + (m.note || m.text || '');
+                        else if (m.type === 'video') body = '[视频]';
+                        else if (m.type === 'file') body = '[文件] ' + (m.fileName || '');
+                        else if (m.type === 'link') body = '[链接] ' + (m.link || '');
+                        else if (m.type === 'gift') body = '[礼物]';
+                        else if (m.type === 'call') body = m.text || '[通话]';
+                        else if (m.type === 'pat') body = m.text || '[拍一拍]';
+                        var time = m.timestamp ? formatDateTime(m.timestamp) : '';
+                        return '<div class="ph-search-hit px-3 py-2 rounded-xl bg-[var(--theme-light)] text-xs cursor-pointer hover:opacity-80 transition-opacity" data-mid="' + (m.id !== undefined ? m.id : '') + '"><div class="text-[var(--text-primary)] font-medium">' + escapeHtml(sender) + ' · ' + time + '</div><div class="text-[var(--text-primary)] mt-0.5 break-all">' + escapeHtml(body) + '</div></div>';
+                    }).join('') + (msgs.length > 100 ? '<div class="text-xs text-[var(--text-secondary)] text-center py-2">仅显示前100条</div>' : '');
+                    resultsEl.querySelectorAll('.ph-search-hit').forEach(function(row) {
+                        row.onclick = function() {
+                            var mid = this.dataset.mid;
+                            if (!mid) { showToast('该消息无法定位'); return; }
+                            document.getElementById('ch-sub-modal').classList.add('hidden');
+                            jumpToPrivateMessage(mid);
+                        };
+                    });
+                }
+                document.getElementById('ph-search-input').oninput = runPrivateSearch;
+                document.getElementById('ph-search-date').onchange = runPrivateSearch;
+                runPrivateSearch();
+            }
+            function openGroupSearch() {
+                var g = getCurrentGroup(); if (!g) return;
+                openChatSubWithTabs({
+                    title: ' 查找聊天记录',
+                    active: 'search',
+                    tabs: [
+                        { id: 'search', label: '🔍 搜索', render: renderGroupSearchView },
+                        { id: 'stats', label: '📊 统计', render: function(content) {
+                            renderChatStatsView(content, {
+                                isGroup: true,
+                                msgs: getGroupMessagesAll,
+                                memberName: function(mid) {
+                                    if (mid === 'me') return settings.myName || '我';
+                                    var c = getGroupMemberById(mid);
+                                    return c ? (c.remark || c.name) : '成员';
+                                }
+                            });
+                        } }
+                    ]
+                });
+            }
+            function renderGroupSearchView(content) {
+                var g = getCurrentGroup(); if (!g) return;
                 var memberOpts = '<option value="">全部成员</option>' + (g.members || []).map(function(mid) {
                     var c = getGroupMemberById(mid);
                     return '<option value="' + mid + '">' + escapeHtml(c ? (c.remark || c.name) : '未知') + '</option>';
@@ -6433,14 +7103,13 @@ async function createGroup(name, memberIds) {
                     '<select id="gh-search-member" class="flex-1 px-3 py-2 border border-[var(--border-color)] rounded-xl text-sm text-[var(--text-primary)] outline-none">' + memberOpts + '</select>' +
                     '</div>' +
                     '<div class="flex flex-wrap gap-1.5" id="gh-search-types">' +
-                    ['all:全部', 'text:文本', 'image:图片', 'video:视频', 'voice:语音', 'file:文件', 'link:链接', 'gift:礼物', 'redpacket:红包'].map(function(t) {
+                    ['all:全部', 'text:文本', 'image:图片', 'video:视频', 'voice:语音', 'file:文件', 'link:链接', 'gift:礼物', 'redpacket:红包', 'pat:拍一拍', 'call:通话'].map(function(t) {
                         var parts = t.split(':');
                         return '<button data-type="' + parts[0] + '" class="gh-search-type px-2.5 py-1 rounded-lg text-xs border border-[var(--border-color)] text-[var(--text-primary)]' + (parts[0] === 'all' ? ' active" style="background:var(--theme);color:#fff;border-color:var(--theme)' : '"') + '">' + parts[1] + '</button>';
                     }).join('') +
                     '</div>' +
                     '<div id="gh-search-results" class="max-h-60 overflow-y-auto space-y-1"></div>' +
                     '</div>';
-                modal.classList.remove('hidden');
                 var currentType = 'all';
                 content.querySelectorAll('.gh-search-type').forEach(function(btn) {
                     btn.onclick = function() {
@@ -6478,8 +7147,16 @@ async function createGroup(name, memberIds) {
                         var sender = m.senderId === 'me' ? '我' : (getGroupMemberById(m.senderId) ? (getGroupMemberById(m.senderId).remark || getGroupMemberById(m.senderId).name) : '成员');
                         var body = m.type === 'image' ? '[图片]' : (m.type === 'voice' ? '[语音]' : (m.type === 'redpacket' ? '[红包] ' + (m.note || '') : (m.type === 'video' ? '[视频]' : (m.type === 'file' ? '[文件] ' + (m.fileName || '') : (m.type === 'link' ? '[链接] ' + (m.link || '') : (m.type === 'gift' ? '[礼物]' : (m.text || '')))))));
                         var time = m.timestamp ? formatDateTime(m.timestamp) : '';
-                        return '<div class="px-3 py-2 rounded-xl bg-[var(--theme-light)] text-xs"><div class="text-[var(--text-primary)] font-medium">' + escapeHtml(sender) + ' · ' + time + '</div><div class="text-[var(--text-primary)] mt-0.5 break-all">' + escapeHtml(body) + '</div></div>';
+                        return '<div class="gh-search-hit px-3 py-2 rounded-xl bg-[var(--theme-light)] text-xs cursor-pointer hover:opacity-80 transition-opacity" data-mid="' + (m.id !== undefined ? m.id : '') + '"><div class="text-[var(--text-primary)] font-medium">' + escapeHtml(sender) + ' · ' + time + '</div><div class="text-[var(--text-primary)] mt-0.5 break-all">' + escapeHtml(body) + '</div></div>';
                     }).join('') + (msgs.length > 100 ? '<div class="text-xs text-[var(--text-secondary)] text-center py-2">仅显示前100条</div>' : '');
+                    resultsEl.querySelectorAll('.gh-search-hit').forEach(function(row) {
+                        row.onclick = function() {
+                            var mid = this.dataset.mid;
+                            if (!mid) { showToast('该消息无法定位'); return; }
+                            document.getElementById('ch-sub-modal').classList.add('hidden');
+                            jumpToGroupMessage(mid);
+                        };
+                    });
                 }
                 document.getElementById('gh-search-input').oninput = runGroupSearch;
                 document.getElementById('gh-search-date').onchange = runGroupSearch;
@@ -7355,6 +8032,7 @@ async function createGroup(name, memberIds) {
                 renderMoodCalendar();
                 applyVisibleExpItems();
                 applyAvatarEffects();
+                maybeAutoMoodPrompt(c);
                 } catch (err) {
                     console.error('switchContact error:', err);
                     // 保证界面可用：至少回到主页
@@ -7840,6 +8518,9 @@ async function createGroup(name, memberIds) {
 
                 function createGroupMessageElement(msg, hideAvatarAndName = false) {
                     const metaVisible = msg._isTail !== false;
+                    const _gNow = getCurrentGroup();
+                    const _isAdmSender = !!(_gNow && msg.senderId && msg.senderId !== 'me' && isGroupAdmin(_gNow, msg.senderId));
+                    const _admTag = _isAdmSender ? '<span class="text-[9px] px-1 py-px rounded ml-1 align-middle" style="background:var(--theme-light);color:var(--theme);border:0.5px solid var(--theme);line-height:1.4">管理员</span>' : '';
                 if (msg.recalled) {
                     var rd = document.createElement('div');
                     rd.className = 'flex justify-center w-full my-1';
@@ -7859,7 +8540,7 @@ async function createGroup(name, memberIds) {
                     const div = document.createElement('div');
                     div.dataset.id = msg.id;
                     const isMe = msg.senderId === 'me';
-                    const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => c.id === msg.senderId) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
+                    const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => String(c.id) === String(msg.senderId)) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
                     div.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-2`;
                     const rpDone = msg.status === 'expired' || msg.status === 'returned';
                     const rpStyle = rpStyleById(msg.rpStyle);
@@ -7877,7 +8558,7 @@ async function createGroup(name, memberIds) {
               <div class="flex items-end space-x-2 max-w-[82%]">
                 ${(!isMe && !hideAvatarAndName) ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=1'">` : (!isMe ? `<div class="w-7 h-7"></div>` : '')}
                 <div>
-                  ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(dispName(sender))}</p>` : ''}
+                  ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(dispName(sender))}${_admTag}</p>` : ''}
                   <div class="rp-bubble${rpDone ? ' done' : ''}"${rpDone ? '' : ' style="background:' + (rpStyle.kind === 'video' ? 'rgba(0,0,0,.4)' : rpStyle.bg) + '"'} onclick="openGroupRedpacketPopup(${msg.id})" title="点击查看红包">${rpMedia}<div class="rp-ico"><i class="fa fa-rmb"></i></div><div class="rp-info"><div class="rp-note">${escapeHtml(msg.note || rpStyle.line1)}</div><div class="rp-label">${kindLabel}</div></div><span class="rp-status">${rpStatusText}</span></div>
                   <div class="msg-meta">
                     <span class="msg-actions" data-actions="${msg.id}">
@@ -7969,7 +8650,7 @@ async function createGroup(name, memberIds) {
                     const div = document.createElement('div');
                     div.dataset.id = msg.id;
                     const isMe = msg.senderId === 'me';
-                    const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => c.id === msg.senderId) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
+                    const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => String(c.id) === String(msg.senderId)) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
                     div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
                     const wrapper = document.createElement('div');
                     wrapper.className = 'flex items-end space-x-2 max-w-[82%]';
@@ -7988,7 +8669,8 @@ async function createGroup(name, memberIds) {
                     if (!isMe && !hideAvatarAndName) {
                         const nameP = document.createElement('p');
                         nameP.className = 'text-xs text-[var(--text-secondary)] mb-1';
-                        nameP.textContent = dispName(sender);
+                        if (_admTag) nameP.innerHTML = escapeHtml(dispName(sender)) + _admTag;
+                        else nameP.textContent = dispName(sender);
                         innerWrap.appendChild(nameP);
                     }
                     const voiceBubble = createVoiceBubble(msg, isMe);
@@ -8022,7 +8704,7 @@ async function createGroup(name, memberIds) {
                     const div = document.createElement('div');
                     div.dataset.id = msg.id;
                     const isMe = msg.senderId === 'me';
-                    const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => c.id === msg.senderId) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
+                    const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => String(c.id) === String(msg.senderId)) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
                     div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
                     const wrapper = document.createElement('div');
                     wrapper.className = 'flex items-end space-x-2 max-w-[82%]';
@@ -8041,7 +8723,8 @@ async function createGroup(name, memberIds) {
                     if (!isMe && !hideAvatarAndName) {
                         const nameP = document.createElement('p');
                         nameP.className = 'text-xs text-[var(--text-secondary)] mb-1';
-                        nameP.textContent = dispName(sender);
+                        if (_admTag) nameP.innerHTML = escapeHtml(dispName(sender)) + _admTag;
+                        else nameP.textContent = dispName(sender);
                         innerWrap.appendChild(nameP);
                     }
                     const img = document.createElement('img');
@@ -8080,7 +8763,7 @@ async function createGroup(name, memberIds) {
                 const div = document.createElement('div');
                 div.dataset.id = msg.id;
                 const isMe = msg.senderId === 'me';
-                const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => c.id === msg.senderId) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
+                const sender = isMe ? { name: settings.myName, avatar: settings.myAvatar } : contacts.find(c => String(c.id) === String(msg.senderId)) || { name: '未知', avatar: 'https://picsum.photos/200/200?random=1' };
                 const bubbleClass = isMe ? 'message-bubble-right' : 'message-bubble-left';
                 div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
                 let quoteHtml = '';
@@ -8099,7 +8782,7 @@ async function createGroup(name, memberIds) {
               <div class="flex items-end space-x-2 max-w-[82%]">
                 ${(!isMe && !hideAvatarAndName) ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=1'">` : (!isMe ? `<div class="w-7 h-7"></div>` : '')}
                 <div class="min-w-0">
-                  ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(dispName(sender))}</p>` : ''}
+                  ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(dispName(sender))}${_admTag}</p>` : ''}
                   <div class="${bubbleClass} px-3.5 py-2.5 card-shadow">${quoteHtml}${contentHtml}</div>
                 </div>
                 ${isMe ? (hideAvatarAndName ? `<div class="w-7 h-7 shrink-0"></div>` : `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">`) : ''}
@@ -8668,7 +9351,7 @@ async function createGroup(name, memberIds) {
                 var rpPlans = [];     // 红包计划（独立2-8s 发送）
 
                 units.forEach(function(uid) {
-                    var replyContact = (chatType === 'group' || !contactId) ? (contacts.find(function(c) { return c.id === uid; }) || null) : (contacts.find(function(c) { return c.id === contactId; }) || null);
+                    var replyContact = (chatType === 'group' || !contactId) ? (contacts.find(function(c) { return String(c.id) === String(uid); }) || null) : (contacts.find(function(c) { return String(c.id) === String(contactId); }) || null);
                     var rc = function(key, def) { return getContactReplySetting(replyContact, key, def); };
                     var poolCid = chatType === 'group' ? uid : contactId;
 
@@ -8857,7 +9540,7 @@ async function createGroup(name, memberIds) {
                     const plan = unitPlans[index];
                     // ===== 每条计划的延迟用所属单元自己的回复设置（群聊按成员=====
                     const ownerId = chatType === 'group' ? plan.senderId : contactId;
-                    const owner = ownerId ? (contacts.find(function(c) { return c.id === ownerId; }) || null) : null;
+                    const owner = ownerId ? (contacts.find(function(c) { return String(c.id) === String(ownerId); }) || null) : null;
                     const rcPlan = function(key) { return getContactReplySetting(owner, key); };
                     const minDelay = rcPlan('minReplyTime') * 1000;
                     const maxDelay = Math.max(rcPlan('maxReplyTime') * 1000, minDelay);
@@ -11404,6 +12087,65 @@ textarea.value = ''; saveSettings(); renderFmVoiceGroups(sq); showToast('导入 
                 renderMoodCalendar();
                 renderMoodStats();
             }
+
+            function fillPartnerMoodBox() {
+                const box = document.getElementById('mood-partner-box');
+                if (!box) return;
+                const c = getCurrentContact();
+                const todayStr = formatDateISO(new Date());
+                const pm = c && c.partnerMoodHistory ? c.partnerMoodHistory.find(m => m.date === todayStr) : null;
+                if (!pm) { box.style.display = 'none'; return; }
+                box.style.display = '';
+                let cardsHtml = '';
+                if (pm.cards && pm.cards.length) {
+                    cardsHtml = '<div class="mt-1 text-[10px] text-[var(--text-secondary)]">TA 今天给你抽了：' + pm.cards.map(function(cd) {
+                        return escapeHtml(typeof cd === 'string' ? cd : (cd.text || cd.content || ''));
+                    }).join('、') + '</div>';
+                }
+                box.innerHTML = '<div class="text-xs font-medium text-[var(--text-primary)]">对方心情</div>' +
+                    '<div class="mt-1 text-[var(--text-primary)]">' + escapeHtml(pm.emoji || '😊') + (pm.note ? ' ' + escapeHtml(pm.note) : '') + '</div>' +
+                    (pm.weather ? '<div class="text-[10px] text-[var(--text-secondary)] mt-0.5">🌤 ' + escapeHtml(pm.weather) + '</div>' : '') +
+                    cardsHtml;
+            }
+
+            function maybeAutoMoodPrompt(c) {
+                try {
+                    if (!c || c.id === undefined || c.id === null) return;
+                    const todayStr = formatDateISO(new Date());
+                    if (!settings.moodPromptDates) settings.moodPromptDates = {};
+                    const key = 'c' + c.id;
+                    if (settings.moodPromptDates[key] === todayStr) return;
+                    const hasRecord = (settings.myMoodHistory || []).some(function(m) { return m.date === todayStr && String(m.contactId) === String(c.id); });
+                    if (hasRecord) return;
+                    settings.moodPromptDates[key] = todayStr;
+                    saveSettings();
+                    fillPartnerMoodBox();
+                    renderMoodEmojiPicker();
+                    document.getElementById('mood-panel').classList.remove('hidden');
+                } catch (e) {}
+            }
+
+            function syncMoodToAllContacts() {
+                const c = getCurrentContact(); if (!c) return;
+                const selected = document.querySelector('#mood-emoji-picker .mood-emoji.selected');
+                const mood = selected ? selected.dataset.mood : '😊';
+                const note = (document.getElementById('mood-note').value || '').trim();
+                const weatherEl = document.getElementById('mood-weather');
+                const weather = weatherEl ? (weatherEl.value || '').trim() : '';
+                const todayStr = formatDateISO(new Date());
+                if (!settings.myMoodHistory) settings.myMoodHistory = [];
+                contacts.forEach(function(ct) {
+                    settings.myMoodHistory = settings.myMoodHistory.filter(function(m) { return !(m.date === todayStr && String(m.contactId) === String(ct.id)); });
+                    settings.myMoodHistory.unshift({ mood, note, weather, date: todayStr, contactId: ct.id });
+                });
+                saveSettings();
+                renderMoodCalendar();
+                renderMoodStats();
+                showToast('已同步到全部联系人');
+            }
+            window.maybeAutoMoodPrompt = maybeAutoMoodPrompt;
+            window.syncMoodToAllContacts = syncMoodToAllContacts;
+            window.fillPartnerMoodBox = fillPartnerMoodBox;
 
             function drawThreeWordCards(contactId) {
                 const pool = buildWordCardPool(contactId);
@@ -14693,6 +15435,7 @@ const myTile = selfCamStream
                 if (!contact || callState.status !== 'idle') { hangupCall(); return; }
                 clearTimeout(callTimer);
                 clearTimeout(callState.hangupTimer);
+                window.playRingtoneFor(contact);
                 callState = { status: 'calling', initiator: 'me', contactId: currentContactId, muted: false, minimized: false,
                     displayMode: 'full', speakerOn: true, cameraOn: false, startTime: null, durationInterval: null, hangupTimer: null };
                 document.getElementById('call-partner-avatar').src = contact.avatar;
@@ -14712,6 +15455,7 @@ const myTile = selfCamStream
             }
 
             function acceptCall() {
+                window.stopRingtone();
                 clearTimeout(callTimer);
                 document.body.classList.add('call-active-busy');
                 const contact = contacts.find(c => c.id === callState.contactId) || getCurrentContact();
@@ -14764,6 +15508,7 @@ const myTile = selfCamStream
             }
 
             function endCall(reason) {
+                window.stopRingtone();
                 document.body.classList.remove('call-active-busy');
                 document.getElementById('call-float-window').classList.add('hidden');
                 document.getElementById('call-pip-window').classList.add('hidden');
@@ -14856,6 +15601,7 @@ const myTile = selfCamStream
             }
 
             function hangupCall() {
+                window.stopRingtone();
                 closeSelfCamera();
                 if (callState.status === 'connected') endCall('cancel');
                 else if (callState.status === 'calling') { clearTimeout(callTimer);
@@ -14869,6 +15615,7 @@ const myTile = selfCamStream
             function incomingCall() {
                 const contact = getCurrentContact();
                 if (callState.status !== 'idle' || !contact) return;
+                window.playMyRingtone();
                 document.getElementById('incoming-call-avatar').src = contact.avatar;
                 document.getElementById('incoming-call-title').textContent = `${contact.remark || contact.name} 邀请你视频通话`;
                 document.getElementById('incoming-call-panel').classList.remove('hidden');
@@ -14876,7 +15623,7 @@ const myTile = selfCamStream
                 callState.initiator = 'partner';
                 callState.contactId = contact.id;
                 sendSystemNotification(`${contact.remark || contact.name} 邀请你视频通话`, '视频通话来电，点击接听', contact.avatar, contact.id, null, { vibrate: [300, 150, 300, 150, 300], tag: 'love-call-' + contact.id });
-                autoHangup = setTimeout(() => { if (callState.status === 'incoming') { document.getElementById(
+                autoHangup = setTimeout(() => { if (callState.status === 'incoming') { window.stopRingtone(); document.getElementById(
                             'incoming-call-panel').classList.add('hidden');
                         callState.status = 'idle';
                         sendSystemNotification(`${contact.remark || contact.name}`, '未接来电', contact.avatar, contact.id, null, { tag: 'love-call-' + contact.id });
@@ -14886,6 +15633,7 @@ const myTile = selfCamStream
             function incomingCallFromContact(contactId) {
                 const contact = contacts.find(c => c.id === contactId);
                 if (!contact || callState.status !== 'idle') return;
+                window.playMyRingtone();
                 document.getElementById('incoming-call-avatar').src = contact.avatar;
                 document.getElementById('incoming-call-title').textContent = `${contact.remark || contact.name} 邀请你视频通话`;
                 document.getElementById('incoming-call-panel').classList.remove('hidden');
@@ -14893,7 +15641,7 @@ const myTile = selfCamStream
                 callState.initiator = 'partner';
                 callState.contactId = contactId;
                 sendSystemNotification(`${contact.remark || contact.name} 邀请你视频通话`, '视频通话来电，点击接听', contact.avatar, contactId, null, { vibrate: [300, 150, 300, 150, 300], tag: 'love-call-' + contactId });
-                autoHangup = setTimeout(() => { if (callState.status === 'incoming') { document.getElementById(
+                autoHangup = setTimeout(() => { if (callState.status === 'incoming') { window.stopRingtone(); document.getElementById(
                             'incoming-call-panel').classList.add('hidden');
                         callState.status = 'idle';
                         sendSystemNotification(`${contact.remark || contact.name}`, '未接来电', contact.avatar, contactId, null, { tag: 'love-call-' + contactId });
@@ -14901,6 +15649,7 @@ const myTile = selfCamStream
             }
 
             function acceptIncomingCall() {
+                window.stopRingtone();
                 clearTimeout(autoHangup);
                 document.body.classList.add('call-active-busy');
                 const contact = contacts.find(c => c.id === callState.contactId) || getCurrentContact();
@@ -14939,6 +15688,7 @@ const myTile = selfCamStream
                 const group = groups.find(g => g.id === groupId);
                 if (!group) return;
                 const initiator = contacts.find(c => c.id === initiatorId);
+                window.playMyRingtone();
                 document.getElementById('incoming-group-call-avatar').src = initiator?.avatar ||
                     'https://picsum.photos/200/200?random=1';
                 document.getElementById('incoming-group-call-title').textContent =
@@ -14951,6 +15701,7 @@ const myTile = selfCamStream
                 groupCallState.participants.forEach(mid => { groupCallState.memberStates[mid] = 'inviting'; });
                 autoHangup = setTimeout(() => {
                     if (groupCallState.status === 'incoming') {
+                        window.stopRingtone();
                         document.getElementById('incoming-group-call-panel').classList.add('hidden');
                         const endMsg = { type: 'call', text: `${settings.myName} 未接听群通话`, senderId: 'me',
                             groupId: groupId, timestamp: new Date().toISOString(), read: true };
@@ -14965,6 +15716,7 @@ const myTile = selfCamStream
             }
 
             function acceptGroupCall() {
+                window.stopRingtone();
                 clearTimeout(autoHangup);
                 document.body.classList.add('call-active-busy');
                 document.getElementById('incoming-group-call-panel').classList.add('hidden');
@@ -18585,40 +19337,21 @@ const myTile = selfCamStream
                 var searchMsg = document.getElementById('ch-search-msg');
                 if (searchMsg) searchMsg.onclick = function() {
                     var c = getCurrentContact(); if (!c) return;
-                    var msgs = cachedContactMessages[c.id] || [];
-                    var panel = document.getElementById('ch-sub-modal');
-                    var title = document.getElementById('ch-sub-title');
-                    var content = document.getElementById('ch-sub-content');
-                    if (!panel || !title || !content) return;
-                    // 按日期分组：只列有消息的日期（最近 60 天，倒序）
-                    var dateMap = {};
-                    msgs.forEach(function(m) {
-                        var ts = m.timestamp || m.createdAt;
-                        if (!ts) return;
-                        var d = new Date(ts);
-                        var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-                        if (!dateMap[key]) { dateMap[key] = { count: 0, firstTs: ts }; }
-                        dateMap[key].count++;
+                    openChatSubWithTabs({
+                        title: '🔍 查找聊天记录',
+                        active: 'search',
+                        tabs: [
+                            { id: 'search', label: '🔍 搜索', render: renderPrivateSearchView },
+                            { id: 'stats', label: '📊 统计', render: function(content) {
+                                renderChatStatsView(content, {
+                                    isGroup: false,
+                                    msgs: function() { return cachedContactMessages[c.id] || []; },
+                                    memberName: function() { return c.remark || c.name; },
+                                    otherName: function() { return c.remark || c.name; }
+                                });
+                            } }
+                        ]
                     });
-                    var keys = Object.keys(dateMap).sort().reverse().slice(0, 60);
-                    title.textContent = '📅 按日期查找聊天记录';
-                    if (!keys.length) {
-                        content.innerHTML = '<div class="text-xs text-[var(--text-secondary)] text-center py-4">暂无聊天记录</div>';
-                    } else {
-                        content.innerHTML = keys.map(function(k) {
-                            var parts = k.split('-');
-                            var label = parts[0] + '年' + parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
-                            return '<div class="px-3 py-2.5 border-b border-[var(--border-color)] flex items-center justify-between cursor-pointer hover:bg-[var(--theme-light)] transition-colors" data-date="' + k + '" data-firstts="' + dateMap[k].firstTs + '"><span class="text-sm text-[var(--text-primary)]">' + label + '</span><span class="text-xs text-[var(--text-secondary)]">' + dateMap[k].count + ' 条</span></div>';
-                        }).join('');
-                        content.querySelectorAll('[data-date]').forEach(function(row) {
-                            row.onclick = function() {
-                                var firstTs = this.dataset.firstts;
-                                panel.classList.remove('open');
-                                jumpToMessageDate(firstTs);
-                            };
-                        });
-                    }
-                    panel.classList.add('open');
                 };
                 var clearMsg = document.getElementById('ch-clear-msg');
                 if (clearMsg) clearMsg.onclick = function() {
@@ -18720,6 +19453,7 @@ const myTile = selfCamStream
                         + '<button id="ch-app-avatar" class="w-full py-3 bg-[var(--theme-light)] rounded-xl text-sm flex items-center justify-center space-x-2 hover:opacity-80"><i class="fa fa-square-o" style="color:var(--theme)"></i><span>头像框</span></button>'
                         + '<button id="ch-app-bubble" class="w-full py-3 bg-[var(--theme-light)] rounded-xl text-sm flex items-center justify-center space-x-2 hover:opacity-80"><i class="fa fa-comment-o" style="color:var(--theme)"></i><span>气泡CSS</span></button>'
                         + '<button id="ch-app-bg" class="w-full py-3 bg-[var(--theme-light)] rounded-xl text-sm flex items-center justify-center space-x-2 hover:opacity-80"><i class="fa fa-picture-o" style="color:var(--theme)"></i><span>聊天背景</span></button>'
+                        + '<button id="ch-app-ringtone" class="w-full py-3 bg-[var(--theme-light)] rounded-xl text-sm flex items-center justify-center space-x-2 hover:opacity-80"><i class="fa fa-bell-o" style="color:var(--theme)"></i><span>专属铃声</span><span class="text-xs text-[var(--text-secondary)]">' + window.ringtoneName(c.ringtone) + '</span></button>'
                         + '</div>';
                     modal.classList.remove('hidden');
                     setTimeout(function() {
@@ -18729,6 +19463,8 @@ const myTile = selfCamStream
                         if (buBtn) buBtn.onclick = function() { openChSubModal('bubble-css', getCurrentContact()); };
                         var bgBtn = document.getElementById('ch-app-bg');
                         if (bgBtn) bgBtn.onclick = function() { modal.classList.add('hidden'); openChBgOverlay(getCurrentContact()); };
+                        var rtBtn = document.getElementById('ch-app-ringtone');
+                        if (rtBtn) rtBtn.onclick = function() { window.showRingtonePicker({ type: 'contact', contact: getCurrentContact() }); };
                     }, 50);
                 };
                 window.openChAvatarFrame = function(c) {
@@ -18769,6 +19505,35 @@ const myTile = selfCamStream
                 var rs = document.getElementById('ch-reply-settings'); if (rs) rs.onclick = function() { var c = getCurrentContact(); if (!c) return; openChSubModal('reply-settings', c); };
                 var mh = document.getElementById('ch-mood-history'); if (mh) mh.onclick = function() { var c = getCurrentContact(); if (!c) return; openChSubModal('mood-history', c); };
                 var dc = document.getElementById('ch-delete-contact'); if (dc) dc.onclick = function() { var c = getCurrentContact(); if (!c) return; if (!confirm('确定删除联系人"' + dispName(c) + '"？\n将同时删除其所有聊天记录。')) return; deleteContactAndSwitch(c.id); };
+                var sadm = document.getElementById('ch-set-admin');
+                if (sadm) {
+                    var _gRet = window._groupHomeReturnState;
+                    var _gForAdmin = _gRet && _gRet.groupId ? groups.find(function(x) { return String(x.id) === String(_gRet.groupId); }) : null;
+                    if (_gForAdmin && isGroupOwner(_gForAdmin)) {
+                        var _curMid = getCurrentContact() ? getCurrentContact().id : null;
+                        if (_curMid !== 'me') {
+                            var _isAdmNow = isGroupAdmin(_gForAdmin, _curMid);
+                            sadm.classList.remove('hidden');
+                            sadm.querySelector('span').textContent = _isAdmNow ? '取消管理员' : '设为管理员';
+                            sadm.querySelector('i').className = 'fa fa-user-circle-o text-lg mb-1';
+                            sadm.querySelector('i').style.color = _isAdmNow ? '#ef4444' : 'var(--theme)';
+                            sadm.onclick = function() {
+                                var gg = groups.find(function(x) { return String(x.id) === String(_gRet.groupId); }) || _gForAdmin;
+                                if (!gg) return;
+                                var adms = (gg.admins || []).slice();
+                                var wasAdm = adms.some(function(a) { return String(a) === String(_curMid); });
+                                if (wasAdm) { gg.admins = adms.filter(function(a) { return String(a) !== String(_curMid); }); }
+                                else { adms.push(_curMid); gg.admins = adms; }
+                                updateData('groups', gg);
+                                var who = (getCurrentContact() ? (getCurrentContact().remark || getCurrentContact().name) : _curMid);
+                                showToast(wasAdm ? ('已取消管理员：' + who) : ('✅ 已设为管理员：' + who));
+                                try { if (document.getElementById('gh-owner-label')) renderGroupHome(); } catch (e) {}
+                                sadm.querySelector('span').textContent = wasAdm ? '设为管理员' : '取消管理员';
+                                sadm.querySelector('i').style.color = wasAdm ? 'var(--theme)' : '#ef4444';
+                            };
+                        }
+                    }
+                }
                 window.openChBgOverlay = function(c) {
                     if (!c) return;
                     var existing = document.getElementById('ch-bg-actions');
@@ -19235,6 +20000,7 @@ const myTile = selfCamStream
                 document.getElementById('mood-panel').addEventListener('click', function(e) { if (e.target === this)
                         this.classList.add('hidden'); });
                 try { document.getElementById('save-mood-btn').onclick = saveMyMood; } catch(e) {}
+                try { document.getElementById('mood-sync-btn').onclick = syncMoodToAllContacts; } catch(e) {}
                 try { document.getElementById('close-add-mood-btn').onclick = () => document.getElementById('add-mood-panel')
                     .classList.add('hidden'); } catch(e) {}
                 document.getElementById('add-mood-panel').addEventListener('click', function(e) { if (e.target ===
@@ -19851,7 +20617,7 @@ const myTile = selfCamStream
                 (document.getElementById('camera-btn')||{}).onclick = toggleSelfCameraBtn;
                 (document.getElementById('flip-camera-btn')||{}).onclick = function() { if (typeof flipSelfCamera === 'function') flipSelfCamera(); };
                 document.getElementById('accept-incoming-call').onclick = acceptIncomingCall;
-                document.getElementById('reject-incoming-call').onclick = () => { clearTimeout(autoHangup);
+                document.getElementById('reject-incoming-call').onclick = () => { clearTimeout(autoHangup); window.stopRingtone();
                     document.getElementById('incoming-call-panel').classList.add('hidden');
                     callState.status = 'idle';
                     var rjContact = contacts.find(function(c) { return c.id === callState.contactId; }) || getCurrentContact();
@@ -19920,7 +20686,7 @@ const myTile = selfCamStream
                         'group-call-interface').classList.add('hidden');
                     groupCallState.status = 'idle'; };
                 document.getElementById('accept-group-call-btn').onclick = acceptGroupCall;
-                document.getElementById('reject-group-call-btn').onclick = () => { document.getElementById(
+                document.getElementById('reject-group-call-btn').onclick = () => { window.stopRingtone(); document.getElementById(
                         'incoming-group-call-panel').classList.add('hidden'); const gid = groupCallState.groupId;
                     const endMsg = { type: 'call', text: `${settings.myName} 拒绝了群通话`, senderId: 'me',
                         groupId: gid, timestamp: new Date().toISOString(), read: true };
@@ -20295,6 +21061,7 @@ const myTile = selfCamStream
                         })(legacy[li]);
                     }
                 } catch (e) {}
+                await buildConvoLastTimeMap();
             }
 
             async function safeGetAll(storeName) { try { return await getAllData(storeName); } catch (e) { return []; } }
@@ -22241,8 +23008,8 @@ const myTile = selfCamStream
                 document.getElementById('mp-name-input').value = settings.myName;
                 document.getElementById('mp-region-input').value = settings.region || '';
                 document.getElementById('mp-phone-input').value = settings.phone || '';
-                document.getElementById('mp-heartkey').textContent = settings.heartKey || ('LX_' + Math.random().toString(36).substr(2,6).toUpperCase());
-                document.getElementById('mp-ringtone-text').textContent = settings.ringtone ? (settings.ringtone === 'call1' ? '柔和铃声' : settings.ringtone === 'call2' ? '轻快铃声' : settings.ringtone === 'call3' ? '经典铃声' : '默认') : '默认';
+                var mrt = document.getElementById('mp-ringtone-text');
+                if (mrt) mrt.textContent = window.ringtoneName(settings.ringtone);
                 var bal = settings.walletBalance || 0;
                 document.getElementById('mp-balance-text').textContent = '¥' + bal.toFixed(2);
                 var mmp = document.getElementById('mp-my-moments-btn');
@@ -22295,18 +23062,93 @@ const myTile = selfCamStream
                 reader.onload = function(ev) { settings.myAvatar = ev.target.result; document.getElementById('mp-avatar').src = ev.target.result; };
                 reader.readAsDataURL(f); e.target.value = '';
             };
-            window.showRingtonePicker = function() {
-                var radios = document.querySelectorAll('input[name="ringtone"]');
-                radios.forEach(function(r) { r.checked = r.value === settings.ringtone; });
+            window._ringtoneScope = { type: 'global' };
+            window._ringtonePendingCustom = '';
+            var rtuBtn = document.getElementById('ringtone-upload-btn');
+            if (rtuBtn) rtuBtn.onclick = function() { var fi = document.getElementById('ringtone-file-input'); if (fi) fi.click(); };
+            var rtfInput = document.getElementById('ringtone-file-input');
+            if (rtfInput) rtfInput.onchange = function(e) { window.ringtoneUpload(e.target.files[0]); e.target.value = ''; };
+            window.ringtoneName = function(v) { if (!v) return '默认'; if (v.indexOf('data:') === 0 || v.indexOf('http') === 0) return '自定义铃声'; return '默认'; };
+            window.showRingtonePicker = function(scope) {
+                window._ringtoneScope = scope || { type: 'global' };
+                var cur = (window._ringtoneScope.type === 'contact' && window._ringtoneScope.contact) ? (window._ringtoneScope.contact.ringtone || '') : (settings.ringtone || '');
+                var box = document.getElementById('ringtone-options');
+                if (!box) return;
+                var isCustom = cur.indexOf('data:') === 0 || cur.indexOf('http') === 0;
+                var opts = [['', '默认']];
+                if (isCustom) opts.push(['__custom__', '自定义铃声']);
+                box.innerHTML = opts.map(function(o) {
+                    return '<label class="flex items-center px-3 py-3 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)]"><input type="radio" name="ringtone" value="' + o[0] + '" class="mr-3" ' + (o[0] === cur ? 'checked' : '') + '><span class="text-sm text-[var(--text-primary)]">' + o[1] + '</span></label>';
+                }).join('');
+                var cname = document.getElementById('ringtone-custom-name');
+                if (cname) {
+                    cname.textContent = cur.indexOf('data:') === 0 ? '已上传自定义铃声（' + Math.round((cur.length - cur.indexOf(',') - 1) * 0.75 / 1024) + ' KB）' : (cur.indexOf('http') === 0 ? '已设置 URL 铃声' : '');
+                    cname.style.display = cname.textContent ? '' : 'none';
+                }
                 document.getElementById('ringtone-picker-modal').classList.remove('hidden');
             };
             window.saveRingtone = function() {
                 var selected = document.querySelector('input[name="ringtone"]:checked');
-                settings.ringtone = selected ? selected.value : '';
-                document.getElementById('mp-ringtone-text').textContent = settings.ringtone ? (settings.ringtone === 'call1' ? '柔和铃声' : settings.ringtone === 'call2' ? '轻快铃声' : settings.ringtone === 'call3' ? '经典铃声' : '默认') : '默认';
+                var val = selected ? selected.value : '';
+                if (val === '__custom__') val = window._ringtonePendingCustom || val;
+                var scope = window._ringtoneScope || { type: 'global' };
+                if (scope.type === 'contact' && scope.contact) {
+                    scope.contact.ringtone = val;
+                    if (typeof queuedUpdateContact === 'function') queuedUpdateContact(scope.contact);
+                } else {
+                    settings.ringtone = val;
+                    saveSettings();
+                    var mrt = document.getElementById('mp-ringtone-text');
+                    if (mrt) mrt.textContent = window.ringtoneName(val);
+                }
                 document.getElementById('ringtone-picker-modal').classList.add('hidden');
-                saveSettings();
+                showToast('铃声已保存');
             };
+            window.ringtoneUpload = function(file) {
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) { showToast('铃声文件请小于 5MB'); return; }
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    window._ringtonePendingCustom = ev.target.result;
+                    var box = document.getElementById('ringtone-options');
+                    if (box) {
+                        var labels = box.querySelectorAll('label');
+                        labels.forEach(function(l) { l.querySelector('input').checked = false; });
+                        var existing = box.querySelector('input[value="__custom__"]');
+                        if (!existing) {
+                            var lab = document.createElement('label');
+                            lab.className = 'flex items-center px-3 py-3 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--theme)]';
+                            lab.innerHTML = '<input type="radio" name="ringtone" value="__custom__" class="mr-3" checked><span class="text-sm text-[var(--text-primary)]">自定义铃声</span>';
+                            box.appendChild(lab);
+                        } else { existing.checked = true; existing.closest('label').style.borderColor = 'var(--theme)'; }
+                    }
+                    var cname = document.getElementById('ringtone-custom-name');
+                    if (cname) { cname.textContent = '已选择：' + (file.name || '自定义铃声') + '（保存后生效）'; cname.style.display = ''; }
+                    showToast('铃声已加载，点击确定保存');
+                };
+                reader.readAsDataURL(file);
+            };
+            var ringtoneAudioEl = null;
+            window.stopRingtone = function() {
+                if (ringtoneAudioEl) { try { ringtoneAudioEl.pause(); ringtoneAudioEl.loop = false; } catch (e) {} ringtoneAudioEl = null; }
+            };
+            function playRingtoneByKey(key) {
+                window.stopRingtone();
+                if (!key) return;
+                if (key.indexOf('data:') === 0 || key.indexOf('http') === 0) {
+                    try {
+                        var el = new Audio(key);
+                        el.loop = true;
+                        el.volume = 0.8;
+                        el.play().catch(function() {});
+                        ringtoneAudioEl = el;
+                    } catch (e) {}
+                }
+            }
+            window.playRingtoneFor = function(contact) {
+                playRingtoneByKey((contact && contact.ringtone) || settings.ringtone || '');
+            };
+            window.playMyRingtone = function() { playRingtoneByKey(settings.ringtone || ''); };
             // ===== 钱包 & 账单 =====
             function getBalance(contactId) {
                 if (contactId === 0) return settings.walletBalance || 0;
@@ -23251,7 +24093,7 @@ const myTile = selfCamStream
                 var content = document.getElementById('rp-popup-content');
                 var cover = document.getElementById('rp-cover');
                 var isMine = msg.senderId === 'me';
-                var sender = isMine ? null : contacts.find(function(c) { return c.id === msg.senderId; });
+                var sender = isMine ? null : contacts.find(function(c) { return String(c.id) === String(msg.senderId); });
                 var senderName = isMine ? (settings.myName || '我') : (sender ? (sender.remark || sender.name) : '群成员');
                 var grayed = msg.status === 'expired' || msg.status === 'returned';
                 var rpStyle = rpStyleById(msg.rpStyle);
@@ -23352,7 +24194,7 @@ const myTile = selfCamStream
                     }
                     msg.claims.push({ id: 'me', name: settings.myName || '我', avatar: settings.myAvatar, amount: amount, time: new Date().toISOString() });
                     setBalance(0, amount, true);
-                    var sender = msg.senderId === 'me' ? { name: settings.myName || '我', remark: settings.myName || '我' } : contacts.find(function(c) { return c.id === msg.senderId; });
+                    var sender = msg.senderId === 'me' ? { name: settings.myName || '我', remark: settings.myName || '我' } : contacts.find(function(c) { return String(c.id) === String(msg.senderId); });
                     rpAddTxn(0, 'income', 'red_packet', amount, '领取了 ' + (sender ? (sender.remark || sender.name) : 'TA') + ' 的群红包', sender ? (sender.remark || sender.name) : '');
                     updateData('groupMessages', msg);
                     rpRerender(msg);

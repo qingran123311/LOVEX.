@@ -749,7 +749,7 @@
         }
         #mood-panel,
         #add-mood-panel {
-            z-index: 85 !important;
+            z-index: 100002 !important;
         }
         .like-avatars {
             display: flex;

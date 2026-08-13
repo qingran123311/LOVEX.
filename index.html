@@ -12923,14 +12923,15 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                         var ca = c.authorId === 'me' ? settings.myName : dispNameById(c.authorId);
                         var text = c.text || '';
                         var cm = '';
-                        if (c.type === 'image' && c.media) cm = '<span class="inline-block align-middle ml-0.5" title="点击放大，双击删除表情评论><img src="' + c.media + '" class="w-8 h-8 object-cover rounded-md cursor-pointer align-middle" style="image-rendering:auto" onclick="event.stopPropagation();window.cmOpenImage(this.src)" ondblclick="event.stopPropagation();window.cmDeleteComment(' + p.id + ',' + idx + ')"></span>';
+                        if (c.type === 'image' && c.media) cm = '<span class="inline-block align-middle ml-0.5" title="点击放大，双击删除表情评论"><img src="' + c.media + '" class="w-8 h-8 object-cover rounded-md cursor-pointer align-middle" style="image-rendering:auto" onclick="event.stopPropagation();window.cmOpenImage(this.src)" ondblclick="event.stopPropagation();window.cmDeleteComment(' + p.id + ',' + idx + ')"></span>';
                         else if (c.type === 'voice' && c.media) cm = '<div class="mt-1"><audio src="' + c.media + '" controls preload="metadata" style="width:180px;height:34px;"></audio></div>';
                         var displayComment = '<span class="font-medium text-xs">' + escapeHtml(ca) + '</span>';
                         if (c.replyToIndex !== undefined && p.comments[c.replyToIndex]) {
                             var targetName = p.comments[c.replyToIndex].authorId === 'me' ? settings.myName : dispNameById(p.comments[c.replyToIndex].authorId);
                             displayComment += '<span class="text-xs text-[var(--text-secondary)]"> 回复 </span><span class="font-medium text-xs">' + escapeHtml(targetName) + '</span>';
                         }
-                        if (text && !(text === '[图片]' && cm)) displayComment += '<span class="text-xs">：' + escapeHtml(text) + '</span>';
+                        if (cm && text === '[图片]') displayComment += '<span class="text-xs">：</span>';
+                        else if (text) displayComment += '<span class="text-xs">：' + escapeHtml(text) + '</span>';
                         displayComment += cm;
                         commentsHtml += '<div class="moment-comment-item" ondblclick="event.stopPropagation();window.cmDeleteComment(' + p.id + ',' + idx + ')" onclick="event.stopPropagation();window.prepareReply(' + p.id + ',' + idx + ')">';
                         commentsHtml += '<div class="flex-1">' + displayComment + ' <span class="text-[10px] text-[var(--text-secondary)]">' + formatRelativeTime(c.timestamp) + '</span></div>';

@@ -2893,22 +2893,22 @@
                 <div class="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-color)]">
                     <div class="flex items-center space-x-3">
                         <i class="fa fa-comments-o text-lg" style="color:var(--theme)"></i>
-                        <span class="text-sm text-[var(--text-primary)]">每轮最多几人回复/span>
+                        <span class="text-sm text-[var(--text-primary)]">每轮最多几人回复</span>
                     </div>
                     <div class="flex items-center space-x-2">
                         <input type="range" id="gh-reply-limit" min="1" max="8" value="2" class="w-24">
-                        <span id="gh-reply-limit-label" class="text-xs text-[var(--text-secondary)] w-7 text-right">2人/span>
+                        <span id="gh-reply-limit-label" class="text-xs text-[var(--text-secondary)] w-7 text-right">2人</span>
                     </div>
                 </div>
                 <!-- 每轮最多几条消息-->
                 <div class="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-color)]">
                     <div class="flex items-center space-x-3">
                         <i class="fa fa-sort-amount-asc text-lg" style="color:var(--theme)"></i>
-                        <span class="text-sm text-[var(--text-primary)]">每轮最多几条消息/span>
+                        <span class="text-sm text-[var(--text-primary)]">每轮最多几条消息</span>
                     </div>
                     <div class="flex items-center space-x-2">
                         <input type="range" id="gh-msg-limit" min="2" max="20" value="8" class="w-24">
-                        <span id="gh-msg-limit-label" class="text-xs text-[var(--text-secondary)] w-7 text-right">8条/span>
+                        <span id="gh-msg-limit-label" class="text-xs text-[var(--text-secondary)] w-7 text-right">8条</span>
                     </div>
                 </div>
             </div>
@@ -3441,7 +3441,7 @@
     </div>
 
     <!-- ===== 赠送亲属卡 → 选择联系人 ===== -->
-    <div id="fc-send-select" class="fixed inset-0 bg-black/30 z-[100] hidden flex items-center justify-center p-4">
+    <div id="fc-send-select" class="fixed inset-0 bg-black/30 z-[100000] hidden flex items-center justify-center p-4">
         <div class="bg-[var(--card-bg)] rounded-3xl w-full max-w-sm max-h-[80vh] overflow-y-auto p-6 shadow-xl">
             <h3 class="font-semibold text-lg mb-4 text-[var(--text-primary)]">选择赠送对象</h3>
             <div id="fc-recipient-list" class="space-y-2"></div>
@@ -3450,7 +3450,7 @@
     </div>
 
     <!-- ===== 赠送亲属卡 → 设置额度 ===== -->
-    <div id="fc-set-limit" class="fixed inset-0 bg-black/30 z-[100] hidden flex items-center justify-center p-4">
+    <div id="fc-set-limit" class="fixed inset-0 bg-black/30 z-[100000] hidden flex items-center justify-center p-4">
         <div class="bg-[var(--card-bg)] rounded-3xl w-full max-w-sm p-6 shadow-xl">
             <h3 class="font-semibold text-lg mb-4 text-[var(--text-primary)]">设置每月消费上限</h3>
             <div class="flex items-center border border-[var(--border-color)] rounded-xl px-3 py-2 mb-2">
@@ -3464,7 +3464,7 @@
     </div>
 
     <!-- ===== 赠送确认弹窗 ===== -->
-    <div id="fc-confirm-modal" class="fixed inset-0 bg-black/30 z-[110] hidden flex items-center justify-center p-4">
+    <div id="fc-confirm-modal" class="fixed inset-0 bg-black/30 z-[100100] hidden flex items-center justify-center p-4">
         <div class="bg-[var(--card-bg)] rounded-3xl w-full max-w-sm p-6 shadow-xl text-center">
             <p id="fc-confirm-text" class="text-sm text-[var(--text-primary)] mb-6">确认赠送亲属卡？</p>
             <div class="flex space-x-3">
@@ -6055,6 +6055,130 @@ async function createGroup(name, memberIds) {
                     });
                 };
             }
+            // ===== 群聊禁言 =====
+            function getGroupMuteUntil(g, memberId) {
+                if (!g || !memberId || memberId === 'system') return 0;
+                if ((g.owner ? g.owner : 'me') === memberId || (g.admins || []).indexOf(memberId) !== -1) return 0;
+                var now = Date.now();
+                var FAR = 1e15;
+                var t = 0;
+                if (g.muteMode === 'always') t = FAR;
+                if (g.muteMode === 'timed' && g.muteStart && g.muteEnd && now >= g.muteStart && now <= g.muteEnd) t = Math.max(t, g.muteEnd);
+                if (g.muteTempAll && now < g.muteTempAll) t = Math.max(t, g.muteTempAll);
+                var mu = g.muteMembers && g.muteMembers[memberId];
+                if (mu === 0 || (mu && now < mu)) t = mu === 0 ? FAR : Math.max(t, mu);
+                return t;
+            }
+            function isGroupMemberMuted(g, memberId) { return getGroupMuteUntil(g, memberId) > 0; }
+            function groupMuteUntilText(ts) {
+                if (!ts || ts <= 0) return '';
+                if (ts >= 1e15) return '永久';
+                var diff = ts - Date.now();
+                if (diff <= 0) return '';
+                var min = Math.ceil(diff / 60000);
+                if (min < 60) return '约' + min + '分钟后';
+                var h = Math.floor(min / 60), m = min % 60;
+                if (h < 24) return m ? '约' + h + '小时' + m + '分钟后' : '约' + h + '小时后';
+                return '约' + Math.floor(h / 24) + '天后';
+            }
+            function groupMemberDispName(mid) {
+                if (mid === 'me') return settings.myName || '我';
+                var c = getGroupMemberById(mid);
+                return c ? (c.remark || c.name) : '未知成员';
+            }
+            function dtLocalFromTs(ts) {
+                if (!ts) return '';
+                var d = new Date(ts);
+                var p = function(n) { return (n < 10 ? '0' : '') + n; };
+                return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+            }
+            function tsFromDtLocal(v) {
+                if (!v) return 0;
+                var t = new Date(v).getTime();
+                return isNaN(t) ? 0 : t;
+            }
+            async function addGroupSystemMessage(groupId, text) {
+                var msg = { type: 'system', text: text, senderId: 'system', timestamp: new Date().toISOString(), read: true, groupId: groupId };
+                var id = await qAddData('groupMessages', msg);
+                msg.id = id;
+                if (groupId === currentGroupId && groupMessages) {
+                    groupMessages.push(msg);
+                    messages = groupMessages;
+                    if (currentGroupId) cachedGroupMessages[currentGroupId] = groupMessages;
+                    appendMessageToChat(msg);
+                } else {
+                    var cgm = cachedGroupMessages[groupId] || [];
+                    cgm.push(msg);
+                    cachedGroupMessages[groupId] = cgm;
+                }
+            }
+            async function doGroupMute(g, memberIds, minutes, byId) {
+                if (!g || !memberIds || !memberIds.length) return;
+                var byName = groupMemberDispName(byId);
+                if (!g.muteMembers) g.muteMembers = {};
+                memberIds.forEach(function(mid) {
+                    g.muteMembers[mid] = minutes > 0 ? Date.now() + minutes * 60000 : 0;
+                });
+                updateData('groups', g);
+                var names = memberIds.map(groupMemberDispName);
+                var durText = minutes > 0 ? (minutes >= 60 ? (minutes % 60 === 0 ? Math.floor(minutes / 60) + '小时' : Math.floor(minutes / 60) + '小时' + (minutes % 60) + '分钟') : minutes + '分钟') : '永久';
+                await addGroupSystemMessage(g.id, names.join('、') + ' 被 ' + byName + ' 禁言 ' + durText);
+                return true;
+            }
+            async function doGroupUnmute(g, memberIds, byId) {
+                if (!g || !memberIds || !memberIds.length) return;
+                var mutedList = g.muteMembers || {};
+                var unmuted = memberIds.filter(function(mid) { return mutedList[mid] !== undefined; });
+                if (!unmuted.length) return;
+                if (!g.muteMembers) g.muteMembers = {};
+                var byName = groupMemberDispName(byId);
+                unmuted.forEach(function(mid) { delete g.muteMembers[mid]; });
+                updateData('groups', g);
+                var names = unmuted.map(groupMemberDispName);
+                await addGroupSystemMessage(g.id, names.join('、') + ' 被 ' + byName + ' 解除禁言');
+                return true;
+            }
+            function maybeAdminRandomMuteAction(grp) {
+                if (!grp || !grp.admins || !grp.admins.length) return;
+                var prob = (grp.muteAdminProb === undefined || grp.muteAdminProb === null) ? 1 : grp.muteAdminProb;
+                if (!(prob > 0) || Math.random() * 100 >= prob) return;
+                var admins = grp.admins.filter(function(a) { return a !== 'me'; });
+                if (!admins.length) return;
+                var admin = admins[Math.floor(Math.random() * admins.length)];
+                var members = (grp.members || []).filter(function(m) { return m !== 'me' && m !== admin && (grp.owner ? grp.owner : 'me') !== m; });
+                if (!members.length) return;
+                var freeNow = members.filter(function(m) { return getGroupMuteUntil(grp, m) <= 0; });
+                var mutedNow = members.filter(function(m) { return getGroupMuteUntil(grp, m) > 0; });
+                setTimeout(function() {
+                    var g2 = groups.find(function(x) { return x.id === grp.id; }) || grp;
+                    if (!freeNow.length && !mutedNow.length) return;
+                    if (freeNow.length && Math.random() < 0.08) {
+                        g2.muteTempAll = Date.now() + 10 * 60000;
+                        updateData('groups', g2);
+                        addGroupSystemMessage(g2.id, groupMemberDispName(admin) + ' 开启了全体禁言 10 分钟（群主与管理员除外）');
+                        return;
+                    }
+                    if (mutedNow.length && Math.random() < 0.5) {
+                        var unfreeze = [];
+                        var un = Math.min(1 + Math.floor(Math.random() * Math.min(2, mutedNow.length)), mutedNow.length);
+                        while (unfreeze.length < un) {
+                            var pick = mutedNow[Math.floor(Math.random() * mutedNow.length)];
+                            if (unfreeze.indexOf(pick) === -1) unfreeze.push(pick);
+                        }
+                        doGroupUnmute(g2, unfreeze, admin);
+                        return;
+                    }
+                    if (freeNow.length) {
+                        var freeze = [];
+                        var fn = Math.min(1 + Math.floor(Math.random() * Math.min(3, freeNow.length)), freeNow.length);
+                        while (freeze.length < fn) {
+                            var pick2 = freeNow[Math.floor(Math.random() * freeNow.length)];
+                            if (freeze.indexOf(pick2) === -1) freeze.push(pick2);
+                        }
+                        doGroupMute(g2, freeze, [5, 10, 30, 60][Math.floor(Math.random() * 4)], admin);
+                    }
+                }, 1200 + Math.random() * 2800);
+            }
             // ---- 群管理 ----
             function openGroupManage() {
                 var g = getCurrentGroup(); if (!g) return;
@@ -6064,6 +6188,33 @@ async function createGroup(name, memberIds) {
                 var content = document.getElementById('ch-sub-content');
                 if (!modal || !title || !content) return;
                 title.textContent = '🛡 群管理 - ' + g.name;
+                content.innerHTML =
+                    '<div class="flex border-b border-[var(--border-color)] mb-1">' +
+                    '<button class="gm-tab gm-tab-active flex-1 py-2.5 text-sm" data-tab="admin" style="color:var(--theme);font-weight:600;border-bottom:2px solid var(--theme)">设置管理员</button>' +
+                    '<button class="gm-tab flex-1 py-2.5 text-sm" data-tab="mute">发言管理</button>' +
+                    '</div>' +
+                    '<div id="gm-pane-admin"></div>' +
+                    '<div id="gm-pane-mute" class="hidden"></div>';
+                modal.classList.remove('hidden');
+                content.querySelectorAll('.gm-tab').forEach(function(btn) {
+                    btn.onclick = function() {
+                        var tab = btn.dataset.tab;
+                        content.querySelectorAll('.gm-tab').forEach(function(b) {
+                            b.style.color = b === btn ? 'var(--theme)' : '';
+                            b.style.fontWeight = b === btn ? '600' : '';
+                            b.style.borderBottom = b === btn ? '2px solid var(--theme)' : '2px solid transparent';
+                        });
+                        document.getElementById('gm-pane-admin').classList.toggle('hidden', tab !== 'admin');
+                        document.getElementById('gm-pane-mute').classList.toggle('hidden', tab !== 'mute');
+                        if (tab === 'admin') renderGroupManageAdmin(g);
+                        else renderGroupManageMute(g, document.getElementById('gm-pane-mute'));
+                    };
+                });
+                renderGroupManageAdmin(g);
+            }
+            function renderGroupManageAdmin(g) {
+                var content = document.getElementById('gm-pane-admin');
+                if (!content) return;
                 var mgList = (g.members || []).slice();
                 if (mgList.indexOf('me') === -1) { if (isGroupOwner(g)) mgList.unshift('me'); else mgList.push('me'); }
                 var rows = mgList.map(function(mid) {
@@ -6077,21 +6228,173 @@ async function createGroup(name, memberIds) {
                     return '<div class="flex items-center justify-between py-2.5 border-b border-[var(--border-color)]"><div class="flex items-center space-x-2.5 min-w-0"><img src="' + escapeHtml(mgAvatar || 'https://picsum.photos/200/200?random=' + mid) + '" class="w-9 h-9 rounded-lg object-cover" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><div class="min-w-0"><p class="text-sm text-[var(--text-primary)] truncate">' + escapeHtml(name) + '</p><div class="mt-0.5">' + badge + '</div></div></div>' + btnHtml + '</div>';
                 }).join('');
                 content.innerHTML = rows || '<div class="text-xs text-[var(--text-secondary)] text-center py-4">暂无成员</div>';
-                modal.classList.remove('hidden');
-                setTimeout(function() {
-                    content.querySelectorAll('.gh-admin-toggle').forEach(function(btn) {
-                        btn.onclick = function() {
-                            var mid = btn.dataset.mid;
-                            var admins = g.admins || [];
-                            var idx = admins.indexOf(mid);
-                            if (idx !== -1) admins.splice(idx, 1); else admins.push(mid);
-                            g.admins = admins;
-                            updateData('groups', g);
-                            showToast(idx !== -1 ? '已取消管理员' : '已设为管理员 ');
-                            openGroupManage();
+                content.querySelectorAll('.gh-admin-toggle').forEach(function(btn) {
+                    btn.onclick = function() {
+                        var mid = btn.dataset.mid;
+                        var admins = g.admins || [];
+                        var idx = admins.indexOf(mid);
+                        if (idx !== -1) admins.splice(idx, 1); else admins.push(mid);
+                        g.admins = admins;
+                        updateData('groups', g);
+                        showToast(idx !== -1 ? '已取消管理员' : '已设为管理员 ');
+                        openGroupManage();
+                    };
+                });
+            }
+            function renderGroupManageMute(g, container) {
+                if (!container) return;
+                var mode = g.muteMode || 'off';
+                var prob = (g.muteAdminProb === undefined || g.muteAdminProb === null) ? 1 : g.muteAdminProb;
+                var html = '';
+                html += '<div class="py-2"><p class="text-xs text-[var(--text-secondary)] mb-2">全员禁言类型</p>';
+                html += '<div class="flex space-x-2">';
+                var modes = [['off', '默认未开启'], ['always', '始终开启'], ['timed', '定时开启']];
+                modes.forEach(function(mm) {
+                    var active = mode === mm[0];
+                    html += '<button class="gm-mode-btn flex-1 py-2 rounded-lg text-xs" data-mode="' + mm[0] + '" style="' + (active ? 'background:var(--theme);color:#fff;font-weight:600;border:1px solid var(--theme)' : 'border:1px solid var(--border-color);color:var(--text-primary)') + '">' + mm[1] + '</button>';
+                });
+                html += '</div>';
+                html += '<div id="gm-timed-row" style="display:' + (mode === 'timed' ? 'block' : 'none') + '" class="mt-2">';
+                html += '<div class="flex items-center space-x-2 text-xs"><label class="text-[var(--text-secondary)] shrink-0">开始</label><input type="datetime-local" id="gm-timed-start" class="flex-1 min-w-0 text-xs bg-transparent border border-[var(--border-color)] rounded-lg px-2 py-1.5" value="' + dtLocalFromTs(g.muteStart) + '"><label class="text-[var(--text-secondary)] shrink-0">结束</label><input type="datetime-local" id="gm-timed-end" class="flex-1 min-w-0 text-xs bg-transparent border border-[var(--border-color)] rounded-lg px-2 py-1.5" value="' + dtLocalFromTs(g.muteEnd) + '"></div>';
+                html += '<p class="text-[10px] mt-1" style="color:var(--text-secondary)">定时开启时段内全员禁言（群主与管理员除外）</p>';
+                html += '</div></div>';
+                html += '<div class="py-2.5 border-t border-[var(--border-color)]">';
+                html += '<p class="text-xs mb-1.5" style="color:var(--text-secondary)">管理员随机禁言概率</p>';
+                html += '<div class="flex items-center space-x-2"><input type="number" id="gm-mute-prob" min="0.01" max="100" step="0.01" value="' + prob + '" class="w-20 text-sm bg-transparent border border-[var(--border-color)] rounded-lg px-2 py-1.5" style="color:var(--text-primary)"><span class="text-xs" style="color:var(--text-secondary)">%（可设 0.XX）</span></div>';
+                html += '<p class="text-[10px] mt-1" style="color:var(--text-secondary)">群内管理员有概率随机禁言 / 解除禁言成员（对群主与管理员无效）</p>';
+                html += '</div>';
+                html += '<div class="py-2.5 border-t border-[var(--border-color)] flex items-center space-x-2">';
+                html += '<button id="gm-batch-mute" class="flex-1 py-2 rounded-lg text-xs" style="background:var(--theme);color:#fff">批量禁言</button>';
+                html += '<button id="gm-batch-unmute" class="flex-1 py-2 rounded-lg text-xs border border-[var(--border-color)]" style="color:var(--text-primary)">批量解除</button>';
+                html += '</div>';
+                html += '<div id="gm-mute-members" class="pt-1"></div>';
+                container.innerHTML = html;
+                renderGroupMuteMembers(g, container.querySelector('#gm-mute-members'));
+                bindGroupMuteUI(g, container);
+            }
+            function renderGroupMuteMembers(g, listEl) {
+                if (!listEl) return;
+                var memberList = (g.members || []).slice();
+                if (memberList.indexOf('me') === -1) memberList.unshift('me');
+                var rows = memberList.map(function(mid) {
+                    var c = getGroupMemberById(mid);
+                    var name = groupMemberDispName(mid);
+                    var avatar = mid === 'me' ? settings.myAvatar : (c ? c.avatar : '');
+                    var isOwner = (g.owner ? g.owner : 'me') === mid;
+                    var isAdmin = isGroupAdmin(g, mid);
+                    var until = getGroupMuteUntil(g, mid);
+                    var statusHtml = '';
+                    if (isOwner) statusHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:var(--theme-light);color:var(--theme)">群主</span>';
+                    else if (isAdmin) statusHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:var(--theme-light);color:var(--theme)">管理员</span>';
+                    if (until > 0) statusHtml = '<span class="text-[10px] px-1.5 py-0.5 rounded inline-block mt-0.5" style="background:#fde8e8;color:#e04c4c">禁言中 · ' + groupMuteUntilText(until) + '解除</span>';
+                    var btnHtml = '';
+                    if (isOwner) btnHtml = '<span class="text-xs" style="color:var(--text-secondary)">群主</span>';
+                    else if (until > 0) btnHtml = '<button class="gm-unmute-btn text-xs px-2.5 py-1 rounded-lg border border-[var(--border-color)]" data-mid="' + mid + '">解除禁言</button>';
+                    else btnHtml = '<button class="gm-mute-btn text-xs px-2.5 py-1 rounded-lg border border-[var(--border-color)]" data-mid="' + mid + '">禁言</button>';
+                    return '<div class="gm-row flex items-center justify-between py-2.5 border-b border-[var(--border-color)]"><div class="flex items-center space-x-2.5 min-w-0"><input type="checkbox" class="gm-mute-cb shrink-0" data-mid="' + mid + '"><img src="' + escapeHtml(avatar || 'https://picsum.photos/200/200?random=' + mid) + '" class="w-8 h-8 rounded-lg object-cover" onerror="this.src=\'https://picsum.photos/200/200?random=1\'"><div class="min-w-0"><p class="text-sm truncate" style="color:var(--text-primary)">' + escapeHtml(name) + '</p><div class="mt-0.5">' + statusHtml + '</div></div></div>' + btnHtml + '</div>';
+                }).join('');
+                listEl.innerHTML = rows;
+            }
+            function bindGroupMuteUI(g, container) {
+                if (!container) return;
+                var membersEl = container.querySelector('#gm-mute-members');
+                if (!membersEl) return;
+                membersEl.querySelectorAll('.gm-mute-btn').forEach(function(btn) {
+                    btn.onclick = function() {
+                        var row = btn.closest('.gm-row');
+                        if (!row) return;
+                        var wrap = row.parentElement;
+                        var existing = wrap.querySelector('.gm-dur-row');
+                        if (existing) { existing.remove(); return; }
+                        wrap.querySelectorAll('.gm-dur-row').forEach(function(e) { e.remove(); });
+                        var durs = [['5分钟', 5], ['10分钟', 10], ['30分钟', 30], ['1小时', 60], ['12小时', 720], ['24小时', 1440], ['永久', 0]];
+                        var durHtml = '<div class="gm-dur-row flex flex-wrap gap-1.5 px-4 pb-2">' + durs.map(function(d) {
+                            return '<button class="gm-dur-chip text-[10px] px-2 py-1 rounded-full border border-[var(--border-color)]" data-min="' + d[1] + '">' + d[0] + '</button>';
+                        }).join('') + '</div>';
+                        row.insertAdjacentHTML('afterend', durHtml);
+                        wrap.querySelectorAll('.gm-dur-chip').forEach(function(chip) {
+                            chip.onclick = function() {
+                                var minutes = parseInt(chip.dataset.min);
+                                var mids = [];
+                                membersEl.querySelectorAll('.gm-mute-cb:checked').forEach(function(cb) { mids.push(cb.dataset.mid); });
+                                if (!mids.length) mids.push(btn.dataset.mid);
+                                doGroupMute(g, mids, minutes, 'me');
+                                renderGroupManageMute(g, container);
+                            };
+                        });
+                    };
+                });
+                membersEl.querySelectorAll('.gm-unmute-btn').forEach(function(btn) {
+                    btn.onclick = function() {
+                        var mids = [btn.dataset.mid];
+                        membersEl.querySelectorAll('.gm-mute-cb:checked').forEach(function(cb) { if (cb.dataset.mid !== btn.dataset.mid) mids.push(cb.dataset.mid); });
+                        doGroupUnmute(g, mids, 'me');
+                        renderGroupManageMute(g, container);
+                    };
+                });
+                var batchMute = container.querySelector('#gm-batch-mute');
+                if (batchMute) batchMute.onclick = function() {
+                    var mids = [];
+                    membersEl.querySelectorAll('.gm-mute-cb:checked').forEach(function(cb) { mids.push(cb.dataset.mid); });
+                    if (!mids.length) { showToast('请先勾选成员'); return; }
+                    container.querySelectorAll('.gm-batch-dur-row').forEach(function(e) { e.remove(); });
+                    var durs = [['5分钟', 5], ['10分钟', 10], ['30分钟', 30], ['1小时', 60], ['12小时', 720], ['24小时', 1440], ['永久', 0]];
+                    var durHtml = '<div class="gm-batch-dur-row flex flex-wrap gap-1.5 p-2 mb-1" style="background:var(--theme-light);border-radius:12px"><span class="text-[10px] w-full mb-1" style="color:var(--text-secondary)">已选 ' + mids.length + ' 人，选择时长：</span>' + durs.map(function(d) {
+                        return '<button class="gm-dur-chip text-[10px] px-2 py-1 rounded-full border border-[var(--border-color)]" data-min="' + d[1] + '">' + d[0] + '</button>';
+                    }).join('') + '</div>';
+                    batchMute.insertAdjacentHTML('afterend', durHtml);
+                    container.querySelectorAll('.gm-batch-dur-row .gm-dur-chip').forEach(function(chip) {
+                        chip.onclick = function() {
+                            doGroupMute(g, mids, parseInt(chip.dataset.min), 'me');
+                            renderGroupManageMute(g, container);
                         };
                     });
-                }, 50);
+                };
+                var batchUnmute = container.querySelector('#gm-batch-unmute');
+                if (batchUnmute) batchUnmute.onclick = function() {
+                    var mids = [];
+                    membersEl.querySelectorAll('.gm-mute-cb:checked').forEach(function(cb) { mids.push(cb.dataset.mid); });
+                    if (!mids.length) { showToast('请先勾选成员'); return; }
+                    doGroupUnmute(g, mids, 'me');
+                    renderGroupManageMute(g, container);
+                };
+                var modeBtns = container.querySelectorAll('.gm-mode-btn');
+                modeBtns.forEach(function(btn) {
+                    btn.onclick = function() {
+                        g.muteMode = btn.dataset.mode;
+                        if (g.muteMode === 'timed' && (!g.muteStart || !g.muteEnd)) {
+                            var now2 = Date.now();
+                            g.muteStart = now2;
+                            g.muteEnd = now2 + 3600000;
+                        }
+                        updateData('groups', g);
+                        showToast(g.muteMode === 'off' ? '已关闭全员禁言' : g.muteMode === 'always' ? '已开启始终禁言' : '已开启定时禁言');
+                        renderGroupManageMute(g, container);
+                    };
+                });
+                var startIn = container.querySelector('#gm-timed-start');
+                var endIn = container.querySelector('#gm-timed-end');
+                function applyTimed() {
+                    var s = tsFromDtLocal(startIn ? startIn.value : '');
+                    var e = tsFromDtLocal(endIn ? endIn.value : '');
+                    if (s && e && e > s) {
+                        g.muteStart = s;
+                        g.muteEnd = e;
+                        updateData('groups', g);
+                        showToast('定时禁言已更新');
+                    } else { showToast('结束时间需晚于开始时间'); }
+                }
+                if (startIn) startIn.onchange = applyTimed;
+                if (endIn) endIn.onchange = applyTimed;
+                var probIn = container.querySelector('#gm-mute-prob');
+                if (probIn) probIn.onchange = function() {
+                    var v = parseFloat(this.value);
+                    if (isNaN(v) || v <= 0) v = 0.01;
+                    v = Math.min(100, Math.round(v * 100) / 100);
+                    g.muteAdminProb = v;
+                    updateData('groups', g);
+                    showToast('管理员随机概率已设为 ' + v + '%');
+                };
             }
             // ---- 查找聊天记录 ----
             function getGroupMessagesAll() {
@@ -6327,13 +6630,13 @@ async function createGroup(name, memberIds) {
                         + '<div class="flex justify-between"><span>主动来信概率</span><input type="range" id="ch-partner-letter-chance" min="0" max="100" value="' + Math.round((rs.partnerLetterChance || 0.3) * 100) + '" class="w-24"><span id="ch-partner-letter-label">' + Math.round((rs.partnerLetterChance || 0.3) * 100) + '%</span></div>'
                         + '</div>'
                         + '<hr>'
-                        + '<div class="flex justify-between"><span>字卡附带表情包/span><div class="glass-toggle' + (rs.attachStickerEnabled !== false ? ' active' : '') + '" id="ch-attach-sticker-enabled"><div class="knob"></div></div></div>'
+                        + '<div class="flex justify-between"><span>字卡附带表情包</span><div class="glass-toggle' + (rs.attachStickerEnabled !== false ? ' active' : '') + '" id="ch-attach-sticker-enabled"><div class="knob"></div></div></div>'
                         + '<div id="ch-attach-sticker-row"' + (rs.attachStickerEnabled !== false ? '' : ' style="display:none"') + '>'
-                        + '<div class="flex justify-between"><span>附带表情包概率/span><input type="range" id="ch-attach-sticker-chance" min="0" max="100" value="' + Math.round((rs.attachStickerChance !== undefined ? rs.attachStickerChance : 0.2) * 100) + '" class="w-24"><span id="ch-attach-sticker-label">' + Math.round((rs.attachStickerChance !== undefined ? rs.attachStickerChance : 0.2) * 100) + '%</span></div>'
+                        + '<div class="flex justify-between"><span>附带表情包概率</span><input type="range" id="ch-attach-sticker-chance" min="0" max="100" value="' + Math.round((rs.attachStickerChance !== undefined ? rs.attachStickerChance : 0.2) * 100) + '" class="w-24"><span id="ch-attach-sticker-label">' + Math.round((rs.attachStickerChance !== undefined ? rs.attachStickerChance : 0.2) * 100) + '%</span></div>'
                         + '</div>'
                         + '<div class="flex justify-between"><span>单独发送表情包</span><div class="glass-toggle' + (rs.separateStickerEnabled !== false ? ' active' : '') + '" id="ch-sep-sticker-enabled"><div class="knob"></div></div></div>'
                         + '<div id="ch-sep-sticker-row"' + (rs.separateStickerEnabled !== false ? '' : ' style="display:none"') + '>'
-                        + '<div class="flex justify-between"><span>单独表情包概率/span><input type="range" id="ch-sep-sticker-chance" min="0" max="100" value="' + Math.round((rs.separateStickerChance !== undefined ? rs.separateStickerChance : 0.3) * 100) + '" class="w-24"><span id="ch-sep-sticker-label">' + Math.round((rs.separateStickerChance !== undefined ? rs.separateStickerChance : 0.3) * 100) + '%</span></div>'
+                        + '<div class="flex justify-between"><span>单独表情包概率</span><input type="range" id="ch-sep-sticker-chance" min="0" max="100" value="' + Math.round((rs.separateStickerChance !== undefined ? rs.separateStickerChance : 0.3) * 100) + '" class="w-24"><span id="ch-sep-sticker-label">' + Math.round((rs.separateStickerChance !== undefined ? rs.separateStickerChance : 0.3) * 100) + '%</span></div>'
                         + '</div>'
                         + '<div class="flex justify-between"><span>引用消息</span><div class="glass-toggle' + (rs.quoteEnabled ? ' active' : '') + '" id="ch-quote-enabled"><div class="knob"></div></div></div>'
                         + '<div id="ch-quote-row"' + (rs.quoteEnabled ? '' : ' style="display:none"') + '>'
@@ -6355,9 +6658,9 @@ async function createGroup(name, memberIds) {
                         + '<div id="ch-timezone-manual-row" class="flex justify-between"' + (contact.timezoneManual ? '' : ' style="display:none"') + '><span>时区<br><span style="font-size:9px;opacity:0.6">+8=北京 +0=伦敦 -5=纽约</span></span><input type="number" id="ch-timezone-offset-input" value="' + (contact.timezoneOffset ?? 0) + '" min="-12" max="12" step="0.5" class="w-16 px-1 border rounded text-center"></div>'
                         + '<div class="flex justify-between"><span>回复中拍一拍概率</span><input type="range" id="ch-reply-pat-chance" min="0" max="100" value="' + Math.round(rs.replyPatChance * 100) + '" class="w-24"><span id="ch-reply-pat-label">' + Math.round(rs.replyPatChance * 100) + '%</span></div>'
                         + '<div class="flex justify-between"><span>回复中通话概率</span><input type="range" id="ch-reply-call-chance" min="0" max="100" value="' + Math.round(rs.replyCallChance * 100) + '" class="w-24"><span id="ch-reply-call-label">' + Math.round(rs.replyCallChance * 100) + '%</span></div>'
-                        + '<div class="flex justify-between"><span>回复中语音概率/span><input type="range" id="ch-voice-reply-chance" min="0" max="30" value="' + Math.round((rs.voiceReplyChance !== undefined ? rs.voiceReplyChance : 0.06) * 100) + '" class="w-24"><span id="ch-voice-reply-label">' + Math.round((rs.voiceReplyChance !== undefined ? rs.voiceReplyChance : 0.06) * 100) + '%</span></div>'
-                        + '<div class="flex justify-between"><span>查岗心里话概率/span><input type="range" id="ch-patrol-heart-chance" min="0" max="100" value="' + Math.round((rs.patrolHeartChance !== undefined ? rs.patrolHeartChance : 0.6) * 100) + '" class="w-24"><span id="ch-patrol-heart-label">' + Math.round((rs.patrolHeartChance !== undefined ? rs.patrolHeartChance : 0.6) * 100) + '%</span></div>'
-                        + '<div class="flex justify-between"><span>抉择心里话概率/span><input type="range" id="ch-decide-heart-chance" min="0" max="100" value="' + Math.round((rs.decideHeartChance !== undefined ? rs.decideHeartChance : 0.6) * 100) + '" class="w-24"><span id="ch-decide-heart-label">' + Math.round((rs.decideHeartChance !== undefined ? rs.decideHeartChance : 0.6) * 100) + '%</span></div>'
+                        + '<div class="flex justify-between"><span>回复中语音概率</span><input type="range" id="ch-voice-reply-chance" min="0" max="30" value="' + Math.round((rs.voiceReplyChance !== undefined ? rs.voiceReplyChance : 0.06) * 100) + '" class="w-24"><span id="ch-voice-reply-label">' + Math.round((rs.voiceReplyChance !== undefined ? rs.voiceReplyChance : 0.06) * 100) + '%</span></div>'
+                        + '<div class="flex justify-between"><span>查岗心里话概率</span><input type="range" id="ch-patrol-heart-chance" min="0" max="100" value="' + Math.round((rs.patrolHeartChance !== undefined ? rs.patrolHeartChance : 0.6) * 100) + '" class="w-24"><span id="ch-patrol-heart-label">' + Math.round((rs.patrolHeartChance !== undefined ? rs.patrolHeartChance : 0.6) * 100) + '%</span></div>'
+                        + '<div class="flex justify-between"><span>抉择心里话概率</span><input type="range" id="ch-decide-heart-chance" min="0" max="100" value="' + Math.round((rs.decideHeartChance !== undefined ? rs.decideHeartChance : 0.6) * 100) + '" class="w-24"><span id="ch-decide-heart-label">' + Math.round((rs.decideHeartChance !== undefined ? rs.decideHeartChance : 0.6) * 100) + '%</span></div>'
                         + '<hr>'
                         + '<div class="flex justify-between"><span>朋友圈评论延迟</span><input type="number" id="ch-post-reply-min" value="' + _du(rs.postReplyMin, '秒', rs.postReplyUnit || '分') + '" class="w-14 px-1 border rounded text-center">~<input type="number" id="ch-post-reply-max" value="' + _du(rs.postReplyMax, '秒', rs.postReplyUnit || '分') + '" class="w-14 px-1 border rounded text-center"><select id="ch-post-reply-unit" class="border rounded text-xs px-1"><option value="秒" ' + ((rs.postReplyUnit||'分')==='秒'?'selected':'') + '>秒</option><option value="分" ' + ((rs.postReplyUnit||'分')==='分'?'selected':'') + '>分</option><option value="时" ' + ((rs.postReplyUnit||'分')==='时'?'selected':'') + '>时</option></select></div>'
                         + '<div class="flex justify-between"><span>对方回复我的评论延迟</span><input type="number" id="ch-comment-reply-min" value="' + _du(rs.commentReplyMin, '秒', rs.commentReplyUnit || '分') + '" class="w-14 px-1 border rounded text-center">~<input type="number" id="ch-comment-reply-max" value="' + _du(rs.commentReplyMax, '秒', rs.commentReplyUnit || '分') + '" class="w-14 px-1 border rounded text-center"><select id="ch-comment-reply-unit" class="border rounded text-xs px-1"><option value="秒" ' + ((rs.commentReplyUnit||'分')==='秒'?'selected':'') + '>秒</option><option value="分" ' + ((rs.commentReplyUnit||'分')==='分'?'selected':'') + '>分</option><option value="时" ' + ((rs.commentReplyUnit||'分')==='时'?'selected':'') + '>时</option></select></div>'
@@ -7245,7 +7548,7 @@ async function createGroup(name, memberIds) {
                 }
             }
 
-            function createPrivateMessageElement(msg) {
+            function createPrivateMessageElement(msg, hideAvatarAndName = false, isGroupTail = true) {
                 if (msg.recalled) {
                     var rd = document.createElement('div');
                     rd.className = 'flex justify-center w-full my-1';
@@ -7455,12 +7758,16 @@ async function createGroup(name, memberIds) {
                     const avatar = msg.isMe ? settings.myAvatar : getCurrentContact()?.avatar || 'https://picsum.photos/200/200?random=1';
                     const wrapper = document.createElement('div');
                     wrapper.className = 'flex items-end space-x-2 max-w-[82%]';
-                    if (!msg.isMe) {
+                    if (!msg.isMe && !hideAvatarAndName) {
                         const av = document.createElement('img');
                         av.className = 'w-7 h-7 rounded-full';
                         av.src = avatar;
                         av.onerror = () => { av.src = 'https://picsum.photos/200/200?random=1'; };
                         wrapper.appendChild(av);
+                    } else if (!msg.isMe) {
+                        const avSpacer = document.createElement('div');
+                        avSpacer.className = 'w-7 h-7 shrink-0';
+                        wrapper.appendChild(avSpacer);
                     }
                     const innerWrap = document.createElement('div');
                     const img = document.createElement('img');
@@ -7475,12 +7782,16 @@ async function createGroup(name, memberIds) {
                     img.onclick = function(e) { e.stopPropagation(); showImageLightbox(msg.src); };
                     innerWrap.appendChild(img);
                     wrapper.appendChild(innerWrap);
-                    if (msg.isMe) {
+                    if (msg.isMe && !hideAvatarAndName) {
                         const meAvatar = document.createElement('img');
                         meAvatar.src = avatar;
                         meAvatar.className = 'w-7 h-7 rounded-full';
                         meAvatar.onerror = () => { meAvatar.src = 'https://picsum.photos/200/200?random=2'; };
                         wrapper.appendChild(meAvatar);
+                    } else {
+                        const meSpacer = document.createElement('div');
+                        meSpacer.className = 'w-7 h-7 shrink-0';
+                        wrapper.appendChild(meSpacer);
                     }
                     div.appendChild(wrapper);
                     const metaDiv = document.createElement('div');
@@ -7489,7 +7800,7 @@ async function createGroup(name, memberIds) {
                     metaDiv.style.padding = msg.isMe ? '0 36px 0 0' : '0 0 0 36px';
                     const readIcon = msg.read ? '' : '●';
                     const readClass = msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400');
-                    metaDiv.innerHTML = `${msg.hideTime ? '' : `<span class="text-xs text-[var(--text-secondary)]">${formatTime(msg.timestamp)}</span>`}<span class="read-status text-xs ml-1 ${readClass}">${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
+                    metaDiv.innerHTML = `${!isGroupTail ? '' : `<span class="text-xs text-[var(--text-secondary)] msg-time">${formatTime(msg.timestamp)}</span>`}<span class="read-status text-xs ml-1 ${readClass}">${isGroupTail ? readIcon : ''}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span>`;
                     div.ondblclick = () => toggleMsgActions(msg.id);
                     div.appendChild(metaDiv);
                     return div;
@@ -7510,11 +7821,11 @@ async function createGroup(name, memberIds) {
                 if (msg.type === 'text') cHtml = `<p class="break-words text-sm">${escapeHtml(msg.text)}</p>`;
                 const readIcon =
                     `<span class="read-status text-xs ml-1 ${msg.isMe ? 'read-dot-me' : (msg.read ? 'text-gray-400' : 'text-blue-400')}">${msg.read ? '' : '●'}</span>`;
-                const timeStr = msg.hideTime ? '' : formatTime(msg.timestamp);
-                const metaRow = `<div class="msg-meta" style="justify-content:${msg.isMe ? 'flex-end' : 'flex-start'}"><span class="msg-time">${timeStr}${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
+                const timeStr = isGroupTail ? formatTime(msg.timestamp) : '';
+                const metaRow = `<div class="msg-meta" style="justify-content:${msg.isMe ? 'flex-end' : 'flex-start'}"><span class="msg-time">${timeStr}${isGroupTail ? readIcon : ''}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
                 div.innerHTML =
-                    `<div class="flex items-end space-x-2 max-w-[82%]">${!msg.isMe ? `<img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=1'">` : ''}<div class="min-w-0"><div class="${bubble} px-3.5 py-2.5 card-shadow">${qHtml}${cHtml}</div></div>${msg.isMe ? `<img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">` : ''}</div>` +
-                    `<div class="msg-meta" style="justify-content:${msg.isMe ? 'flex-end' : 'flex-start'};${msg.isMe ? 'padding-right:36px;' : 'padding-left:36px;'}"><span class="msg-time">${timeStr}${readIcon}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
+                    `<div class="flex items-end space-x-2 max-w-[82%]">${(!msg.isMe && !hideAvatarAndName) ? `<img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=1'">` : (!msg.isMe ? `<div class="w-7 h-7 shrink-0"></div>` : '')}<div class="min-w-0"><div class="${bubble} px-3.5 py-2.5 card-shadow">${qHtml}${cHtml}</div></div>${msg.isMe ? (hideAvatarAndName ? `<div class="w-7 h-7 shrink-0"></div>` : `<img src="${escapeHtml(avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">`) : ''}</div>` +
+                    `<div class="msg-meta" style="justify-content:${msg.isMe ? 'flex-end' : 'flex-start'};${msg.isMe ? 'padding-right:36px;' : 'padding-left:36px;'}"><span class="msg-time">${timeStr}${isGroupTail ? readIcon : ''}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button><button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="${msg.id}"><i class="fa fa-trash"></i></button><button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
                 div.ondblclick = function() { toggleMsgActions(msg.id); };
                 return div;
             }
@@ -7536,6 +7847,13 @@ async function createGroup(name, memberIds) {
                     var by = msg.senderId === 'me' ? '你' : dispNameById(msg.senderId);
                     rd.innerHTML = '<span class="text-xs text-[var(--text-secondary)] msg-recalled">' + escapeHtml(by) + ' 撤回了一条消息</span>';
                     return rd;
+                }
+                if (msg.type === 'system') {
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-center w-full my-2';
+                    div.dataset.id = msg.id;
+                    div.innerHTML = `<span class="text-xs text-[var(--text-secondary)] bg-[var(--card-bg)] px-3 py-2 rounded-xl" style="max-width:90%;text-align:center;line-height:1.6;">${escapeHtml(msg.text)}</span>`;
+                    return div;
                 }
                 if (msg.type === 'redpacket') {
                     const div = document.createElement('div');
@@ -7569,7 +7887,7 @@ async function createGroup(name, memberIds) {
                     </span>
                   </div>
                 </div>
-                ${isMe ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">` : ''}
+                ${isMe ? (hideAvatarAndName ? `<div class="w-7 h-7 shrink-0"></div>` : `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">`) : ''}
               </div>`;
                     div.ondblclick = function() { toggleMsgActions(msg.id); };
                     return div;
@@ -7655,12 +7973,16 @@ async function createGroup(name, memberIds) {
                     div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
                     const wrapper = document.createElement('div');
                     wrapper.className = 'flex items-end space-x-2 max-w-[82%]';
-                    if (!isMe) {
+                    if (!isMe && !hideAvatarAndName) {
                         const av = document.createElement('img');
                         av.src = sender.avatar;
                         av.className = 'w-7 h-7 rounded-full';
                         av.onerror = () => { av.src = 'https://picsum.photos/200/200?random=1'; };
                         wrapper.appendChild(av);
+                    } else if (!isMe) {
+                        const avSpacer = document.createElement('div');
+                        avSpacer.className = 'w-7 h-7 shrink-0';
+                        wrapper.appendChild(avSpacer);
                     }
                     const innerWrap = document.createElement('div');
                     if (!isMe && !hideAvatarAndName) {
@@ -7672,12 +7994,16 @@ async function createGroup(name, memberIds) {
                     const voiceBubble = createVoiceBubble(msg, isMe);
                     innerWrap.appendChild(voiceBubble);
                     wrapper.appendChild(innerWrap);
-                    if (isMe) {
+                    if (isMe && !hideAvatarAndName) {
                         const meAv = document.createElement('img');
                         meAv.src = sender.avatar;
                         meAv.className = 'w-7 h-7 rounded-full';
                         meAv.onerror = () => { meAv.src = 'https://picsum.photos/200/200?random=2'; };
                         wrapper.appendChild(meAv);
+                    } else {
+                        const meSpacer = document.createElement('div');
+                        meSpacer.className = 'w-7 h-7 shrink-0';
+                        wrapper.appendChild(meSpacer);
                     }
                     div.appendChild(wrapper);
                     const metaDiv = document.createElement('div');
@@ -7708,7 +8034,7 @@ async function createGroup(name, memberIds) {
                         wrapper.appendChild(av);
                     } else if (!isMe && hideAvatarAndName) {
                         const spacer = document.createElement('div');
-                        spacer.className = 'w-7 h-7';
+                        spacer.className = 'w-7 h-7 shrink-0';
                         wrapper.appendChild(spacer);
                     }
                     const innerWrap = document.createElement('div');
@@ -7730,12 +8056,16 @@ async function createGroup(name, memberIds) {
                     img.onclick = function(e) { e.stopPropagation(); showImageLightbox(msg.src); };
                     innerWrap.appendChild(img);
                     wrapper.appendChild(innerWrap);
-                    if (isMe) {
+                    if (isMe && !hideAvatarAndName) {
                         const meAv = document.createElement('img');
                         meAv.src = sender.avatar;
                         meAv.className = 'w-7 h-7 rounded-full';
                         meAv.onerror = () => { meAv.src = 'https://picsum.photos/200/200?random=2'; };
                         wrapper.appendChild(meAv);
+                    } else {
+                        const meSpacer = document.createElement('div');
+                        meSpacer.className = 'w-7 h-7 shrink-0';
+                        wrapper.appendChild(meSpacer);
                     }
                     div.appendChild(wrapper);
                     const metaDiv = document.createElement('div');
@@ -7772,20 +8102,20 @@ async function createGroup(name, memberIds) {
                   ${(!isMe && !hideAvatarAndName) ? `<p class="text-xs text-[var(--text-secondary)] mb-1">${escapeHtml(dispName(sender))}</p>` : ''}
                   <div class="${bubbleClass} px-3.5 py-2.5 card-shadow">${quoteHtml}${contentHtml}</div>
                 </div>
-                ${isMe ? `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">` : ''}
+                ${isMe ? (hideAvatarAndName ? `<div class="w-7 h-7 shrink-0"></div>` : `<img src="${escapeHtml(sender.avatar)}" class="w-7 h-7 rounded-full" onerror="this.src='https://picsum.photos/200/200?random=2'">`) : ''}
               </div>
               <div class="msg-meta" style="justify-content:${isMe ? 'flex-end' : 'flex-start'};${isMe ? 'padding-right:36px;' : 'padding-left:36px;'}"><span class="msg-time">${timeStrG}</span><span class="msg-actions" data-actions="${msg.id}"><button class="quote-btn text-xs text-[var(--text-secondary)]" data-msgid="${msg.id}"><i class="fa fa-reply"></i></button>${isMe ? '<button class="delete-btn text-xs text-[var(--text-secondary)] hover:text-red-400" data-msgid="' + msg.id + '"><i class="fa fa-trash"></i></button>' : ''}<button class="recall-btn text-xs text-[var(--text-secondary)] hover:text-orange-400" data-msgid="${msg.id}"><i class="fa fa-undo"></i></button></span></div>`;
                 div.ondblclick = function() { toggleMsgActions(msg.id); };
                 return div;
             }
 
-            function createMessageElement(msg, hideAvatarAndName = false) {
-                return currentChatType === 'group' ? createGroupMessageElement(msg, hideAvatarAndName) : createPrivateMessageElement(msg);
+            function createMessageElement(msg, hideAvatarAndName = false, isGroupTail = true) {
+                return currentChatType === 'group' ? createGroupMessageElement(msg, hideAvatarAndName) : createPrivateMessageElement(msg, hideAvatarAndName, isGroupTail);
             }
 
             function appendMessageToChat(msg) {
                 var el;
-                if (currentChatType === 'group' && msg.senderId && msg.senderId !== 'me') {
+                if (currentChatType === 'group' && msg.senderId) {
                     var lastEl = null;
                     var allEls = chatContainer.querySelectorAll('[data-id]');
                     if (allEls.length > 0) lastEl = allEls[allEls.length - 1];
@@ -7803,7 +8133,22 @@ async function createGroup(name, memberIds) {
                     }
                     el = createMessageElement(msg, merged);
                 } else {
-                    el = createMessageElement(msg, false);
+                    var lastElP = null;
+                    var allElsP = chatContainer.querySelectorAll('[data-id]');
+                    if (allElsP.length > 0) lastElP = allElsP[allElsP.length - 1];
+                    var mergedP = false;
+                    if (lastElP) {
+                        var lastDataP = null;
+                        try {
+                            lastDataP = messages.find(function(gm) { return String(gm.id) === String(lastElP.dataset.id); }) || null;
+                        } catch (e) {}
+                        if (lastDataP && lastDataP.type !== 'date-separator' && lastDataP.isMe === msg.isMe && (new Date(msg.timestamp).getTime() - new Date(lastDataP.timestamp).getTime()) < 60000) {
+                            var prevMetaElsP = lastElP.querySelectorAll('.msg-time, .read-status');
+                            for (var pmP = 0; pmP < prevMetaElsP.length; pmP++) prevMetaElsP[pmP].textContent = '';
+                            mergedP = true;
+                        }
+                    }
+                    el = createMessageElement(msg, mergedP, true);
                 }
                 var typingEl = document.getElementById('typing-indicator');
                 if (typingEl) { chatContainer.insertBefore(el, typingEl); } else { chatContainer.appendChild(el); }
@@ -7957,15 +8302,21 @@ async function createGroup(name, memberIds) {
             function appendDisplayMsgsToChat(displayMsgs, isFirstPage) {
                 var lastSenderId = null;
                 var lastSenderTimestamp = null;
+                var lastIsMe = null;
+                var lastMergeable = false;
                 displayMsgs.forEach(function(m, mIdx) {
                     if (m.type === 'date-separator') {
-                        const el = createMessageElement(m, false);
+                        lastSenderId = null;
+                        lastSenderTimestamp = null;
+                        lastIsMe = null;
+                        lastMergeable = false;
+                        const el = createMessageElement(m, false, true);
                         chatContainer.appendChild(el);
                         return;
                     }
                     let hideAvatarAndName = false;
                     let isTail = true;
-                    if (currentChatType === 'group' && m.senderId && m.senderId !== 'me') {
+                    if (currentChatType === 'group' && m.senderId) {
                         if (lastSenderId === m.senderId && lastSenderTimestamp) {
                             const diff = new Date(m.timestamp).getTime() - new Date(lastSenderTimestamp).getTime();
                             if (diff < 60000) hideAvatarAndName = true;
@@ -7976,9 +8327,22 @@ async function createGroup(name, memberIds) {
                         if (nextM && nextM.type !== 'date-separator' && nextM.senderId === m.senderId && (new Date(nextM.timestamp).getTime() - new Date(m.timestamp).getTime()) < 60000) {
                             isTail = false;
                         }
+                    } else if (currentChatType !== 'group') {
+                        const mergeable = function(x) { return x && x.type !== 'date-separator' && x.type !== 'pat' && x.type !== 'call' && x.type !== 'redpacket' && x.type !== 'rp-claim' && x.type !== 'report' && x.type !== 'voice' && x.type !== 'familyCard'; };
+                        if (lastMergeable && mergeable(m) && lastIsMe === m.isMe && lastSenderTimestamp) {
+                            const diff = new Date(m.timestamp).getTime() - new Date(lastSenderTimestamp).getTime();
+                            if (diff < 60000) hideAvatarAndName = true;
+                        }
+                        const nextM = displayMsgs[mIdx + 1];
+                        if (mergeable(nextM) && nextM.isMe === m.isMe && new Date(nextM.timestamp).getTime() - new Date(m.timestamp).getTime() < 60000) {
+                            isTail = false;
+                        }
+                        lastIsMe = m.isMe;
+                        lastSenderTimestamp = m.timestamp;
+                        lastMergeable = mergeable(m);
                     }
                     m._isTail = isTail;
-                    const el = createMessageElement(m, hideAvatarAndName);
+                    const el = createMessageElement(m, hideAvatarAndName, isTail);
                     chatContainer.appendChild(el);
                     postProcessMsgActions(el, m);
                 });
@@ -8100,6 +8464,10 @@ async function createGroup(name, memberIds) {
             async function sendGroupMessage(text, type = 'text', src = null, quote = null, isSticker = false) {
                 const group = getCurrentGroup();
                 if (!group || (!text && type !== 'image' && type !== 'voice')) return;
+                if (type !== 'system' && isGroupMemberMuted(group, 'me')) {
+                    showToast('你已被禁言，' + groupMuteUntilText(getGroupMuteUntil(group, 'me')) + '解除禁言');
+                    return;
+                }
                 const finalQuote = (type === 'pat' || type === 'voice') ? null : quote;
                 const msg = { type, text: (text || '').trim(), src, senderId: 'me', timestamp: new Date().toISOString(), read: true,
                     groupId: currentGroupId, quote: finalQuote, duration: 0, sticker: !!isSticker };
@@ -8118,6 +8486,11 @@ async function createGroup(name, memberIds) {
 
             async function sendVoiceMessage(src, duration) {
                 if (currentChatType === 'group') {
+                    const gv = getCurrentGroup();
+                    if (gv && isGroupMemberMuted(gv, 'me')) {
+                        showToast('你已被禁言，无法发送语音');
+                        return;
+                    }
                     const msg = { type: 'voice', text: '', src, senderId: 'me', timestamp: new Date().toISOString(), read: true,
                         groupId: currentGroupId, quote: null, duration };
                     const id = await addData('groupMessages', msg);
@@ -8282,6 +8655,10 @@ async function createGroup(name, memberIds) {
                     for (var _qi = 0; _qi < gPool.length && units.length < replyLimit; _qi++) {
                         if (units.indexOf(gPool[_qi]) === -1) units.push(gPool[_qi]);
                     }
+                    // 被禁言的成员（非群主/管理员）不参与回复
+                    units = units.filter(function(uid) { return getGroupMuteUntil(grp, uid) <= 0; });
+                    // 管理员随机禁言/解除动作（概率在群管理-发言管理中设置）
+                    if (grp) maybeAdminRandomMuteAction(grp);
                 } else {
                     units = [contactId];
                 }
@@ -8340,6 +8717,10 @@ async function createGroup(name, memberIds) {
 
                         const plan = { messages: [], senderId: chatType === 'group' ? uid : null };
 
+                        // ===== 表情包模式 roll（各 roll 一次，避免文字与单独表情包判断不一致）=====
+                        var _sepRoll = stickerPool.length > 0 && rc('separateStickerEnabled') !== false && Math.random() < rc('separateStickerChance', 0.3);
+                        var _attRoll = stickerPool.length > 0 && rc('attachStickerEnabled') !== false && Math.random() < rc('attachStickerChance', 0.2);
+
                         if (mainText) {
                             let quote = null;
                             if (rc('quoteEnabled') && Math.random() < (rc('quoteChance') || 0.3)) {
@@ -8359,17 +8740,20 @@ async function createGroup(name, memberIds) {
                                     }
                                 }
                             }
-                            plan.messages.push({ type: 'text', text: mainText, quote: quote });
+                            // 单独表情包命中时 → 这条回复只发纯表情包单条，不附带文字；未命中才发文字
+                            if (!_sepRoll) {
+                                plan.messages.push({ type: 'text', text: mainText, quote: quote });
+                            }
 
-                            // ===== 附带表情包：独立概率 roll（开关概率，默认开/20%）=====
-                            if (stickerPool.length > 0 && rc('attachStickerEnabled') !== false && Math.random() < rc('attachStickerChance', 0.2)) {
+                            // ===== 附带表情包：文字+表情包合并一个框（开关概率，默认开/20%）=====
+                            if (_attRoll) {
                                 const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
                                 plan.messages.push({ type: 'image', src: sticker.src, sticker: true, hideTime: true });
                             }
                         }
 
-                        // ===== 单独表情包：独立概率 roll（开关概率，默认开/30%，不限字卡） =====
-                        if (stickerPool.length > 0 && rc('separateStickerEnabled') !== false && Math.random() < rc('separateStickerChance', 0.3)) {
+                        // ===== 单独表情包：独立概率 roll（开关概率，默认开/30%，不限字卡）=====
+                        if (_sepRoll) {
                             const sticker = stickerPool[Math.floor(Math.random() * stickerPool.length)];
                             plan.messages.push({ type: 'image', src: sticker.src, sticker: true });
                         }
@@ -9116,7 +9500,7 @@ async function createGroup(name, memberIds) {
                 var content = document.getElementById('ch-sub-content');
                 if (!modal || !title || !content) { callback(-1); return; }
                 title.textContent = titleText || '选择添加分组';
-                var html = '<label class="flex items-center px-3 py-2 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)] mb-2"><input type="radio" name="char-pack-radio" value="-1" class="mr-3" checked><span class="text-sm text-[var(--text-primary)]">默认（无分组/span></label>';
+                var html = '<label class="flex items-center px-3 py-2 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)] mb-2"><input type="radio" name="char-pack-radio" value="-1" class="mr-3" checked><span class="text-sm text-[var(--text-primary)]">默认（无分组）</span></label>';
                 pks.forEach(function(p, pi) {
                     html += '<label class="flex items-center px-3 py-2 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)] mb-2"><input type="radio" name="char-pack-radio" value="' + pi + '" class="mr-3"><span class="text-sm text-[var(--text-primary)]">' + escapeHtml(p.name || ('分组' + (pi + 1))) + '</span></label>';
                 });
@@ -17067,7 +17451,7 @@ const myTile = selfCamStream
                       <button class="ex-wc-batch-btn flex-1 py-2 bg-[var(--theme-light)] rounded-lg text-sm text-[var(--text-primary)]" data-action="export" disabled>导出</button>
                       <button id="ex-wc-batch-cancel" class="py-2 px-3 border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-secondary)]">取消</button>
                     </div>
-                  </div></div><div id="ex-emojis-panel" class="hidden"><div id="ex-emoji-list" class="grid grid-cols-5 gap-2 mb-3"></div><label for="ex-emoji-upload" class="block py-2 bg-[var(--theme-light)] rounded-lg text-center cursor-pointer text-sm mb-2">📷 上传表情包（可多选）</label><input type="file" id="ex-emoji-upload" accept="image/*" multiple class="hidden"><button id="clear-ex-emojis-btn" class="w-full py-2 bg-red-50 text-red-500 rounded-xl text-sm mt-2">清空专属表情包/button></div><div id="ex-voices-panel" class="hidden"><div id="ex-voice-list" class="space-y-2 mb-3"></div><div class="flex border-b border-[var(--border-color)] mb-3"><button class="ex-voice-tab active flex-1 py-2 text-xs font-medium text-center border-b-2" data-vtab="voice-groups" style="color:var(--theme);border-color:var(--theme);">语音分组</button><button class="ex-voice-tab flex-1 py-2 text-xs font-medium text-center text-[var(--text-secondary)]" data-vtab="voice-record">录音录入</button></div><div id="voice-groups-panel"><div class="flex items-center gap-2 mb-2"><button id="ex-voice-select-toggle" class="text-xs px-3 py-1.5 rounded-lg border border-[var(--border-color)]">选择</button><span id="ex-voice-sel-count" class="text-xs text-[var(--text-secondary)]"></span><button id="ex-voice-sel-all" class="hidden text-xs px-3 py-1.5 rounded-lg bg-[var(--theme-light)]">全选/button><button id="ex-voice-sel-del" class="hidden text-xs px-3 py-1.5 rounded-lg bg-red-500 text-white">删除选中</button><button id="ex-voice-sel-move" class="hidden text-xs px-3 py-1.5 rounded-lg bg-blue-500 text-white">移动</button><button id="ex-voice-sel-export" class="hidden text-xs px-3 py-1.5 rounded-lg bg-[var(--theme-light)]">导出选中</button><button id="ex-voice-sel-cancel" class="hidden text-xs px-3 py-1.5 rounded-lg border">取消</button></div><div id="ex-voice-groups" class="space-y-3"></div><button id="add-exclusive-voice-group-btn" class="w-full py-2 border border-dashed border-[var(--border-color)] rounded-xl text-sm mt-4">+ 添加语音分组</button></div><div id="voice-record-panel" class="hidden"><div class="text-center py-4"><button id="start-voice-record-btn" class="px-6 py-3 rounded-full text-white text-lg" style="background:var(--theme)"><i class="fa fa-microphone mr-2"></i>开始录音/button><p id="voice-record-status" class="text-xs text-[var(--text-secondary)] mt-2"></p><audio id="voice-record-preview" class="hidden mt-2 w-full" controls></audio><div class="flex space-x-2 mt-3 hidden" id="voice-save-btns"><input type="text" id="new-voice-name" placeholder="语音名称" class="flex-1 px-2 py-1 border rounded text-sm"><button id="save-recorded-voice-btn" class="px-4 py-1 text-white rounded text-sm" style="background:var(--theme)">保存</button></div></div></div></div></div>`;
+                  </div></div><div id="ex-emojis-panel" class="hidden"><div id="ex-emoji-list" class="grid grid-cols-5 gap-2 mb-3"></div><label for="ex-emoji-upload" class="block py-2 bg-[var(--theme-light)] rounded-lg text-center cursor-pointer text-sm mb-2">📷 上传表情包（可多选）</label><input type="file" id="ex-emoji-upload" accept="image/*" multiple class="hidden"><button id="clear-ex-emojis-btn" class="w-full py-2 bg-red-50 text-red-500 rounded-xl text-sm mt-2">清空专属表情包</button></div><div id="ex-voices-panel" class="hidden"><div id="ex-voice-list" class="space-y-2 mb-3"></div><div class="flex border-b border-[var(--border-color)] mb-3"><button class="ex-voice-tab active flex-1 py-2 text-xs font-medium text-center border-b-2" data-vtab="voice-groups" style="color:var(--theme);border-color:var(--theme);">语音分组</button><button class="ex-voice-tab flex-1 py-2 text-xs font-medium text-center text-[var(--text-secondary)]" data-vtab="voice-record">录音录入</button></div><div id="voice-groups-panel"><div class="flex items-center gap-2 mb-2"><button id="ex-voice-select-toggle" class="text-xs px-3 py-1.5 rounded-lg border border-[var(--border-color)]">选择</button><span id="ex-voice-sel-count" class="text-xs text-[var(--text-secondary)]"></span><button id="ex-voice-sel-all" class="hidden text-xs px-3 py-1.5 rounded-lg bg-[var(--theme-light)]">全选</button><button id="ex-voice-sel-del" class="hidden text-xs px-3 py-1.5 rounded-lg bg-red-500 text-white">删除选中</button><button id="ex-voice-sel-move" class="hidden text-xs px-3 py-1.5 rounded-lg bg-blue-500 text-white">移动</button><button id="ex-voice-sel-export" class="hidden text-xs px-3 py-1.5 rounded-lg bg-[var(--theme-light)]">导出选中</button><button id="ex-voice-sel-cancel" class="hidden text-xs px-3 py-1.5 rounded-lg border">取消</button></div><div id="ex-voice-groups" class="space-y-3"></div><button id="add-exclusive-voice-group-btn" class="w-full py-2 border border-dashed border-[var(--border-color)] rounded-xl text-sm mt-4">+ 添加语音分组</button></div><div id="voice-record-panel" class="hidden"><div class="text-center py-4"><button id="start-voice-record-btn" class="px-6 py-3 rounded-full text-white text-lg" style="background:var(--theme)"><i class="fa fa-microphone mr-2"></i>开始录音</button><p id="voice-record-status" class="text-xs text-[var(--text-secondary)] mt-2"></p><audio id="voice-record-preview" class="hidden mt-2 w-full" controls></audio><div class="flex space-x-2 mt-3 hidden" id="voice-save-btns"><input type="text" id="new-voice-name" placeholder="语音名称" class="flex-1 px-2 py-1 border rounded text-sm"><button id="save-recorded-voice-btn" class="px-4 py-1 text-white rounded text-sm" style="background:var(--theme)">保存</button></div></div></div></div></div>`;
                     const contactSelect = document.getElementById('exclusive-contact-select');
                     const contentArea = document.getElementById('exclusive-content-area');
                     const tabs = document.querySelectorAll('.exclusive-tab');

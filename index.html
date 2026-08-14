@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>LOVE · 多联系人治愈版</title>
-    <script src="tailwind.js"></script>
+    <link rel="stylesheet" href="tailwind.css">
     <link rel="stylesheet" href="fa.css">
-    <link rel="stylesheet" href="css/all.css">
-    <script src="chart.js"></script>
+    <link rel="stylesheet" href="all.css">
+    
     <style>
         /* ===== 原有所有样式（完全保留） ===== */
         * {
@@ -5366,6 +5366,12 @@
 
             function getAllEmojiChars() { return emojiChars; }
 
+            function getAllEmojiPool() {
+                var set = new Set(emojiChars || []);
+                (settings.emojiPacks || []).forEach(function(p) { if (p.enabled !== false) (p.emojis || []).forEach(function(c) { set.add(c); }); });
+                return Array.from(set);
+            }
+
             function getAllKaomoji() { return kaomojiChars; }
 
             function getWeatherPool() {
@@ -9158,7 +9164,7 @@ function getGroupMessagesAll() {
                 if (!text) return;
                 if (text.startsWith('/')) {
                     var keyword = text.slice(1).toLowerCase();
-                    var matched = getAllEmojiChars().concat(getAllKaomoji()).filter(function(e) { return e.indexOf(keyword) !== -1 || keyword.indexOf(e) !== -1; });
+                    var matched = getAllEmojiPool().concat(getAllKaomoji()).filter(function(e) { return e.indexOf(keyword) !== -1 || keyword.indexOf(e) !== -1; });
                     if (matched.length > 0) {
                         messageInput.value = matched[Math.floor(Math.random() * matched.length)];
                         var sb = document.getElementById('send-btn'); if (sb) sb.classList.remove('hidden');
@@ -9417,7 +9423,7 @@ function getGroupMessagesAll() {
                     var poolCid = chatType === 'group' ? uid : contactId;
 
                     const wordCardPool = buildWordCardPool(poolCid);
-                    const emojiKaomojiPool = [...getAllEmojiChars(), ...getAllKaomoji()];
+                    const emojiKaomojiPool = [...getAllEmojiPool(), ...getAllKaomoji()];
                     const stickerPool = buildStickerPool(poolCid);
                     const voicePool = chatType === 'group' ? buildVoicePool(uid) : buildVoicePool(contactId);
                     const patPool = chatType === 'group' ? [] : getPartnerPatPool();
@@ -10257,6 +10263,42 @@ function getGroupMessagesAll() {
                     callback(selected ? parseInt(selected.value) : -1);
                 };
             }
+            function showExclusiveVoiceGroupPicker(cid, callback) {
+                var modal = document.getElementById('ch-sub-modal');
+                var title = document.getElementById('ch-sub-title');
+                var content = document.getElementById('ch-sub-content');
+                if (!modal || !title || !content) { callback(null); return; }
+                var c = contacts.find(function(x) { return x.id === cid; });
+                var groups = (c && c.uniqueVoiceGroups) || [];
+                title.textContent = '选择上传到哪个分组';
+                var html = '';
+                if (!groups.length) { html = '<p class="text-xs text-[var(--text-secondary)] mb-2">暂无分组，请新建：</p>'; }
+                groups.forEach(function(g, gi) {
+                    html += '<label class="flex items-center px-3 py-2 rounded-xl cursor-pointer hover:bg-[var(--theme-light)] border border-[var(--border-color)] mb-2"><input type="radio" name="exv-grp-radio" value="' + gi + '" class="mr-3"' + (gi === 0 ? ' checked' : '') + '><span class="text-sm text-[var(--text-primary)]">' + escapeHtml(g.name || ('分组' + (gi + 1))) + ' <span class="text-xs text-[var(--text-secondary)]">(' + (g.items || []).length + ' 条)</span></span></label>';
+                });
+                html += '<input id="exv-new-grp-name" type="text" placeholder="或输入新分组名称" class="w-full px-3 py-2 border border-[var(--border-color)] rounded-xl text-sm mb-2">';
+                html += '<button id="exv-grp-confirm" class="w-full mt-1 py-2.5 text-white rounded-xl text-sm" style="background:var(--theme)">确定上传</button>';
+                content.innerHTML = html;
+                modal.classList.remove('hidden');
+                document.getElementById('exv-grp-confirm').onclick = function() {
+                    var nn = document.getElementById('exv-new-grp-name').value.trim();
+                    if (nn) {
+                        if (!c.uniqueVoiceGroups) c.uniqueVoiceGroups = [];
+                        var g = c.uniqueVoiceGroups.find(function(x) { return x.name === nn; });
+                        if (!g) { g = { name: nn, enabled: true, items: [] }; c.uniqueVoiceGroups.push(g); }
+                        modal.classList.add('hidden');
+                        callback(g);
+                        return;
+                    }
+                    var selected = document.querySelector('input[name="exv-grp-radio"]:checked');
+                    if (selected && groups.length) {
+                        modal.classList.add('hidden');
+                        callback(groups[parseInt(selected.value)]);
+                        return;
+                    }
+                    showToast('请选择分组或输入新分组名');
+                };
+            }
             function buildStickerData(f, maxDim) {
                 return new Promise(function(resolve) {
                     var animTypes = ['image/gif', 'image/apng', 'image/webp'];
@@ -10591,6 +10633,43 @@ function getGroupMessagesAll() {
                     var all6 = (ct && ct.uniqueEmojis) || [];
                     return { on: !!window._ceBatch, allCount: all6.length, sel: window._ceSelected || [], move: false };
                 }
+                if (tab === 'add') {
+                    var section = window._fmSection;
+                    var res = { on: false, allCount: 0, sel: [], move: false };
+                    if (section === 'wordcard') {
+                        if (_fmWcTab === 'shared') {
+                            res.on = !!window._fmWcSelectMode;
+                            res.sel = window._fmWcSelected || [];
+                            res.move = wordCardGroups.length > 0;
+                            var wcAll = [];
+                            wordCardGroups.forEach(function(g) { wcAll.push.apply(wcAll, g.cards || []); });
+                            res.allCount = wcAll.length;
+                        } else {
+                            res.on = !!_fmWcExSelectMode;
+                            res.sel = _fmWcExSelected || [];
+                        }
+                    } else if (section === 'voice') {
+                        if (_fmVoiceTab === 'general') {
+                            res.on = !!window._fmVoiceBatch;
+                            res.sel = window._fmVoiceSelected || [];
+                        } else {
+                            var fmCidEl = document.getElementById('fm-voice-exclusive-contact');
+                            var fmCid = parseInt(fmCidEl && fmCidEl.value);
+                            var st = (window._fmExvState && fmCid && window._fmExvState[fmCid]) || null;
+                            res.on = !!(st && st.batch);
+                            res.sel = (st && st.sel) || [];
+                        }
+                    } else if (section === 'pat') {
+                        if (_fmPatTab === 'mine') {
+                            res.on = !!window._fmPatBatch;
+                            res.sel = window._fmPatSelected || [];
+                        }
+                    } else if (section === 'status') {
+                        res.on = !!window._fmStBatch;
+                        res.sel = window._fmStSelected || [];
+                    }
+                    return res;
+                }
                 return null;
             }
             function drawerSelAllItems() {
@@ -10613,6 +10692,44 @@ function getGroupMessagesAll() {
                 if (tab === 'contact-emojis') {
                     var ct = getCurrentContact();
                     return ((ct && ct.uniqueEmojis) || []).map(function(e) { return e.src; });
+                }
+                if (tab === 'add') {
+                    var section = window._fmSection;
+                    if (section === 'wordcard' && _fmWcTab === 'shared') {
+                        var wcOut = [];
+                        wordCardGroups.forEach(function(g) { wcOut.push.apply(wcOut, g.cards || []); });
+                        return wcOut;
+                    }
+                    if (section === 'wordcard' && _fmWcTab === 'exclusive') {
+                        var wcCidEl = document.getElementById('fm-wc-exclusive-contact');
+                        var wcCid = parseInt(wcCidEl && wcCidEl.value);
+                        var wcC = contacts.find(function(x) { return String(x.id) === String(wcCid); });
+                        var wcOut2 = [];
+                        if (wcC && wcC.uniqueWordCardGroups) wcC.uniqueWordCardGroups.forEach(function(g) { wcOut2.push.apply(wcOut2, g.cards || []); });
+                        return wcOut2;
+                    }
+                    if (section === 'voice' && _fmVoiceTab === 'general') {
+                        var vOut = [];
+                        (settings.generalVoiceGroups || []).forEach(function(g, gi) { (g.items || []).forEach(function(it, ii) { vOut.push(gi + '-' + ii); }); });
+                        return vOut;
+                    }
+                    if (section === 'voice' && _fmVoiceTab === 'exclusive') {
+                        var vCidEl = document.getElementById('fm-voice-exclusive-contact');
+                        var vCid = parseInt(vCidEl && vCidEl.value);
+                        var vC = contacts.find(function(x) { return String(x.id) === String(vCid); });
+                        var vOut2 = [];
+                        if (vC && vC.uniqueVoiceGroups) vC.uniqueVoiceGroups.forEach(function(g, gi) { (g.items || []).forEach(function(it, ii) { vOut2.push(gi + '-' + ii); }); });
+                        return vOut2;
+                    }
+                    if (section === 'pat' && _fmPatTab === 'mine') {
+                        return (settings.patLibrary || []).map(function(item, i) { return i; });
+                    }
+                    if (section === 'status') {
+                        var stOut = [];
+                        getStatusGroups().forEach(function(g) { (g.items || []).forEach(function(it) { stOut.push(it.text); }); });
+                        return stOut;
+                    }
+                    return [];
                 }
                 return [];
             }
@@ -10641,6 +10758,12 @@ function getGroupMessagesAll() {
                 }
                 var delBtn = bar.querySelector('.dsel-del');
                 if (delBtn) delBtn.onclick = function() { drawerSelDelete(); };
+                var exportBtn = bar.querySelector('.dsel-export');
+                if (exportBtn) {
+                    var isWcShared = window._currentEmojiTab === 'add' && window._fmSection === 'wordcard' && _fmWcTab === 'shared';
+                    exportBtn.classList.toggle('hidden', !isWcShared);
+                    exportBtn.onclick = function() { fmWcBatchAction('export'); };
+                }
                 var cancelBtn = bar.querySelector('.dsel-cancel');
                 if (cancelBtn) cancelBtn.onclick = function() { drawerSelToggleOff(); };
             }
@@ -10650,6 +10773,17 @@ function getGroupMessagesAll() {
                 else if (tab === 'shared') renderSharedEmojiUI();
                 else if (tab === 'contact-emojis') renderContactEmojiContent();
                 else if (tab && tab.indexOf('img-group-') === 0) renderImageGroupContent(tab.replace('img-group-', ''));
+                else if (tab === 'add') {
+                    var section = window._fmSection;
+                    if (section === 'wordcard') {
+                        if (_fmWcTab === 'shared') renderFmWordCardGroups('');
+                        else { var cidEl = document.getElementById('fm-wc-exclusive-contact'); var cid = parseInt(cidEl && cidEl.value); renderFmExclusiveWordCardGroups(cid || 0, ''); }
+                    } else if (section === 'voice') {
+                        if (_fmVoiceTab === 'general') renderFmVoiceGroups('');
+                        else { var cidEl2 = document.getElementById('fm-voice-exclusive-contact'); var cid2 = parseInt(cidEl2 && cidEl2.value); renderFmExclusiveVoiceGroups(cid2 || 0); }
+                    } else if (section === 'pat' && _fmPatTab === 'mine') renderFmPatMyContent();
+                    else if (section === 'status') renderFmStGroups('');
+                }
             }
             function drawerSelToggleOff() {
                 var tab = window._currentEmojiTab;
@@ -10658,11 +10792,84 @@ function getGroupMessagesAll() {
                 else if (tab === 'mine') { window._mineBatch = false; window._mineSelected = []; }
                 else if (tab === 'shared') { window._sharedEmojiBatch = false; window._selectedEmojis = []; }
                 else if (tab === 'contact-emojis') { window._ceBatch = false; window._ceSelected = []; }
+                else if (tab === 'add') {
+                    var section = window._fmSection;
+                    if (section === 'wordcard') { if (_fmWcTab === 'shared') { window._fmWcSelectMode = false; window._fmWcSelected = []; } else { _fmWcExSelectMode = false; _fmWcExSelected = []; } }
+                    else if (section === 'voice') { if (_fmVoiceTab === 'general') { window._fmVoiceBatch = false; window._fmVoiceSelected = []; } else { window._fmExvBatchFlag = false; } }
+                    else if (section === 'pat') { window._fmPatBatch = false; window._fmPatSelected = []; }
+                    else if (section === 'status') { window._fmStBatch = false; window._fmStSelected = []; }
+                }
                 drawerSelReRender();
             }
-            function drawerSelDelete() {
+function drawerSelDelete() {
                 var tab = window._currentEmojiTab;
                 if (tab === 'shared' || (tab && tab.indexOf('img-group-') === 0)) { batchDeleteSharedEmojis(); return; }
+                if (tab === 'add') {
+                    var section = window._fmSection;
+                    if (section === 'wordcard' && _fmWcTab === 'shared') { fmWcBatchAction('delete'); return; }
+                    if (section === 'wordcard' && _fmWcTab === 'exclusive') {
+                        var sel = _fmWcExSelected || [];
+                        if (!sel.length) { showToast('请先选择字卡'); return; }
+                        if (!confirm('删除选中的 ' + sel.length + ' 个字卡？')) return;
+                        var cidEl = document.getElementById('fm-wc-exclusive-contact');
+                        var cid = parseInt(cidEl && cidEl.value);
+                        var ct = contacts.find(function(x) { return String(x.id) === String(cid); });
+                        if (ct && ct.uniqueWordCardGroups) {
+                            ct.uniqueWordCardGroups.forEach(function(g) { sel.forEach(function(card) { var i = (g.cards || []).indexOf(card); if (i !== -1) g.cards.splice(i, 1); var bi = (g.blockedCards || []).indexOf(card); if (bi !== -1) g.blockedCards.splice(bi, 1); }); });
+                            queuedUpdateContact(ct);
+                        }
+                        _fmWcExSelected = [];
+                        renderFmExclusiveWordCardGroups(cid || 0, '');
+                        showToast('已删除 ' + sel.length + ' 个字卡'); return;
+                    }
+                    if (section === 'voice' && _fmVoiceTab === 'general') {
+                        var sel2 = window._fmVoiceSelected || [];
+                        if (!sel2.length) { showToast('请先选择语音'); return; }
+                        if (!confirm('删除选中的 ' + sel2.length + ' 条语音？')) return;
+                        sel2.forEach(function(key) { var p = key.split('-'); var gi = parseInt(p[0]); var ii = parseInt(p[1]); var g = settings.generalVoiceGroups && settings.generalVoiceGroups[gi]; if (g && g.items && g.items[ii]) g.items.splice(ii, 1); });
+                        window._fmVoiceSelected = [];
+                        saveSettings();
+                        renderFmVoiceGroups('');
+                        showToast('已删除 ' + sel2.length + ' 条语音'); return;
+                    }
+                    if (section === 'voice' && _fmVoiceTab === 'exclusive') {
+                        var cidEl2 = document.getElementById('fm-voice-exclusive-contact');
+                        var cid2 = parseInt(cidEl2 && cidEl2.value);
+                        var st2 = window._fmExvState && window._fmExvState[cid2];
+                        var sel3 = (st2 && st2.sel) || [];
+                        if (!sel3.length) { showToast('请先选择语音'); return; }
+                        if (!confirm('删除选中的 ' + sel3.length + ' 条语音？')) return;
+                        var ct2 = contacts.find(function(x) { return String(x.id) === String(cid2); });
+                        sel3.forEach(function(key) { var p = key.split('-'); var gi = parseInt(p[0]); var ii = parseInt(p[1]); if (ct2 && ct2.uniqueVoiceGroups && ct2.uniqueVoiceGroups[gi] && ct2.uniqueVoiceGroups[gi].items && ct2.uniqueVoiceGroups[gi].items[ii]) ct2.uniqueVoiceGroups[gi].items.splice(ii, 1); });
+                        if (st2) st2.sel = [];
+                        if (ct2) queuedUpdateContact(ct2);
+                        renderFmExclusiveVoiceGroups(cid2 || 0);
+                        showToast('已删除 ' + sel3.length + ' 条语音'); return;
+                    }
+                    if (section === 'pat' && _fmPatTab === 'mine') {
+                        var sel4 = window._fmPatSelected || [];
+                        if (!sel4.length) { showToast('请先选择拍一拍'); return; }
+                        if (!confirm('删除选中的 ' + sel4.length + ' 个拍一拍？')) return;
+                        var lib = settings.patLibrary || [];
+                        sel4.slice().sort(function(a, b) { return b - a; }).forEach(function(i) { lib.splice(i, 1); });
+                        window._fmPatSelected = [];
+                        saveSettings();
+                        renderFmPatMyContent();
+                        renderPatDrawer();
+                        showToast('已删除 ' + sel4.length + ' 个拍一拍'); return;
+                    }
+                    if (section === 'status') {
+                        var sel5 = window._fmStSelected || [];
+                        if (!sel5.length) { showToast('请先选择状态'); return; }
+                        if (!confirm('删除选中的 ' + sel5.length + ' 个状态？')) return;
+                        getStatusGroups().forEach(function(g) { (g.items || []).slice().forEach(function(it) { if (sel5.indexOf(it.text) !== -1) { var i = g.items.indexOf(it); if (i !== -1) g.items.splice(i, 1); } }); });
+                        window._fmStSelected = [];
+                        saveStatusGroups();
+                        renderFmStGroups('');
+                        showToast('已删除 ' + sel5.length + ' 个状态'); return;
+                    }
+                    return;
+                }
                 var sel;
                 if (tab === 'emoji-lib') sel = window._emojiPackSelChars || [];
                 else if (tab === 'kaomoji') sel = window._kaoSelected || [];
@@ -10702,6 +10909,11 @@ function getGroupMessagesAll() {
             }
             function drawerSelMove() {
                 var tab = window._currentEmojiTab;
+                if (tab === 'add') {
+                    var section = window._fmSection;
+                    if (section === 'wordcard' && _fmWcTab === 'shared') { fmWcBatchAction('move'); return; }
+                    showToast('该栏目暂不支持移动'); return;
+                }
                 if (tab === 'emoji-lib') {
                     var sel = window._emojiPackSelChars || [];
                     if (!sel.length) { showToast('请先选择表情'); return; }
@@ -11200,13 +11412,13 @@ function getGroupMessagesAll() {
                         if (!cid) { showToast('请先选择联系人'); e.target.value = ''; return; }
                         var c = contacts.find(function(x){return x.id === cid;}); if (!c) return;
                         if (!c.uniqueVoiceGroups) c.uniqueVoiceGroups = [];
-                        var grpName = prompt('选择或输入语音分组名称' + (c.uniqueVoiceGroups.length ? '（已有：' + c.uniqueVoiceGroups.map(function(g){return g.name;}).join('、') + '）' : '')) || '语音';
-                        var grp = c.uniqueVoiceGroups.find(function(g){return g.name === grpName;});
-                        if (!grp) { grp = { name: grpName, enabled: true, items: [] }; c.uniqueVoiceGroups.push(grp); }
-                        var vset = getAllVoiceNames();
-                        var vadded = 0;
-                        Array.from(files).forEach(function(f){var nm=(f.name||'').replace(/\.[^.]+$/,'');if(!nm||vset.has(nm))return;var url=URL.createObjectURL(f);grp.items.push({src:url,duration:3,name:nm,enabled:true});vset.add(nm);vadded++;});
-                        updateContact(c); renderFmExclusiveVoiceGroups(cid); showToast('上传' + vadded + '个语音' + (files.length > vadded ? '(跳过重复' + (files.length - vadded) + '个) ' : ' '));
+                        showExclusiveVoiceGroupPicker(cid, function(grp) {
+                            if (!grp) { e.target.value = ''; return; }
+                            var vset = getAllVoiceNames();
+                            var vadded = 0;
+                            Array.from(files).forEach(function(f){var nm=(f.name||'').replace(/\.[^.]+$/,'');if(!nm||vset.has(nm))return;var url=URL.createObjectURL(f);grp.items.push({src:url,duration:3,name:nm,enabled:true});vset.add(nm);vadded++;});
+                            updateContact(c); renderFmExclusiveVoiceGroups(cid); showToast('上传' + vadded + '个语音' + (files.length > vadded ? '(跳过重复' + (files.length - vadded) + '个) ' : ' '));
+                        });
                     };
                 }
                 document.getElementById('fm-voice-tab-general').onclick = function() { _fmVoiceTab = 'general'; renderFmVoice(el); };
@@ -12832,7 +13044,7 @@ function drawThreeWordCards(contactId) {
             }
 
             // ===== 重写：经期统计模块 =====
-            function renderPeriodStats() {
+            async function renderPeriodStats() {
                 const container = document.getElementById('period-stats-container');
                 if (!container) return;
 
@@ -13032,6 +13244,15 @@ function drawThreeWordCards(contactId) {
                 // ===== 创建经期时长图 =====
                 if (cycleDurations.length > 0 && document.getElementById('cycle-duration-chart')) {
                     try {
+                        if (typeof Chart === 'undefined') {
+                            await new Promise(function(resolve, reject) {
+                                var s = document.createElement('script');
+                                s.src = 'chart.js';
+                                s.onload = function() { resolve(); };
+                                s.onerror = function() { reject(new Error('chart.js load fail')); };
+                                document.head.appendChild(s);
+                            });
+                        }
                         var ctx = document.getElementById('cycle-duration-chart').getContext('2d');
                         var c = new Chart(ctx, {
                             type: 'bar',
@@ -14903,7 +15124,7 @@ p.comments.slice(0, p._commentsOpen ? p.comments.length : 5).forEach(function(c,
                     if (momentEnabled && Math.random() < (getContactReplySetting(contact, 'momentPostProb') / 100)) {
                         const pool = buildWordCardPool(contactId);
                         const stickerPool = buildStickerPool(contactId);
-                        const emojiPool = [...getAllEmojiChars(), ...getAllKaomoji()];
+                        const emojiPool = [...getAllEmojiPool(), ...getAllKaomoji()];
                         // 各类型独立概率roll，无优先级：语音 / 字卡(组合) / 附带包/ 单独表情包
                         const voiceRoll = Math.random() < getContactReplySetting(contact, 'voiceReplyChance', 0.06);
                         const sepSticker = (stickerPool.length && Math.random() < 0.15) ? stickerPool[Math.floor(Math.random() * stickerPool.length)] : null;
@@ -22305,7 +22526,7 @@ function startStatusTimersForAll(force) {
 
             function buildThreadReplyPlan(contactId) {
                 var cardPool = buildWordCardPool(contactId);
-                var emojiPool = [...getAllEmojiChars(), ...getAllKaomoji()];
+                var emojiPool = [...getAllEmojiPool(), ...getAllKaomoji()];
                 var stickerPool = buildStickerPool(contactId);
                 var plan = [];
                 var hasMain = false;

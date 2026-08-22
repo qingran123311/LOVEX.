@@ -28,6 +28,7 @@
 ### 问题2 — 查岗只触发一个人 (`Us` / `checkPatrolDue`)
 - **bug**：`var n=!1; ... if(!(n||tr.length)){... (tr.push(a), n=!0) ...}` → 第一人中标后 `n=1` 导致余下联系人全被跳过（`n||tr.length`永远真）；同时 `patrolCooldownMin` 冷却又卡住剩下轮次 → 实质**一次只弹1人**；
 - **改处** (`app.js` ~patrol 调度处)：去掉 `var n` + `if(!(n||tr.length)){` 封装，用 `(tr.push(a),a.lastPatrolAt=e,oe(a)):(a.lastPatrolAt=e,oe(a))` 让**所有到期人排队；push 时即刷新 _lastStatusAt_**。
+- **数据修复**：旧联系人的 `lastPatrolAt` 被之前bug写入近期时间戳，导致它们要等很久。在 `Us()` 开头加一次性数据清理（localStorage标记），把所有联系人的 `lastPatrolAt` 清零，让它们立即有资格触发。
 
 ### 问题3 — 查岗汇报弹窗误显示“报备一下/才不要”
 - **bug**：CSS 里 `.patrol-actions{display:flex}`（all.css）把 tailwind 的 `.hidden{display:none}` **同特异性覆写**；`classList.add/remove("hidden")` 失效 → result(汇报)弹窗把 request(按钮)框也露出来；
@@ -68,7 +69,7 @@
 - **效果**：即使 DB 死锁，最多 8 s 后队列恢复、最多 150 s 后输入中消失，从此不“永久卡死，多个联系人全挂”。
 
 ## 三、文件落盘清单
-- `app.js`        — final22 + 11 处修复 (922297 字节)
+- `app.js`        — final22 + 11 处修复 (923693 字节)
 - `backup-0814/final26.js` — 同 app.js 备份
 - `index.html`    — `app.js?v=20260822b` 缓存版本号 → **务必 Ctrl+F5 强刷！**
 
